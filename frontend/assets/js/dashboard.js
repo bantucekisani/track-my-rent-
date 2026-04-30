@@ -1,5 +1,5 @@
 ﻿/* ======================================================
-   DASHBOARD â€“ LEDGER BASED (PRODUCTION)
+   DASHBOARD - LEDGER BASED (PRODUCTION)
 ====================================================== */
 
 let currentUser = null;

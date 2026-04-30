@@ -431,7 +431,7 @@ window.openUtilities = function (tenantId, unitId) {
   window.location.href = `utilities.html?tenantId=${tenantId}&unitId=${unitId}`;
 };
 
-/* âœ… ADD THIS */
+/* Add this */
 window.openTenantProfile = function (tenantId) {
   window.location.href = `tenant-profile.html?id=${tenantId}`;
 };

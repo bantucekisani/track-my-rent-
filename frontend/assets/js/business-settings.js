@@ -46,7 +46,7 @@ async function loadSettings() {
     registrationNumber.value = s.registrationNumber || "";
     vatNumber.value = s.vatNumber || "";
 
-    // âœ… Banking info
+    // Banking info
     bankName.value = s.bank?.bankName || "";
     accountName.value = s.bank?.accountName || "";
     accountNumber.value = s.bank?.accountNumber || "";
@@ -81,7 +81,7 @@ async function saveSettings(e) {
     registrationNumber: registrationNumber.value.trim(),
     vatNumber: vatNumber.value.trim(),
 
-    // âœ… Banking details
+    // Banking details
     bank: {
       bankName: bankName.value.trim(),
       accountName: accountName.value.trim(),

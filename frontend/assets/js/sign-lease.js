@@ -161,7 +161,7 @@ async function submitSignature() {
       return;
     }
 
-    // âœ… SUCCESS PAGE
+    // Success page
     window.location.href = "signed.html";
 
   } catch (err) {

@@ -65,7 +65,7 @@ uploadForm.addEventListener("submit", async (e) => {
 
   const formData = new FormData();
 
-  // ðŸ”´ MUST MATCH multer.single("statement")
+  // Must match multer.single("statement")
   formData.append("statement", fileInput.files[0]);
 
   try {

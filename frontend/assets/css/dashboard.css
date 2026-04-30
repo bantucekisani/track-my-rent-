@@ -1040,7 +1040,7 @@ tr.invoice-overdue .badge-unpaid {
 input,
 select,
 textarea {
-  font-size: 16px;      /* try 16â€“18px */
+  font-size: 16px;      /* try 16-18px */
   padding: 12px 14px;  /* gives breathing space */
   gap: 14px;
 }

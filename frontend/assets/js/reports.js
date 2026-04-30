@@ -1,5 +1,5 @@
 ﻿/* ==========================================================
-   REPORTS MODULE â€“ LEDGER BASED (FINAL)
+   REPORTS MODULE - LEDGER BASED (FINAL)
    Works with reports.html + /api/ledger
 ========================================================== */
 
@@ -51,7 +51,7 @@ await Promise.all([
 ]);
 
   bindEvents();
-  await buildAllReports(); // ðŸ”´ must be awaited
+  await buildAllReports(); // must be awaited
 });  
 
 function money(value){
@@ -1065,7 +1065,7 @@ async function emailTenantStatement() {
   const monthName = document.getElementById("reportMonth").value;
 
   const monthIndex = MONTHS.indexOf(monthName);
-  const month = monthIndex + 1; // âœ… FIX: convert to 1â€“12
+  const month = monthIndex + 1; // FIX: convert to 1-12
 
   if (!tenantId) {
     notify("Please select a tenant first");
@@ -1662,14 +1662,14 @@ async function buildAllReports() {
   const year = Number(document.getElementById("reportYear").value);
   const propertyId = document.getElementById("reportProperty").value;
 
-  // âœ… STEP 1: Ensure rent + expenses exist
+  // STEP 1: Ensure rent + expenses exist
   await chargeRentIfNeeded();
 
 
-  // âœ… STEP 2: Reload ledger AFTER auto charges
+  // STEP 2: Reload ledger AFTER auto charges
   await loadLedger();
 
-  // âœ… STEP 3: Build reports
+  // STEP 3: Build reports
   await buildTopSummary(month, year, propertyId);
   await buildProfitLoss(month, year, propertyId);
 
@@ -1687,7 +1687,7 @@ async function buildAllReports() {
   buildDamageReport(month, year, propertyId);
 }
 
-// ðŸ‘‡ REQUIRED for onclick=""
+// REQUIRED for onclick=""
 window.emailTenantStatement = emailTenantStatement;
 
 window.exportTenantStatementPDF = exportTenantStatementPDF;

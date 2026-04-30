@@ -64,7 +64,7 @@ async function loadTenants() {
 
       if (t._id === tenantIdParam) {
         opt.selected = true;
-        tenantSelect.disabled = true; // ðŸ”’ lock if from tenant page
+        tenantSelect.disabled = true; // lock if from tenant page
       }
 
       tenantSelect.appendChild(opt);
@@ -114,7 +114,7 @@ async function submitUtility(e) {
     tenantId: tenantSelect.value,
     amount: Number(amountInput.value),
     subtype: utilityType.value,
-    description: `${utilityType.value.toUpperCase()} â€“ ${periodInput.value}${
+    description: `${utilityType.value.toUpperCase()} - ${periodInput.value}${
       notesInput.value ? " | " + notesInput.value : ""
     }`
   };
