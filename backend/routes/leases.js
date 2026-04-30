@@ -19,8 +19,16 @@ const sendEmail = require("../utils/email/sendEmail");
 const Settings = require("../models/Financial-Settings");
 const mongoose = require("mongoose");
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "http://localhost:3000";
+function getFrontendUrl(req) {
+  const configuredUrl = process.env.FRONTEND_URL;
+  const requestUrl = req ? `${req.protocol}://${req.get("host")}` : null;
+
+  return (configuredUrl || requestUrl || "https://trackmyrent.co.za").replace(/\/+$/, "");
+}
+
+function getSignSecret() {
+  return process.env.SIGN_SECRET || process.env.JWT_SECRET;
+}
 
 /* =========================
    CONSTANTS
@@ -610,7 +618,13 @@ router.post("/sign", async (req, res) => {
       return res.status(400).json({ message: "Invalid signing request" });
     }
 
-    const payload = jwt.verify(token, process.env.SIGN_SECRET);
+    const signSecret = getSignSecret();
+
+    if (!signSecret) {
+      return res.status(503).json({ message: "Lease signing is not configured" });
+    }
+
+    const payload = jwt.verify(token, signSecret);
     const lease = await Lease.findById(payload.leaseId);
 
     if (!lease) return res.status(404).json({ message: "Lease not found" });
@@ -664,10 +678,18 @@ router.post("/:id/send-sign", auth, async (req, res) => {
     if (!lease) return res.status(404).json({ message: "Lease not found" });
     if (lease.isSigned)
       return res.status(400).json({ message: "Lease already signed" });
+    if (!lease.tenantId?.email)
+      return res.status(400).json({ message: "Tenant email address is missing" });
+
+    const signSecret = getSignSecret();
+
+    if (!signSecret) {
+      return res.status(503).json({ message: "Lease signing is not configured" });
+    }
 
     const token = jwt.sign(
       { leaseId: lease._id },
-      process.env.SIGN_SECRET,
+      signSecret,
       { expiresIn: "7d" }
     );
 
@@ -675,11 +697,11 @@ router.post("/:id/send-sign", auth, async (req, res) => {
     lease.signTokenExpires = Date.now() + 7 * 24 * 60 * 60 * 1000;
     await lease.save();
 
-    const signUrl = `${FRONTEND_URL}/sign-lease.html?token=${token}`;
+    const signUrl = `${getFrontendUrl(req)}/sign-lease.html?token=${encodeURIComponent(token)}`;
 
     await sendEmail({
       to: lease.tenantId.email,
-      subject: "Lease Agreement – Signature Required",
+      subject: "Lease Agreement - Signature Required",
       text: `Hi ${lease.tenantId.fullName},\n\nPlease sign your lease:\n${signUrl}`,
       html: `<p>Please sign your lease: <a href="${signUrl}">Sign Lease</a></p>`
     });
@@ -688,7 +710,8 @@ router.post("/:id/send-sign", auth, async (req, res) => {
 
   } catch (err) {
     console.error("SEND SIGN EMAIL ERROR:", err);
-    res.status(500).json({ message: "Failed to send signing email" });
+    const statusCode = err.code === "EMAIL_NOT_CONFIGURED" ? 503 : 500;
+    res.status(statusCode).json({ message: "Failed to send signing email" });
   }
 });
 

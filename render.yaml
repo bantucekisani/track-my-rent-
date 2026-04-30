@@ -14,15 +14,23 @@ services:
         value: production
       - key: CORS_ORIGINS
         value: https://trackmyrent.co.za,https://www.trackmyrent.co.za
+      - key: FRONTEND_URL
+        value: https://trackmyrent.co.za
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: SIGN_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: EMAIL_HOST
         sync: false
       - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_SECURE
+        value: "false"
+      - key: EMAIL_FROM
         sync: false
       - key: EMAIL_USER
         sync: false
