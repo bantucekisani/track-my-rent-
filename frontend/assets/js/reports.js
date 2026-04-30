@@ -159,7 +159,11 @@ async function loadLeases() {
 }
 
 async function loadLedger() {
-  const res = await fetch(`${API_URL}/ledger`, auth());
+  const params = new URLSearchParams({ _: String(Date.now()) });
+  const res = await fetch(`${API_URL}/ledger?${params.toString()}`, {
+    ...auth(),
+    cache: "no-store"
+  });
   const data = await res.json();
   allLedger = data.ledger || [];
 }
@@ -262,7 +266,10 @@ async function buildTopSummary(month, year, propertyId) {
 
     const res = await fetch(
       `${API_URL}/dashboard/summary?${params.toString()}`,
-      auth()
+      {
+        ...auth(),
+        cache: "no-store"
+      }
     );
 
     if (!res.ok) {
@@ -1662,14 +1669,13 @@ async function buildAllReports() {
   const year = Number(document.getElementById("reportYear").value);
   const propertyId = document.getElementById("reportProperty").value;
 
-  // STEP 1: Ensure rent + expenses exist
+  // Paint the headline numbers first; detailed sections can take longer.
+  await buildTopSummary(month, year, propertyId);
+
   await chargeRentIfNeeded();
 
-
-  // STEP 2: Reload ledger AFTER auto charges
   await loadLedger();
 
-  // STEP 3: Build reports
   await buildTopSummary(month, year, propertyId);
   await buildProfitLoss(month, year, propertyId);
 

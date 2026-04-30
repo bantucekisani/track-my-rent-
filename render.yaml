@@ -18,6 +18,8 @@ services:
         value: https://trackmyrent.co.za
       - key: PUPPETEER_CACHE_DIR
         value: /opt/render/project/src/backend/.cache/puppeteer
+      - key: APP_TIMEZONE
+        value: Africa/Johannesburg
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET

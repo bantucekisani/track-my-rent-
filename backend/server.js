@@ -86,7 +86,13 @@ app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
 );
-app.use(express.static(frontendDir));
+app.use(express.static(frontendDir, {
+  setHeaders(res, filePath) {
+    if (/\.(html|js|css)$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    }
+  }
+}));
 
 /* ======================================================
    ROUTE IMPORTS – CORE

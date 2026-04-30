@@ -20,6 +20,7 @@ Set these in Render, not in Git:
 - `SIGN_SECRET` for lease-signing email links. Use a long random value.
 - `FRONTEND_URL=https://trackmyrent.co.za`
 - `PUPPETEER_CACHE_DIR=/opt/render/project/src/backend/.cache/puppeteer` for PDF generation on Render
+- `APP_TIMEZONE=Africa/Johannesburg` so month-based dashboard totals roll over at local South African midnight
 - `CORS_ORIGINS=https://trackmyrent.co.za,https://www.trackmyrent.co.za`
 - `OPENAI_API_KEY` if AI features are enabled
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SECURE`, `EMAIL_FROM`, `EMAIL_USER`, `EMAIL_PASS` if email is enabled

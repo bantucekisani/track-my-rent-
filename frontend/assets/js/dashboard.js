@@ -105,8 +105,14 @@ const controller = new AbortController();
 
 setTimeout(()=>controller.abort(),8000);
 
-const res = await fetch(`${API_URL}/dashboard/summary`,{
-headers:authHeader(),
+const params = new URLSearchParams({ _: String(Date.now()) });
+
+const res = await fetch(`${API_URL}/dashboard/summary?${params.toString()}`,{
+headers: {
+...authHeader(),
+"Cache-Control": "no-cache"
+},
+cache: "no-store",
 signal:controller.signal
 });
 

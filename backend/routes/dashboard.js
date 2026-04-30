@@ -14,6 +14,20 @@ const monthNames = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
+const DEFAULT_TIMEZONE = process.env.APP_TIMEZONE || "Africa/Johannesburg";
+
+function getCurrentPeriod(timeZone = DEFAULT_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat("en-ZA", {
+    timeZone,
+    month: "numeric",
+    year: "numeric"
+  }).formatToParts(new Date());
+
+  return {
+    month: Number(parts.find(part => part.type === "month")?.value),
+    year: Number(parts.find(part => part.type === "year")?.value)
+  };
+}
 
 /* =========================================================
    HELPER: GET MONTH RANGE
@@ -29,6 +43,7 @@ function getMonthRange(year, month) {
 ========================================================= */
 router.get("/summary", auth, async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
 
     /* -------------------------------
        SAFETY
@@ -43,21 +58,6 @@ router.get("/summary", auth, async (req, res) => {
         ? new mongoose.Types.ObjectId(req.query.propertyId)
         : null;
     /* -------------------------------
-       DATE HANDLING
-    -------------------------------- */
-    const now = new Date();
-
-    const month =
-  req.query.month !== undefined
-    ? Number(req.query.month)
-    : now.getMonth() + 1;
-
-    const year =
-      req.query.year !== undefined
-        ? Number(req.query.year)
-        : now.getFullYear();
-
-    /* -------------------------------
        LOAD SETTINGS
     -------------------------------- */
     const settings = await Settings.findOne({ ownerId });
@@ -67,6 +67,23 @@ router.get("/summary", auth, async (req, res) => {
   settings?.financial?.currency ||
   settings?.preferences?.currency ||
   "ZAR";
+
+    /* -------------------------------
+       DATE HANDLING
+    -------------------------------- */
+    const currentPeriod = getCurrentPeriod(
+      process.env.APP_TIMEZONE || settings?.preferences?.timezone || DEFAULT_TIMEZONE
+    );
+
+    const month =
+  req.query.month !== undefined
+    ? Number(req.query.month)
+    : currentPeriod.month;
+
+    const year =
+      req.query.year !== undefined
+        ? Number(req.query.year)
+        : currentPeriod.year;
 
     /* -------------------------------
        BASIC COUNTS
