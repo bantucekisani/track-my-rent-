@@ -1,0 +1,583 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reports | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css">
+  <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+  <a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- âœ… INVOICES -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link active">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>   
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+    <!-- MAIN AREA -->
+    <div class="main">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <h2 data-tutorial="reports-heading">Reports</h2>
+          <span class="tagline">Analyse your rent income, arrears, and performance</span>
+        </div>
+        <div class="header-right">
+          <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content reports-content">
+
+        <section class="page-hero reports-hero">
+          <div class="page-hero-copy">
+            <span class="page-eyebrow">Reporting Studio</span>
+            <h3>Review income, arrears, statements, and portfolio performance from one reporting surface.</h3>
+            <p>
+              Filter the period once, then move across charts, statements, exports, and reconciliations
+              without losing context.
+            </p>
+          </div>
+
+          <div class="hero-metric-strip hero-metric-strip-compact">
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Built for</span>
+              <strong>Month-end reviews</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Exports</span>
+              <strong>CSV and PDF ready</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Focus</span>
+              <strong>Fast landlord reporting</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card report-filter-panel">
+          <div class="report-filter-copy">
+            <span class="page-eyebrow">Report Controls</span>
+            <h3>Choose your period, property, and statement tenant.</h3>
+            <p>
+              Refresh the view to rebuild the full report pack for the selected month and year.
+            </p>
+          </div>
+
+          <div class="report-filter-grid">
+            <label class="filter-field">
+              <span>Month</span>
+              <select id="reportMonth" data-tutorial="report-month">
+                <!-- Filled by JS -->
+              </select>
+            </label>
+
+            <label class="filter-field filter-field-sm">
+              <span>Year</span>
+              <select id="reportYear">
+                <!-- Filled by JS -->
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span>Property</span>
+              <select id="reportProperty" data-tutorial="report-type">
+                <option value="">All properties</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span>Tenant (for statement)</span>
+              <select id="reportTenant">
+                <option value="">Select tenant</option>
+              </select>
+            </label>
+
+            <div class="filter-actions">
+              <button id="refreshReportsBtn" class="btn-secondary report-refresh-btn" data-tutorial="refresh-reports">
+                Refresh
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-grid report-overview-grid">
+          <div class="card money">
+            <div class="card-label">Rent Expected (Selected Month)</div>
+            <div class="card-value" id="repRentExpected">--</div>
+          </div>
+
+          <div class="card money">
+            <div class="card-label">Rent Collected (Selected Month)</div>
+            <div class="card-value" id="repRentCollected">--</div>
+          </div>
+
+          <div class="card money highlight">
+            <div class="card-label">Outstanding (Selected Month)</div>
+            <div class="card-value" id="repRentOutstanding">--</div>
+          </div>
+
+          <div class="card warning">
+            <div class="card-label">Tenants in Arrears</div>
+            <div class="card-value" id="repArrearsCount">0</div>
+          </div>
+        </section>
+
+        <section class="stats-grid report-overview-grid report-overview-grid-single">
+          <div class="card money danger">
+            <div class="card-label">Total Rolling Arrears (All Months)</div>
+            <div class="card-value" id="repTotalRollingArrears">--</div>
+          </div>
+        </section>
+
+        <section class="report-section report-surface">
+          <div class="report-section-heading">
+            <div>
+              <span class="page-eyebrow">Financial Summary</span>
+              <h3 class="section-title">Profit &amp; Loss</h3>
+              <p class="section-subtitle">Summary for the selected month and year.</p>
+            </div>
+          </div>
+
+          <div class="stats-grid profit-loss-grid">
+            <div class="stat-card income">
+              <span class="label">Total Income</span>
+              <span class="value" id="plIncome">--</span>
+            </div>
+
+            <div class="stat-card expense">
+              <span class="label">Total Expenses</span>
+              <span class="value" id="plExpenses">--</span>
+            </div>
+
+            <div class="stat-card profit">
+              <span class="label">Net Profit</span>
+              <span class="value" id="plProfit">--</span>
+            </div>
+          </div>
+
+          <div class="card report-table-card">
+            <div class="card-header report-table-header">
+              <div>
+                <h4>Monthly Profit &amp; Loss</h4>
+                <p class="table-caption">Track how income, expenses, and profit move through the year.</p>
+              </div>
+              <div class="action-cluster">
+                <button class="btn-secondary btn-sm" id="exportPLCsv">Export CSV</button>
+                <button class="btn-secondary btn-sm" id="exportPLPdf">Export PDF</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper table-scroll-md">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
+                    <th>Profit</th>
+                  </tr>
+                </thead>
+                <tbody id="plTableBody">
+                  <tr>
+                    <td colspan="4" class="empty-row">Loading...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="reports-two-column">
+          <section class="report-section report-surface">
+            <div class="report-section-heading">
+              <div>
+                <span class="page-eyebrow">Recovery</span>
+                <h3 class="section-title">Utilities Report</h3>
+                <p class="section-subtitle">Track billed utilities, payments, and outstanding balances.</p>
+              </div>
+            </div>
+
+            <div class="card report-table-card">
+              <div class="table-wrapper table-scroll-lg">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Property</th>
+                      <th>Tenant</th>
+                      <th>Utility</th>
+                      <th>Billed</th>
+                      <th>Paid</th>
+                      <th>Outstanding</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="utilitiesReportBody">
+                    <tr>
+                      <td colspan="8" class="empty-row">Loading...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="card-sub report-total-line">
+                Total outstanding utilities:
+                <strong id="utilitiesOutstandingTotal">--</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="report-section report-surface">
+            <div class="report-section-heading">
+              <div>
+                <span class="page-eyebrow">Recovery</span>
+                <h3 class="section-title">Damages Report</h3>
+                <p class="section-subtitle">Track tenant-caused damages, reversals, and outstanding balances.</p>
+              </div>
+            </div>
+
+            <div class="card report-table-card">
+              <div class="table-wrapper table-scroll-lg">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Tenant</th>
+                      <th>Property</th>
+                      <th>Description</th>
+                      <th>Damage</th>
+                      <th>Reversed</th>
+                      <th>Outstanding</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="damageReportBody">
+                    <tr>
+                      <td colspan="8" class="empty-row">Loading...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="card-sub report-total-line">
+                Total outstanding damages:
+                <strong id="damageOutstandingTotal">--</strong>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="charts-row reports-chart-row">
+          <div class="chart-box">
+            <div class="chart-header">
+              <div>
+                <h3>Monthly Income by Property</h3>
+                <span class="chart-subtitle" id="monthlyIncomeSubtitle">For selected month &amp; year</span>
+              </div>
+              <div class="action-cluster">
+                <button id="exportMonthlyIncomeBtn" class="btn-secondary btn-sm" data-tutorial="export-report">
+                  Export CSV
+                </button>
+                <button id="exportMonthlyIncomePdfBtn" class="btn-secondary btn-sm">Export PDF</button>
+              </div>
+            </div>
+            <canvas id="monthlyIncomeChart"></canvas>
+
+            <div class="table-wrapper table-scroll-sm">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Expected</th>
+                    <th>Collected</th>
+                    <th>Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody id="monthlyIncomeBody">
+                  <tr><td colspan="4" class="empty-row">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="chart-box small">
+            <div class="chart-header">
+              <div>
+                <h3>Yearly Income Trend</h3>
+                <span class="chart-subtitle" id="yearlySummarySubtitle">For selected year</span>
+              </div>
+              <div class="action-cluster">
+                <button id="exportYearlySummaryBtn" class="btn-secondary btn-sm">Export CSV</button>
+                <button id="exportYearlySummaryPdfBtn" class="btn-secondary btn-sm">Export PDF</button>
+              </div>
+            </div>
+            <canvas id="yearlySummaryChart"></canvas>
+
+            <div class="table-wrapper table-scroll-xs">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Collected</th>
+                  </tr>
+                </thead>
+                <tbody id="yearlySummaryBody">
+                  <tr><td colspan="2" class="empty-row">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="bottom-row reports-bottom-row">
+          <div class="table-box">
+            <div class="table-header">
+              <div>
+                <h3>Payment History</h3>
+                <span class="chart-subtitle">Search payments by tenant or reference.</span>
+              </div>
+              <div class="table-toolbar">
+                <input
+                  type="text"
+                  id="paymentHistorySearch"
+                  class="search-input"
+                  placeholder="Search tenant / ref..."
+                />
+                <button id="exportPaymentHistoryBtn" class="btn-secondary btn-sm">Export CSV</button>
+                <button id="exportPaymentHistoryPdfBtn" class="btn-secondary btn-sm">Export PDF</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper table-scroll-md">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Property / Unit</th>
+                    <th>Amount</th>
+                    <th>Period</th>
+                    <th>Paid On</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentHistoryBody">
+                  <tr><td colspan="7" class="empty-row">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-box">
+            <div class="table-header">
+              <div>
+                <h3>Property Performance</h3>
+                <span class="chart-subtitle">Compare occupancy and collection strength by property.</span>
+              </div>
+              <div class="action-cluster">
+                <button id="exportPropertyPerformanceBtn" class="btn-secondary btn-sm">Export CSV</button>
+                <button class="btn-secondary btn-sm" onclick="exportPropertyPerformancePDF()">Export PDF</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper table-scroll-md">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Units</th>
+                    <th>Occupied</th>
+                    <th>Vacant</th>
+                    <th>Occupancy %</th>
+                    <th>Collected</th>
+                    <th>Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody id="propertyPerformanceBody">
+                  <tr><td colspan="7" class="empty-row">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="bottom-row reports-bottom-row">
+          <div class="table-box">
+            <div class="table-header">
+              <div>
+                <h3>Tenant Statement</h3>
+                <span class="chart-subtitle">Generate, export, and email a statement for the selected tenant.</span>
+              </div>
+              <div class="action-cluster">
+                <button id="generateTenantStatementBtn" class="btn-primary btn-sm">Generate</button>
+                <button id="exportTenantStatementBtn" class="btn-secondary btn-sm">Export CSV</button>
+                <button class="btn-secondary btn-sm" onclick="exportTenantStatementPDF()">Export PDF</button>
+                <button class="btn-secondary btn-sm" onclick="emailTenantStatement()">Email Statement</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper table-scroll-md">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Description</th>
+                    <th>Debit (Expected)</th>
+                    <th>Credit (Paid)</th>
+                    <th>Running Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantStatementBody">
+                  <tr><td colspan="5" class="empty-row">Select a tenant above and click Generate.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card-sub report-total-line" id="tenantStatementSummary"></div>
+          </div>
+
+          <div class="table-box">
+            <div class="table-header">
+              <div>
+                <h3>Rent Arrears</h3>
+                <span class="chart-subtitle">Review tenants whose rent is still outstanding for the period.</span>
+              </div>
+              <div class="action-cluster">
+                <button id="exportArrearsBtn" class="btn-secondary btn-sm">Export CSV</button>
+                <button class="btn-secondary btn-sm" onclick="exportArrearsPDF()">Export PDF</button>
+              </div>
+            </div>
+
+            <div class="table-wrapper table-scroll-md">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Property / Unit</th>
+                    <th>Expected</th>
+                    <th>Paid</th>
+                    <th>Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody id="arrearsTableBody">
+                  <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card-sub report-total-line">
+              Total arrears: <strong id="arrearsTotal">--</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="bottom-row reports-bottom-row">
+          <div class="card info-panel">
+            <span class="page-eyebrow">Coming Soon</span>
+            <h3>Bank Reconciliation</h3>
+            <p class="card-sub">
+              This section will summarise matched and unmatched bank transactions once your bank
+              imports are processed.
+            </p>
+            <div id="bankReconcileBox" class="surface-note">
+              No reconciliation data loaded yet.
+            </div>
+          </div>
+
+          <div class="card info-panel">
+            <span class="page-eyebrow">Data Room</span>
+            <h3>Export All Data</h3>
+            <p class="card-sub">
+              Download your data for backup, accounting, or sharing with your bookkeeper.
+            </p>
+
+            <div class="report-actions">
+              <button class="btn-secondary" onclick="exportTenantsCSV()">Tenants (CSV)</button>
+              <button class="btn-secondary" onclick="exportPropertiesCSV()">Properties (CSV)</button>
+              <button class="btn-secondary" onclick="exportPaymentsCSV()">Payments (CSV)</button>
+              <button class="btn-secondary" onclick="exportLeasesCSV()">Leases (CSV)</button>
+              <button class="btn-primary" onclick="exportTenantsPDF()">Tenants (PDF)</button>
+              <button class="btn-primary" onclick="exportPropertiesPDF()">Properties (PDF)</button>
+            </div>
+
+            <p class="card-sub info-panel-tip">
+              Tip: Open the CSV files in Excel, Google Sheets, or your accounting software.
+            </p>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/tutorial-markup.js"></script>
+  <script src="assets/js/tutorial-engine.js"></script>
+  <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/reports.js"></script>  
+  <footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,84 @@
+#unitList {
+  margin-top: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+.unit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unit-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge.vacant {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.badge.occupied {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.unit-meta {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.unit-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.unit-actions button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+/* Modal improvements */
+.modal-content.professional {
+  max-width: 900px;
+  width: 90%;
+  border-radius: 15px;
+  padding: 25px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.col {
+  flex: 1;
+}
+.col input,
+.col select,
+.col textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leases | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css">
+  <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link active">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+<a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- Invoices -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>  
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <h2 data-tutorial="leases-heading">Leases</h2>
+          <span class="tagline">Manage active and past tenant leases</span>
+        </div>
+
+        <div class="header-right">
+          <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+          <button id="addLeaseBtn" class="btn-primary" data-tutorial="create-lease">+ Create Lease</button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content operations-content">
+
+        <section class="page-hero operations-hero">
+          <div class="page-hero-copy">
+            <span class="page-eyebrow">Lease Control</span>
+            <h3>Manage active, pending, and past lease agreements with less friction.</h3>
+            <p>
+              Create lease records cleanly, keep references consistent, and make signing and renewal
+              steps easier to track.
+            </p>
+          </div>
+
+          <div class="hero-metric-strip hero-metric-strip-compact">
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Track</span>
+              <strong>Start, end, and due dates</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Generate</span>
+              <strong>Payment references cleanly</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Manage</span>
+              <strong>Signing and renewal actions</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-box operations-table-box">
+          <div class="table-header">
+            <div>
+              <h3>Lease List</h3>
+              <span class="chart-subtitle">Review lease periods, tenant assignments, references, and signing status.</span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tenant</th>
+                  <th>Property / Unit</th>
+                  <th>Rent</th>
+                  <th>Start / End</th>
+                  <th>Reference</th>
+                  <th>Status</th>
+                  <th>Sign</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leaseTableBody">
+                <tr><td colspan="8" class="empty-row">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- LEASE MODAL -->
+  <div class="modal" id="leaseModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="leaseModalTitle">Create Lease</h3>
+        <button class="modal-close" id="closeLeaseModal">&times;</button>
+      </div>
+
+      <form id="leaseForm" class="modal-form">
+
+        <div class="form-section">
+          <h4 class="section-title">Tenant & Unit</h4>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Tenant</label>
+              <select id="leaseTenantId" required data-tutorial="lease-tenant"></select>
+            </div>
+
+            <div class="form-col">
+              <label>Property</label>
+              <select id="leasePropertyId" required data-tutorial="lease-property"></select>
+            </div>
+
+            <div class="form-col">
+              <label>Unit</label>
+              <select id="leaseUnitId" required></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">Lease Terms</h4>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Monthly Rent</label>
+              <input type="number" id="leaseRent" required data-tutorial="lease-rent">
+            </div>
+
+            <div class="form-col">
+              <label>Deposit</label>
+              <input type="number" id="leaseDeposit">
+            </div>
+
+            <div class="form-col">
+              <label>Escalation %</label>
+              <input type="number" id="leaseEscalation" placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Start Date</label>
+              <input type="date" id="leaseStart" required>
+            </div>
+
+            <div class="form-col">
+              <label>End Date</label>
+              <input type="date" id="leaseEnd">
+            </div>
+
+            <div class="form-col">
+              <label>Payment Due Day</label>
+              <input type="number" id="leaseDueDay" value="1">
+            </div>
+          </div>
+        </div>
+<div class="form-section">
+  <h4 class="section-title">Payment Reference</h4>
+
+  <div class="form-row">
+    <div class="form-col">
+      <label>Reference Code</label>
+      <input type="text" id="leaseRef" class="readonly-input" readonly>
+    </div>
+  </div>
+</div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" data-tutorial="save-lease">Save Lease</button>
+          <button type="button" id="cancelLeaseBtn" class="btn-secondary">Cancel</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/tutorial-markup.js"></script>
+  <script src="assets/js/tutorial-engine.js"></script>
+  <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/leases.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+
+

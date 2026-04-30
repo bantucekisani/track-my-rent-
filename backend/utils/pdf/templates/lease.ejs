@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Lease Agreement</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #14213d;
+      margin: 0;
+      padding: 32px 34px;
+      background: #ffffff;
+    }
+
+    .top-shell {
+      border: 1px solid #d8e2f0;
+      border-radius: 22px;
+      padding: 24px 24px 18px;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      margin-bottom: 20px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .brand-block {
+      max-width: 56%;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3556d5;
+      background: #e8efff;
+    }
+
+    .brand-name {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.1;
+      color: #0f172a;
+    }
+
+    .brand-subtext {
+      margin: 0;
+      color: #52607a;
+      line-height: 1.6;
+    }
+
+    .doc-meta {
+      min-width: 220px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+
+    .doc-meta h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .meta-line {
+      margin: 0 0 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #d7e3f8;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .summary-card {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #dce7f6;
+      min-height: 86px;
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+
+    .summary-subvalue {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #52607a;
+    }
+
+    .section {
+      margin-bottom: 18px;
+      page-break-inside: avoid;
+    }
+
+    .section-header {
+      margin-bottom: 12px;
+    }
+
+    .section-header h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      color: #0f172a;
+    }
+
+    .section-header p {
+      margin: 0;
+      font-size: 11px;
+      color: #52607a;
+      line-height: 1.5;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .info-card {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .info-card-head {
+      padding: 12px 16px;
+      background: #edf3ff;
+      border-bottom: 1px solid #dce7f6;
+    }
+
+    .info-card-head strong {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #3556d5;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #ecf1f8;
+      vertical-align: top;
+    }
+
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .label {
+      width: 36%;
+      font-weight: 700;
+      color: #52607a;
+    }
+
+    .value {
+      color: #0f172a;
+    }
+
+    .terms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .term-card {
+      border: 1px solid #dce7f6;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #fbfdff;
+      page-break-inside: avoid;
+      min-height: 130px;
+    }
+
+    .term-card h4 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .term-card p {
+      margin: 0;
+      line-height: 1.6;
+      color: #334155;
+      text-align: left;
+    }
+
+    .signature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .signature-card {
+      border: 1px solid #dce7f6;
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      min-height: 128px;
+      background: #ffffff;
+    }
+
+    .signature-title {
+      margin: 0 0 18px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #3556d5;
+    }
+
+    .signature-line {
+      margin-top: 42px;
+      padding-top: 8px;
+      border-top: 1px solid #94a3b8;
+      color: #475569;
+      font-size: 11px;
+    }
+
+    .bank-card {
+      border: 1px solid #dce7f6;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #f8fbff;
+      margin-top: 8px;
+    }
+
+    .bank-card p {
+      margin: 0;
+      line-height: 1.7;
+      color: #334155;
+    }
+
+    .footnote {
+      margin-top: 12px;
+      font-size: 10px;
+      line-height: 1.6;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+<%
+  const businessName =
+    business?.tradingName || business?.businessName || "Business Name";
+  const businessAddress = [
+    business?.addressLine1,
+    business?.addressLine2,
+    business?.city,
+    business?.province,
+    business?.postalCode,
+    business?.country
+  ].filter(Boolean).join(", ");
+  const rentDueDay = lease?.paymentDueDay || 1;
+  const escalationPercent = Number(lease?.escalationPercent || 0);
+%>
+
+<section class="top-shell">
+  <div class="top-row">
+    <div class="brand-block">
+      <span class="eyebrow">Track My Rent Lease Pack</span>
+      <h1 class="brand-name"><%= businessName %></h1>
+      <p class="brand-subtext">
+        Residential lease summary for <%= lease?.tenantId?.fullName || "-" %>,
+        covering the active rental terms, payment details, and core obligations.
+      </p>
+      <% if (businessAddress) { %>
+        <p class="brand-subtext"><strong>Address:</strong> <%= businessAddress %></p>
+      <% } %>
+      <% if (business?.email || business?.phone) { %>
+        <p class="brand-subtext">
+          <% if (business?.email) { %><strong>Email:</strong> <%= business.email %><% } %>
+          <% if (business?.email && business?.phone) { %> | <% } %>
+          <% if (business?.phone) { %><strong>Phone:</strong> <%= business.phone %><% } %>
+        </p>
+      <% } %>
+    </div>
+
+    <aside class="doc-meta">
+      <h2>Lease Agreement</h2>
+      <p class="meta-line"><strong>Reference:</strong> <%= lease?.referenceCode || "-" %></p>
+      <p class="meta-line"><strong>Generated:</strong> <%= generatedAt ? new Date(generatedAt).toLocaleDateString(locale) : "-" %></p>
+      <p class="meta-line"><strong>Status:</strong> <%= lease?.status || "-" %></p>
+      <p class="meta-line"><strong>Currency:</strong> <%= currency || "ZAR" %></p>
+    </aside>
+  </div>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <span class="summary-label">Monthly Rent</span>
+      <strong class="summary-value"><%= lease.formattedMonthlyRent %></strong>
+      <span class="summary-subvalue">Due on day <%= rentDueDay %> of each month</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Security Deposit</span>
+      <strong class="summary-value"><%= lease.formattedDeposit %></strong>
+      <span class="summary-subvalue">Held against lawful deductions</span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Lease Period</span>
+      <strong class="summary-value"><%= lease.formattedStartDate %></strong>
+      <span class="summary-subvalue">Until <%= lease.formattedEndDate || "Ongoing" %></span>
+    </article>
+    <article class="summary-card">
+      <span class="summary-label">Escalation</span>
+      <strong class="summary-value"><%= escalationPercent ? escalationPercent.toFixed(1) + "%" : "Not set" %></strong>
+      <span class="summary-subvalue">Annual review setting</span>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h3>Agreement Details</h3>
+    <p>Confirm the tenant, property, and payment terms captured for this lease.</p>
+  </div>
+
+  <div class="info-grid">
+    <article class="info-card">
+      <div class="info-card-head"><strong>Tenant</strong></div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Full Name</td>
+          <td class="value"><%= lease.tenantId?.fullName || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Email</td>
+          <td class="value"><%= lease.tenantId?.email || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Phone</td>
+          <td class="value"><%= lease.tenantId?.phone || "-" %></td>
+        </tr>
+      </table>
+    </article>
+
+    <article class="info-card">
+      <div class="info-card-head"><strong>Property</strong></div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Property</td>
+          <td class="value"><%= lease.propertyId?.name || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Unit</td>
+          <td class="value"><%= lease.unitId?.unitLabel || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Reference</td>
+          <td class="value"><%= lease.referenceCode || "-" %></td>
+        </tr>
+      </table>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h3>Core Lease Terms</h3>
+    <p>This summary keeps the main operating rules easy to scan before signatures.</p>
+  </div>
+
+  <div class="terms-grid">
+    <article class="term-card">
+      <h4>1. Lease Period</h4>
+      <p>
+        The lease starts on <%= lease.formattedStartDate %> and runs until
+        <%= lease.formattedEndDate || "the agreed termination date" %>.
+        If the tenant remains in occupation with consent after expiry, the agreement
+        continues month to month on the same core terms until updated in writing.
+      </p>
+    </article>
+
+    <article class="term-card">
+      <h4>2. Rental Payments</h4>
+      <p>
+        Monthly rent of <%= lease.formattedMonthlyRent %> is payable in advance on or
+        before day <%= rentDueDay %> each month. Payment is only treated as received
+        once it reflects in the nominated landlord bank account.
+      </p>
+    </article>
+
+    <article class="term-card">
+      <h4>3. Deposit and Deductions</h4>
+      <p>
+        The deposit of <%= lease.formattedDeposit %> may be applied to unpaid rent,
+        utilities, cleaning, or damages beyond fair wear and tear. Any lawful balance
+        remaining is refunded after inspection and reconciliation.
+      </p>
+    </article>
+
+    <article class="term-card">
+      <h4>4. Utilities and Care</h4>
+      <p>
+        Unless otherwise agreed, the tenant remains responsible for utility charges
+        linked to the unit and for keeping the property in clean, tenantable condition.
+        Damage caused by negligence or misuse is recoverable.
+      </p>
+    </article>
+
+    <article class="term-card">
+      <h4>5. Access and Inspections</h4>
+      <p>
+        Reasonable notice may be given for inspections, maintenance, repairs, valuation,
+        or viewings. Joint incoming and outgoing inspections should be completed to
+        record condition at move-in and move-out.
+      </p>
+    </article>
+
+    <article class="term-card">
+      <h4>6. Breach and Early Exit</h4>
+      <p>
+        Failure to pay or comply with the agreement may trigger written breach notice.
+        Early cancellation remains subject to applicable law and any reasonable
+        cancellation costs permitted by the agreement and legislation.
+      </p>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h3>Signatures</h3>
+    <p>Use this section when the lease is printed or reviewed in person.</p>
+  </div>
+
+  <div class="signature-grid">
+    <article class="signature-card">
+      <p class="signature-title">Landlord / Agent</p>
+      <div class="signature-line">Signature and date</div>
+    </article>
+    <article class="signature-card">
+      <p class="signature-title">Tenant</p>
+      <div class="signature-line">Signature and date</div>
+    </article>
+  </div>
+
+  <% if (business?.bank?.accountNumber || lease?.referenceCode) { %>
+    <div class="bank-card">
+      <p>
+        <% if (business?.bank?.bankName) { %><strong>Bank:</strong> <%= business.bank.bankName %><br><% } %>
+        <% if (business?.bank?.accountName) { %><strong>Account Name:</strong> <%= business.bank.accountName %><br><% } %>
+        <% if (business?.bank?.accountNumber) { %><strong>Account Number:</strong> <%= business.bank.accountNumber %><br><% } %>
+        <% if (business?.bank?.branchCode) { %><strong>Branch Code:</strong> <%= business.bank.branchCode %><br><% } %>
+        <% if (business?.bank?.accountType) { %><strong>Account Type:</strong> <%= business.bank.accountType %><br><% } %>
+        <% if (lease?.referenceCode) { %><strong>Tenant Payment Reference:</strong> <%= lease.referenceCode %><% } %>
+      </p>
+    </div>
+  <% } %>
+
+  <p class="footnote">
+    This document is system generated from Track My Rent and should be read together
+    with the full lease wording and any annexures or house rules agreed by the parties.
+  </p>
+</section>
+
+</body>
+</html>

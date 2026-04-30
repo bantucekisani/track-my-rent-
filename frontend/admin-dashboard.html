@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Track My Rent</title>
+<link rel="stylesheet" href="assets/css/admin-dashboard.css">
+</head>
+<body>
+
+<main class="admin-shell">
+
+<header class="admin-topbar">
+<div>
+<p class="admin-eyebrow">Platform operations</p>
+<h1>Track My Rent Admin Dashboard</h1>
+<p class="admin-subtitle">
+See platform growth, subscription health, and the revenue picture of the app in one place.
+</p>
+</div>
+
+<div class="admin-actions">
+<span id="adminIdentity" class="admin-identity">Admin</span>
+<a href="dashboard.html" class="admin-link-btn">Landlord App</a>
+<button id="refreshDashboardBtn" type="button" class="admin-link-btn primary">Refresh</button>
+<button id="logoutBtn" type="button" class="admin-link-btn danger">Logout</button>
+</div>
+</header>
+
+<section class="hero-panel">
+<div>
+<h2>Subscription business overview</h2>
+<p>
+This view focuses on platform performance: how many landlords are subscribed, which plans are converting, how much recurring revenue the app is generating, and where subscription risk is building.
+</p>
+</div>
+
+<div class="hero-pills">
+<span class="hero-pill">Revenue is estimated from current subscription plans</span>
+<span class="hero-pill">All values follow your reporting currency</span>
+</div>
+</section>
+
+<section class="section-block">
+<div class="section-heading">
+<h2>Overview</h2>
+<p>Headline platform and subscription metrics.</p>
+</div>
+
+<div class="metric-grid">
+<article class="metric-card">
+<span class="metric-label">Landlords</span>
+<strong id="overviewLandlords" class="metric-value">0</strong>
+<span class="metric-note">Owner accounts on the platform</span>
+</article>
+
+<article class="metric-card accent-blue">
+<span class="metric-label">Active subscriptions</span>
+<strong id="overviewActiveSubscriptions" class="metric-value">0</strong>
+<span class="metric-note">Subscriptions currently marked active</span>
+</article>
+
+<article class="metric-card accent-green">
+<span class="metric-label">Paid subscriptions</span>
+<strong id="overviewPaidSubscriptions" class="metric-value">0</strong>
+<span class="metric-note">Active Starter, Growth, and Pro plans</span>
+</article>
+
+<article class="metric-card accent-amber">
+<span class="metric-label">Estimated MRR</span>
+<strong id="overviewMRR" class="metric-value">--</strong>
+<span class="metric-note">Monthly recurring app revenue estimate</span>
+</article>
+
+<article class="metric-card accent-purple">
+<span class="metric-label">Projected ARR</span>
+<strong id="overviewARR" class="metric-value">--</strong>
+<span class="metric-note">Estimated yearly recurring revenue</span>
+</article>
+
+<article class="metric-card accent-red">
+<span class="metric-label">Revenue at risk</span>
+<strong id="overviewRevenueRisk" class="metric-value">--</strong>
+<span class="metric-note">Past due subscriptions that may slip</span>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">Properties</span>
+<strong id="overviewProperties" class="metric-value">0</strong>
+<span class="metric-note">Properties tracked across the app</span>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">Units</span>
+<strong id="overviewUnits" class="metric-value">0</strong>
+<span class="metric-note">Rental units currently on the platform</span>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">Tenants</span>
+<strong id="overviewTenants" class="metric-value">0</strong>
+<span class="metric-note">Tenant profiles registered in portfolios</span>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">Active leases</span>
+<strong id="overviewActiveLeases" class="metric-value">0</strong>
+<span class="metric-note">Current leases driving tenant occupancy</span>
+</article>
+</div>
+</section>
+
+<section class="section-block">
+<div class="section-heading">
+<h2>Subscription Plans</h2>
+<p>Current active plan mix and the revenue contribution of each paid tier.</p>
+</div>
+
+<div class="metric-grid plan-grid">
+<article class="plan-card plan-free">
+<span class="metric-label">Free</span>
+<strong id="planFreeCount" class="metric-value">0</strong>
+<span class="metric-note">Active free accounts</span>
+</article>
+
+<article class="plan-card plan-starter">
+<span class="metric-label">Starter</span>
+<strong id="planStarterCount" class="metric-value">0</strong>
+<span id="planStarterRevenue" class="metric-note">--</span>
+</article>
+
+<article class="plan-card plan-growth">
+<span class="metric-label">Growth</span>
+<strong id="planGrowthCount" class="metric-value">0</strong>
+<span id="planGrowthRevenue" class="metric-note">--</span>
+</article>
+
+<article class="plan-card plan-pro">
+<span class="metric-label">Pro</span>
+<strong id="planProCount" class="metric-value">0</strong>
+<span id="planProRevenue" class="metric-note">--</span>
+</article>
+</div>
+</section>
+
+<section class="section-block">
+<div class="section-heading">
+<h2>This Month</h2>
+<p>New growth and movement inside the current month.</p>
+</div>
+
+<div class="metric-grid">
+<article class="metric-card">
+<span class="metric-label">New landlords</span>
+<strong id="growthNewUsers" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">New subscriptions</span>
+<strong id="growthNewSubscriptions" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">New paid subscriptions</span>
+<strong id="growthNewPaidSubscriptions" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card accent-amber">
+<span class="metric-label">New MRR added</span>
+<strong id="growthNewMRR" class="metric-value">--</strong>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">New properties</span>
+<strong id="growthNewProperties" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">New units</span>
+<strong id="growthNewUnits" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card">
+<span class="metric-label">New tenants</span>
+<strong id="growthNewTenants" class="metric-value">0</strong>
+</article>
+
+<article class="metric-card accent-red">
+<span class="metric-label">Churned subscriptions</span>
+<strong id="growthChurnedSubscriptions" class="metric-value">0</strong>
+</article>
+</div>
+</section>
+
+<section class="admin-grid">
+<article class="panel-card">
+<div class="section-heading compact">
+<h2>Subscription Health</h2>
+<p>Signals to monitor retention, conversion, and platform usage quality.</p>
+</div>
+
+<div class="health-grid">
+<div class="health-item">
+<span class="metric-label">Free accounts</span>
+<strong id="healthFreeSubscriptions">0</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Past due</span>
+<strong id="healthPastDueSubscriptions">0</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Cancelled</span>
+<strong id="healthCancelledSubscriptions">0</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Expired</span>
+<strong id="healthExpiredSubscriptions">0</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Paid conversion</span>
+<strong id="healthConversionRate">0%</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Avg revenue per paid sub</span>
+<strong id="healthAvgRevenuePerPaid">--</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Occupancy rate</span>
+<strong id="healthOccupancyRate">0%</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Avg units per landlord</span>
+<strong id="healthAvgUnitsPerLandlord">0</strong>
+</div>
+
+<div class="health-item">
+<span class="metric-label">Avg tenants per property</span>
+<strong id="healthAvgTenantsPerProperty">0</strong>
+</div>
+</div>
+
+<div class="status-grid">
+<div class="status-pill">
+<span>Active</span>
+<strong id="statusActiveCount">0</strong>
+</div>
+<div class="status-pill warning">
+<span>Past due</span>
+<strong id="statusPastDueCount">0</strong>
+</div>
+<div class="status-pill danger">
+<span>Cancelled</span>
+<strong id="statusCancelledCount">0</strong>
+</div>
+<div class="status-pill neutral">
+<span>Expired</span>
+<strong id="statusExpiredCount">0</strong>
+</div>
+</div>
+</article>
+
+<article class="panel-card">
+<div class="section-heading compact">
+<h2>Admin Notes</h2>
+<p>How to read these numbers properly.</p>
+</div>
+
+<ul class="admin-notes">
+<li>MRR and ARR are estimated from the current subscription records and plan pricing.</li>
+<li>Revenue at risk reflects paid subscriptions currently marked <code>past_due</code>.</li>
+<li>New MRR is based on paid plans started during the current month.</li>
+<li>If you need exact realized revenue later, add a dedicated subscription payments ledger or invoice model.</li>
+</ul>
+
+<div id="adminStatus" class="admin-status" aria-live="polite"></div>
+</article>
+</section>
+
+<section class="charts-grid">
+<article class="panel-card">
+<div class="section-heading compact">
+<h2>Growth Trend</h2>
+<p>Landlords, subscriptions, and paid subscriptions over the last 6 months.</p>
+</div>
+<div class="chart-wrap">
+<canvas id="growthChart"></canvas>
+</div>
+</article>
+
+<article class="panel-card">
+<div class="section-heading compact">
+<h2>Revenue Mix</h2>
+<p>Current estimated MRR split by plan, plus past-due revenue at risk.</p>
+</div>
+<div class="chart-wrap">
+<canvas id="revenueChart"></canvas>
+</div>
+</article>
+</section>
+
+</main>
+
+<script src="assets/js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="assets/js/admin-dashboard.js"></script>
+</body>
+</html>

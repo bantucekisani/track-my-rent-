@@ -1,0 +1,386 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Track My Rent | Rental Automation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+font-family: Arial, Helvetica, sans-serif;
+margin:0;
+background:#f4f7fb;
+color:#333;
+}
+
+/* NAVBAR */
+
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+background:#fff;
+box-shadow:0 2px 5px rgba(0,0,0,0.05);
+}
+
+.logo{
+font-size:20px;
+font-weight:bold;
+color:#1f4ed8;
+}
+
+.nav-links a{
+margin-left:25px;
+text-decoration:none;
+color:#444;
+font-weight:500;
+}
+
+.nav-links a:hover{
+color:#1f4ed8;
+}
+
+/* HERO */
+
+.hero{
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:80px 10%;
+}
+
+.hero-text{
+max-width:500px;
+}
+
+.hero-text h1{
+font-size:40px;
+margin-bottom:20px;
+}
+
+.hero-text p{
+font-size:18px;
+color:#666;
+margin-bottom:30px;
+}
+
+.cta-btn{
+background:#1f4ed8;
+color:#fff;
+padding:14px 28px;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+text-decoration:none;
+}
+
+.cta-btn:hover{
+background:#183bb5;
+}
+
+.hero-img img{
+width:500px;
+border-radius:10px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* FEATURES */
+
+.features{
+padding:70px 10%;
+text-align:center;
+background:#fff;
+}
+
+.features h2{
+margin-bottom:50px;
+}
+
+.feature-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:30px;
+}
+
+.feature{
+background:#f4f7fb;
+padding:30px;
+border-radius:10px;
+}
+
+.feature h3{
+margin-bottom:10px;
+}
+
+/* PRICING */
+
+.pricing{
+padding:70px 10%;
+text-align:center;
+}
+
+.pricing-grid{
+display:flex;
+justify-content:center;
+gap:30px;
+flex-wrap:wrap;
+}
+
+.price-card{
+background:#fff;
+padding:40px;
+border-radius:10px;
+box-shadow:0 4px 15px rgba(0,0,0,0.05);
+width:260px;
+}
+
+.price{
+font-size:30px;
+margin:20px 0;
+}
+
+/* CTA */
+
+.cta{
+background:#1f4ed8;
+color:#fff;
+text-align:center;
+padding:70px 20px;
+}
+
+.cta h2{
+margin-bottom:20px;
+}
+
+/* FOOTER */
+
+footer{
+background:#111827;
+color:#fff;
+text-align:center;
+padding:25px;
+font-size:14px;
+}
+.hero-buttons{
+display:flex;
+gap:15px;
+}
+
+.secondary-btn{
+background:#e5e7eb;
+padding:14px 25px;
+border-radius:6px;
+text-decoration:none;
+color:#333;
+font-weight:500;
+}
+.trust{
+text-align:center;
+padding:60px 10%;
+background:#f9fafb;
+}
+
+.trust-stats{
+display:flex;
+justify-content:center;
+gap:60px;
+margin-top:30px;
+}
+
+.trust-stats h2{
+color:#1f4ed8;
+}  
+.hero-img img{
+width:600px;
+border-radius:12px;
+box-shadow:0 20px 40px rgba(0,0,0,0.15);
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<div class="navbar">
+
+<div class="logo">Track My Rent</div>
+
+<div class="nav-links">
+<a href="login.html">Login</a>
+<a href="register.html">Register</a>
+</div>
+
+</div>
+
+<!-- HERO -->
+
+<section class="hero">
+
+<div class="hero-text">
+
+<h1>Manage Your Rentals With Confidence</h1>
+
+<p>
+Track rent payments, monitor arrears, manage tenants and
+properties in one simple platform built for landlords.
+</p>
+
+<div class="hero-buttons">
+
+<a class="cta-btn" href="register.html">Start Free</a>
+
+<a class="secondary-btn" href="login.html">Login</a>
+
+</div>
+
+</div>
+
+<div class="hero-img">
+
+<img src="dashboard-preview.png" alt="Track My Rent dashboard preview">
+
+</div>
+
+</section>
+<section class="trust">
+
+<h3>Built for Property Owners</h3>
+
+<p>
+Track My Rent helps landlords manage rent, tenants,
+leases and cashflow from one simple dashboard.
+</p>
+
+<div class="trust-stats">
+
+<div>
+<h2>100+</h2>
+<p>Landlords</p>
+</div>
+
+<div>
+<h2>500+</h2>
+<p>Units Managed</p>
+</div>
+
+<div>
+<h2>R1M+</h2>
+<p>Rent Tracked</p>
+</div>
+
+</div>
+
+</section>
+<!-- FEATURES -->
+
+<section class="features">
+
+<h2>Powerful Rental Management</h2>
+
+<div class="feature-grid">
+
+<div class="feature">
+<h3>ðŸ“Š Rent Tracking</h3>
+<p>See rent expected, collected and outstanding instantly.</p>
+</div>
+
+<div class="feature">
+<h3>ðŸ  Property Management</h3>
+<p>Organize all your properties and units in one place.</p>
+</div>
+
+<div class="feature">
+<h3>ðŸ‘¤ Tenant Management</h3>
+<p>Manage tenants, leases and payment history.</p>
+</div>
+
+<div class="feature">
+<h3>ðŸ“ˆ Financial Reports</h3>
+<p>Understand your rental income and expenses.</p>
+</div>
+
+</div>
+
+</section>
+
+<!-- PRICING -->
+
+
+<section class="pricing">
+
+<h2>Simple Pricing</h2>
+
+<div class="pricing-grid">
+
+<div class="price-card">
+
+<h3>Free</h3>
+
+<div class="price">R0</div>
+
+<p>Up to 2 Units</p>
+<p>Tenant Management</p>
+<p>Basic Reports</p>
+
+</div>
+
+<div class="price-card">
+
+<h3>Starter</h3>
+
+<div class="price">R99 / month</div>
+
+<p>Up to 10 Units</p>
+<p>Invoices</p>
+<p>Expense Tracking</p>
+
+</div>
+
+<div class="price-card">
+
+<h3>Growth</h3>
+
+<div class="price">R199 / month</div>
+
+<p>Up to 50 Units</p>
+<p>Advanced Reports</p>
+<p>Bank Import</p>
+
+</div>
+
+</div>
+
+<br>
+
+<a class="cta-btn" href="pricingboard.html">View Full Pricing</a>
+
+</section>
+
+<!-- CTA -->
+
+<section class="cta">
+
+<h2>Start Tracking Your Rent Today</h2>
+
+<p>Join landlords using Track My Rent to manage their properties.</p>
+
+<a class="cta-btn" href="register.html">Create Free Account</a>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+
+© 2026 Track My Rent. All rights reserved.
+
+</footer>
+
+</body>
+</html>
+
+

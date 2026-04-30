@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bank Import | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <script src="assets/js/config.js"></script>
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+  <a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- âœ… INVOICES -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link active">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <h2>Bank Import</h2>
+        <span class="tagline">
+          Upload bank statements and automatically reconcile rent payments
+        </span>
+      </div>
+    </header>
+
+    <!-- ===================== CONTENT ===================== -->
+    <main class="content">
+
+      <!-- ===================== UPLOAD CARD ===================== -->
+      <section class="card" style="margin-bottom:16px;">
+        <h3>Upload Bank Statement</h3>
+
+        <p class="card-sub">
+          Upload a <strong>CSV or PDF bank statement</strong>.  
+          Transactions are analysed and matched to tenants automatically.
+        </p>
+
+        <form id="uploadForm" style="margin-top:12px;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input
+              type="file"
+              id="bankFile"
+              accept=".csv,.pdf"
+              required
+            >
+
+            <button type="submit" class="btn-primary">
+              Upload & Process
+            </button>
+          </div>
+        </form>
+
+        <p id="uploadStatus" class="card-sub" style="margin-top:10px;"></p>
+
+        <p class="card-sub" style="margin-top:6px; font-size:0.8rem;">
+          âœ” CSV fully supported Â· âœ” PDF (text + OCR supported)
+        </p>
+      </section>
+
+      <!-- ===================== SUMMARY ===================== -->
+      <section class="stats-grid" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-label">Auto Posted</div>
+          <div class="card-value" id="autoPostedCount">0</div>
+        </div>
+
+        <div class="card warning">
+          <div class="card-label">Pending Review</div>
+          <div class="card-value" id="pendingCount">0</div>
+        </div>
+
+        <div class="card danger">
+          <div class="card-label">Unmatched</div>
+          <div class="card-value" id="unmatchedCount">0</div>
+        </div>
+      </section>
+
+      <!-- ===================== RESULTS TABLE ===================== -->
+      <section class="table-box">
+        <div class="table-header">
+          <h3>Imported Transactions</h3>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tenant</th>
+                <th>Reference</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="importTableBody">
+              <tr>
+                <td colspan="6" class="empty-row">
+                  Upload a bank statement to view results
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== INFO ===================== -->
+      <section class="card" style="margin-top:16px;">
+        <h3>How matching works</h3>
+        <ul class="card-sub" style="margin-top:8px;">
+          <li>âœ” Matches tenant by reference, phone, email or name</li>
+          <li>âœ” Verifies active lease before posting</li>
+          <li>âœ” Auto-posts high-confidence matches to the ledger</li>
+          <li>âœ” Flags uncertain matches for manual approval</li>
+          <li>âœ” Prevents duplicate payments</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/bank-imports.js"></script>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+
+

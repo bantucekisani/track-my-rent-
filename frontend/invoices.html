@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoices | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css" />
+
+  <!-- API config -->
+  <script src="assets/js/config.js"></script>
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Menu</div>
+
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link">Expenses</a>
+    <a href="invoices.html" class="sidebar-link active">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+    <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+    <a href="notifications.html" class="sidebar-link">Notifications</a>
+     <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+    <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+    <div class="sidebar-section-title">Settings</div>
+
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>   
+    <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <h2 data-tutorial="invoices-heading">Invoices</h2>
+        <span class="tagline">Automatically generated rent invoices</span>
+      </div>
+      <div class="header-right">
+        <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content operations-content">
+
+      <section class="page-hero operations-hero">
+        <div class="page-hero-copy">
+          <span class="page-eyebrow">Invoice Control</span>
+          <h3>Review generated rent invoices with clearer status and follow-up context.</h3>
+          <p>
+            Move between paid, unpaid, and overdue invoices quickly so billing follow-up stays simple
+            and visible.
+          </p>
+        </div>
+
+        <div class="hero-metric-strip hero-metric-strip-compact">
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Watch</span>
+            <strong>Paid and overdue status</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Search</span>
+            <strong>Tenant and invoice references</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Use</span>
+            <strong>A cleaner billing review screen</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card report-filter-panel operations-filter-panel">
+        <div class="report-filter-copy">
+          <span class="page-eyebrow">Invoice Filters</span>
+          <h3>Switch invoice status views without losing search context.</h3>
+          <p>
+            Use status chips for quick billing triage, then search a tenant or invoice number when you
+            need something specific.
+          </p>
+        </div>
+
+        <div class="operations-filter-grid">
+          <div class="filter-field filter-field-wide">
+            <span>Status</span>
+            <div class="filter-chip-row">
+              <button class="filter-btn active" data-filter="ALL">All</button>
+              <button class="filter-btn" data-filter="OVERDUE" data-tutorial="invoice-status-overdue">Overdue</button>
+              <button class="filter-btn" data-filter="UNPAID">Unpaid</button>
+              <button class="filter-btn" data-filter="PAID">Paid</button>
+            </div>
+          </div>
+
+          <label class="filter-field">
+            <span>Search</span>
+            <input 
+              type="text" 
+              id="invoiceSearch" 
+              class="search-input invoice-search" 
+              data-tutorial="invoice-search"
+              placeholder="Search invoice or tenant..."
+            />
+          </label>
+
+          <div class="surface-note filter-note">
+            Filter chips and search work together to keep invoice review fast.
+          </div>
+        </div>
+      </section>
+
+      <section class="table-box operations-table-box">
+        <div class="table-header">
+          <div>
+            <h3>Invoice List</h3>
+            <span class="chart-subtitle">Review invoice dates, billed amounts, paid amounts, and outstanding balances.</span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Tenant</th>
+                <th>Invoice Date</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Charged</th>
+                <th>Paid</th>
+                <th>Amount Due</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="invoiceTableBody">
+              <tr>
+                <td colspan="9" class="empty-row">
+                  Loading invoices...
+                </td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- JS -->
+<script src="assets/js/tutorial-markup.js"></script>
+<script src="assets/js/tutorial-engine.js"></script>
+<script src="assets/js/tutorial-catalog.js"></script>
+<script src="assets/js/invoices.js"></script>
+
+<script>
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+</script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+

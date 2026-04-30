@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tenant Ledger | Track My Rent</title>
+
+  <!-- Main dashboard styles -->
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+
+  <!-- API config (API_URL) -->
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link ">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+<a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- âœ… INVOICES -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>  
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <!-- âœ… REQUIRED BY ledger.js -->
+      <h2 id="tenantName">Tenant Ledger</h2>
+
+      <!-- âœ… REQUIRED META TARGETS -->
+      <div class="ledger-meta" style="margin-top:8px;color:#555">
+        <span>
+          <strong>Property:</strong>
+          <span id="tenantProperty">-</span>
+        </span>
+        &nbsp;&nbsp;
+        <span>
+          <strong>Unit:</strong>
+          <span id="tenantUnit">-</span>
+        </span>
+        &nbsp;&nbsp;
+        <span>
+          <strong>Rent:</strong>
+          <span id="tenantRent">--</span>
+        </span>
+        &nbsp;&nbsp;
+        <span>
+          <strong>Deposit:</strong>
+          <span id="tenantDeposit">--</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- LEDGER TABLE -->
+    <main class="content">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Debit (R)</th>
+            <th>Credit (R)</th>
+            <th>Balance (R)</th>
+          </tr>
+        </thead>
+
+        <!-- âœ… MUST MATCH ledger.js EXACTLY -->
+        <tbody id="ledgerBody">
+          <tr>
+            <td colspan="5">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+  </div>
+</div>
+
+<!-- Ledger logic -->
+<script src="assets/js/ledger.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+

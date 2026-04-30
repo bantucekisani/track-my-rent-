@@ -1,0 +1,295 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payments | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css">
+  <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link active">Payments</a>
+  <a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- Invoices -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>  
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+    <!-- MAIN AREA -->
+    <div class="main">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <h2 data-tutorial="payments-heading">Payments</h2>
+          <span class="tagline">Record and track rent payments across all tenants</span>
+        </div>
+
+        <div class="header-right">
+          <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+          <button id="addPaymentBtn" class="btn-primary" data-tutorial="record-payment">+ Record Payment</button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content operations-content">
+
+        <section class="page-hero operations-hero">
+          <div class="page-hero-copy">
+            <span class="page-eyebrow">Collections Desk</span>
+            <h3>Record payments fast and keep rent collection history easy to audit.</h3>
+            <p>
+              Filter by period or property, trace references quickly, and keep each payment tied to the
+              correct tenant and accounting period.
+            </p>
+          </div>
+
+          <div class="hero-metric-strip hero-metric-strip-compact">
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Filter</span>
+              <strong>Month, year, and property</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Track</span>
+              <strong>Method, date, and reference</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Support</span>
+              <strong>Cleaner payment audits</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card report-filter-panel operations-filter-panel">
+          <div class="report-filter-copy">
+            <span class="page-eyebrow">Payment Filters</span>
+            <h3>Search collections and narrow the view by period or property.</h3>
+            <p>
+              Use the search field for tenant, property, or reference lookups, then focus the table by
+              month, year, and property.
+            </p>
+          </div>
+
+          <div class="operations-filter-grid">
+            <label class="filter-field filter-field-wide">
+              <span>Search (tenant, property or reference)</span>
+              <input
+                type="text"
+                id="paymentSearch"
+                class="search-input"
+                placeholder="Type to search..."
+                data-tutorial="payment-search"
+              >
+            </label>
+
+            <label class="filter-field">
+              <span>Month</span>
+              <select id="monthFilter">
+                <option value="">All</option>
+              </select>
+            </label>
+
+            <label class="filter-field filter-field-sm">
+              <span>Year</span>
+              <select id="yearFilter">
+                <option value="">All</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span>Property</span>
+              <select id="propertyFilter" data-tutorial="payment-property-filter">
+                <option value="">All properties</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="table-box operations-table-box">
+          <div class="table-header">
+            <div>
+              <h3>Payments</h3>
+              <span class="chart-subtitle">Review rent collections by tenant, period, method, and reference.</span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tenant</th>
+                  <th>Property / Unit</th>
+                  <th>Amount</th>
+                  <th>Period</th>
+                  <th>Paid On</th>
+                  <th>Method</th>
+                  <th>Ref</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody">
+                <tr><td colspan="8" class="empty-row">Loading payments...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="paymentModalTitle">Record Payment</h3>
+        <button class="modal-close" id="closePaymentModal" type="button" aria-label="Close payment modal">&times;</button>
+      </div>
+
+      <form id="paymentForm" class="modal-form">
+
+        <!-- BASIC PAYMENT DATA -->
+        <div class="form-section">
+          <h4 class="section-title">Tenant & Amount</h4>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Tenant</label>
+              <select id="tenantId" required onchange="loadTenantReference()" data-tutorial="payment-tenant">
+                <option value="">Select tenant</option>
+              </select>
+            </div>
+
+            <div class="form-col">
+              <label>Amount</label>
+              <input type="number" id="amount" min="0" step="0.01" required>
+            </div>
+          </div>
+
+          <!-- Tenant Reference -->
+          <div class="form-row">
+            <div class="form-col">
+              <label>Tenant Payment Reference</label>
+              <input type="text" id="tenantRef" class="readonly-input" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERIOD & METHOD -->
+        <div class="form-section">
+          <h4 class="section-title">Period & Method</h4>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Month</label>
+              <select id="paymentMonth" required></select>
+            </div>
+
+            <div class="form-col">
+              <label>Year</label>
+              <select id="paymentYear" required></select>
+            </div>
+
+            <div class="form-col">
+              <label>Payment Method</label>
+<select id="method">
+  <option value="EFT">EFT</option>
+  <option value="Cash">Cash</option>
+  <option value="Card">Card</option>
+  <option value="Other">Other</option>
+</select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Paid On</label>
+              <input type="date" id="paidOn">
+            </div>
+
+            <div class="form-col">
+              <label>Reference</label>
+              <input type="text" id="reference" placeholder="Bank ref, slip no...">
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTES -->
+        <div class="form-section">
+          <h4 class="section-title">Notes</h4>
+          <textarea id="notes" rows="3" placeholder="Optional notes about this payment..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" data-tutorial="save-payment">Save Payment</button>
+          <button type="button" class="btn-secondary" id="cancelPaymentBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/tutorial-markup.js"></script>
+  <script src="assets/js/tutorial-engine.js"></script>
+  <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/payments.js"></script>
+  <footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+
+

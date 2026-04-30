@@ -1,0 +1,444 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard | Track My Rent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="assets/css/dashboard.css">
+<link rel="stylesheet" href="assets/css/dashboard-polish.css">
+<link rel="stylesheet" href="assets/css/tutorial.css">
+<link rel="stylesheet" href="assets/css/toast.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+
+<div class="sidebar-header">
+<div class="logo-circle">TMR</div>
+<div class="brand">
+<h1>Track My Rent</h1>
+<span>Rental automation</span>
+</div>
+</div>
+
+<div class="sidebar-section-title">Menu</div>
+
+<a href="dashboard.html" class="sidebar-link active">Dashboard</a>
+<a href="properties.html" class="sidebar-link">Properties & Units</a>
+<a href="tenants.html" class="sidebar-link">Tenants</a>
+<a href="leases.html" class="sidebar-link">Leases</a>
+<a href="payments.html" class="sidebar-link">Payments</a>
+<a href="expenses.html" class="sidebar-link">Expenses</a>
+
+<!-- PLAN CONTROLLED -->
+<a id="menuInvoices" href="invoices.html" class="sidebar-link">Invoices</a>
+<a id="menuReports" href="reports.html" class="sidebar-link">Reports</a>
+<a id="menuBankImport" href="bank-import.html" class="sidebar-link">Bank Import</a>
+<a id="menuNotifications" href="notifications.html" class="sidebar-link">Notifications</a>
+
+<a href="tutorials.html" class="sidebar-link">Tutorials</a>
+
+<a id="menuAI" href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+<a href="admin-dashboard.html" class="sidebar-link">Admin Dashboard</a>
+
+<div class="sidebar-section-title">Settings</div>
+
+<a href="business-settings.html" class="sidebar-link">Business Profile</a>
+<a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+<button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<header class="header">
+
+<div class="header-left">
+<h2 data-tutorial="dashboard-heading">Dashboard</h2>
+<span class="tagline">
+Overview of your rentals, tenants, and cashflow
+</span>
+</div>
+
+<div class="header-right">
+<button id="startTutorialBtn" class="tutorial-trigger" type="button">
+Start tutorial
+</button>
+<div class="notif-wrapper" onclick="goToNotifications()">
+<span class="notif-icon">Alerts</span>
+<span id="notifBadge" class="notif-badge">0</span>
+</div>
+</div>
+
+</header>
+
+<main class="content dashboard-content">
+
+<section class="page-hero dashboard-hero">
+<div class="page-hero-copy">
+<span class="page-eyebrow">Portfolio Control</span>
+<h3>Keep cashflow, occupancy, and arrears in view before they become surprises.</h3>
+<p>
+Use this dashboard as your landlord command center for the month: what is occupied,
+what has been collected, and where follow-up is needed next.
+</p>
+</div>
+
+<div class="hero-metric-strip">
+<div class="hero-metric-card">
+<span class="hero-metric-label">Best for</span>
+<strong>Daily landlord operations</strong>
+</div>
+
+<div class="hero-metric-card">
+<span class="hero-metric-label">Focus</span>
+<strong>Cashflow and arrears visibility</strong>
+</div>
+
+<div class="hero-metric-card">
+<span class="hero-metric-label">Workflow</span>
+<strong>Review, act, and export fast</strong>
+</div>
+</div>
+</section>
+
+<section id="dashboardOnboarding" class="dashboard-onboarding hidden">
+<div>
+<h3>Start your setup</h3>
+<p>
+New to Track My Rent? Follow the guided setup to add your business profile,
+properties, tenants, and leases.
+</p>
+</div>
+
+<div class="dashboard-onboarding-actions">
+<a class="primary-link" href="tutorials.html">Open Tutorials</a>
+<a class="secondary-link" href="business-settings.html?tutorial=business-settings&autostart=1">
+Start Business Setup
+</a>
+</div>
+</section>
+
+<section id="dashboardQuickstart" class="dashboard-quickstart hidden">
+<div class="dashboard-quickstart-copy">
+<span class="quickstart-eyebrow">Quick Start</span>
+<h3>Build your rental workflow</h3>
+<p>
+Set up the core pieces of Track My Rent in order so your dashboard becomes useful fast.
+</p>
+</div>
+
+<div id="dashboardQuickstartSteps" class="quickstart-steps"></div>
+</section>
+
+<!-- STATS -->
+<section class="stats-grid">
+
+<div class="card">
+<div class="card-label">Total Properties</div>
+<div class="card-value" id="totalProperties" data-tutorial="total-properties">0</div>
+</div>
+
+<div class="card">
+<div class="card-label">Total Units</div>
+<div class="card-value" id="totalUnits" data-tutorial="total-units">0</div>
+<div class="card-sub">
+<span id="occupiedUnits">0</span> occupied /
+<span id="vacantUnits">0</span> vacant
+</div>
+</div>
+
+<div class="card">
+<div class="card-label">Total Tenants</div>
+<div class="card-value" id="totalTenants">0</div>
+</div>
+
+<div class="card warning">
+<div class="card-label">Tenants in Arrears</div>
+<div class="card-value" id="arrearsTenants">0</div>
+</div>
+
+</section>
+
+<!-- RENT SUMMARY -->
+
+<section class="stats-grid stats-grid-finance">
+
+<div class="card money">
+<div class="card-label">Rent Expected (This Month)</div>
+<div class="card-value" id="rentExpected">--</div>
+</div>
+
+<div class="card money">
+<div class="card-label">Rent Collected (This Month)</div>
+<div class="card-value" id="rentCollected">--</div>
+</div>
+
+<div class="card money highlight">
+<div class="card-label">Outstanding Rent (This Month)</div>
+<div class="card-value" id="rentOutstanding">--</div>
+</div>
+
+<div class="card money">
+<div class="card-label">VAT Collected (This Month)</div>
+<div class="card-value" id="vatCollected">--</div>
+</div>
+
+</section>
+
+<section class="stats-grid stats-grid-single">
+
+<div class="card money danger">
+<div class="card-label">Total Rolling Arrears</div>
+<div class="card-value" id="totalRollingArrears">--</div>
+<div class="card-sub">Across all months</div>
+</div>
+
+</section>
+
+<section class="dashboard-insight-grid">
+
+<div class="card rent-status-widget surface-card">
+
+<h3>Rent Status (This Month)</h3>
+
+<div class="rent-status-row">
+<span class="status paid">Paid</span>
+<span id="rentPaidCount">0</span>
+</div>
+
+<div class="rent-status-row">
+<span class="status partial">Partially Paid</span>
+<span id="rentPartialCount">0</span>
+</div>
+
+<div class="rent-status-row">
+<span class="status unpaid">Unpaid</span>
+<span id="rentUnpaidCount">0</span>
+</div>
+
+<div class="rent-status-row total">
+<span>Total Tenants</span>
+<span id="rentTotalCount">0</span>
+</div>
+
+</div>
+
+<section class="card subscription-widget surface-card">
+
+<h3>Your Subscription</h3>
+
+<div class="subscription-info">
+
+<div class="subscription-plan">
+Plan: <strong id="subPlan" data-tutorial="subscription-plan">Loading...</strong>
+</div>
+
+<div class="subscription-units">
+Units Used:
+<strong id="unitsUsed">0</strong> /
+<strong id="unitsLimit">0</strong>
+</div>
+
+</div>
+
+<button class="btn-primary" onclick="goToPricing()">
+Upgrade Plan
+</button>
+
+</section>
+
+</section>
+
+<!-- CHARTS -->
+
+<section class="charts-row">
+
+<div class="chart-box">
+
+<div class="chart-header">
+<h3>Monthly Rent Trend</h3>
+<span class="chart-subtitle">Last 6 months</span>
+</div>
+
+<canvas id="incomeChart"></canvas>
+
+</div>
+
+<div class="chart-box small">
+
+<div class="chart-header">
+<h3>Unit Occupancy</h3>
+</div>
+
+<div class="donut-wrapper">
+<canvas id="occupancyChart"></canvas>
+</div>
+
+<div class="occupancy-legend">
+
+<span class="legend-item">
+<span class="dot dot-1"></span>Occupied
+</span>
+
+<span class="legend-item">
+<span class="dot dot-2"></span>Vacant
+</span>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- RECENT PAYMENTS -->
+
+<section class="bottom-row">
+
+<div class="table-box">
+
+<div class="table-header">
+<h3>Recent Payments</h3>
+<a href="payments.html" class="link-sm">View all</a>
+</div>
+
+<div class="table-wrapper">
+
+<table>
+
+<thead>
+<tr>
+<th>Tenant</th>
+<th>Property / Unit</th>
+<th>Amount</th>
+<th>Month</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="recentPaymentsBody">
+<tr>
+<td colspan="5">Loading...</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card arrears-card">
+
+<h3>Arrears Summary</h3>
+
+<p class="summary-line">
+<span id="arrearsAmount">--</span> total arrears
+</p>
+
+<a href="reports.html" class="link-sm">View arrears report</a>
+
+</div>
+
+</section>
+
+<!-- UPGRADE MODAL -->
+
+<div id="upgradeModal" class="upgrade-modal hidden">
+
+<div class="upgrade-box">
+
+<h2>Upgrade Your Plan</h2>
+
+<p>You have reached the limit of your current plan.</p>
+
+<div class="plans">
+
+<div class="plan">
+<h3>Starter</h3>
+<p>10 Units</p>
+<button onclick="upgradePlan('Starter')">Upgrade</button>
+</div>
+
+<div class="plan">
+<h3>Growth</h3>
+<p>50 Units</p>
+<button onclick="upgradePlan('Growth')">Upgrade</button>
+</div>
+
+<div class="plan">
+<h3>Pro</h3>
+<p>Unlimited Units</p>
+<button onclick="upgradePlan('Pro')">Upgrade</button>
+</div>
+
+</div>
+
+<button onclick="closeUpgrade()">Cancel</button>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+</div>
+
+<!-- JS -->
+
+<script src="assets/js/ai-helper.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/tutorial-markup.js"></script>
+<script src="assets/js/tutorial-engine.js"></script>
+<script src="assets/js/tutorial-catalog.js"></script>
+<script src="assets/js/auth-guard.js"></script>
+<script src="assets/js/dashboard.js"></script>
+
+<script>
+function goToNotifications(){
+window.location.href = "notifications.html";
+}
+</script>
+
+<footer class="site-footer">
+
+<div class="footer-links">
+<a href="terms.html">Terms of Service</a>
+<a href="privacy.html">Privacy Policy</a>
+<a href="subscription-policy.html">Subscription Policy</a>
+<a href="acceptable-use.html">Acceptable Use</a>
+</div>
+
+<div class="footer-copy">
+© 2026 Track My Rent
+</div>
+
+</footer>
+
+</body>
+</html>
+
+
+
+
+
+
+
+

@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Properties | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css">
+  <link rel="stylesheet" href="assets/css/toast.css" />
+    
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+  <a href="properties.html" class="sidebar-link active">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+<a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- Invoices -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>  
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+    <!-- MAIN AREA -->
+    <div class="main">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <h2 data-tutorial="properties-heading">Properties</h2>
+          <span class="tagline">Manage your buildings, houses and units</span>
+        </div>
+
+        <div class="header-right">
+          <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+          <button id="addPropertyBtn" class="btn-primary" data-tutorial="add-property">+ Add Property</button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content operations-content">
+
+        <section class="page-hero operations-hero">
+          <div class="page-hero-copy">
+            <span class="page-eyebrow">Portfolio Setup</span>
+            <h3>Organise buildings, houses, and units from one control room.</h3>
+            <p>
+              Keep your property structure clean here so leases, tenants, rent rolls, and reporting
+              stay accurate everywhere else in the app.
+            </p>
+          </div>
+
+          <div class="hero-metric-strip hero-metric-strip-compact">
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Manage</span>
+              <strong>Buildings and houses</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Connect</span>
+              <strong>Units to tenants and leases</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Outcome</span>
+              <strong>Cleaner downstream reporting</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="collection-shell">
+          <div class="collection-heading">
+            <div>
+              <span class="page-eyebrow">Portfolio List</span>
+              <h3>Properties and units</h3>
+              <p>Review your portfolio stock and open a property when you want to manage its units.</p>
+            </div>
+          </div>
+
+          <section class="stats-grid collection-grid" id="propertiesGrid">
+            <!-- Filled by JS -->
+          </section>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT PROPERTY MODAL -->
+  <div class="modal" id="propertyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="propertyModalTitle">Add Property</h3>
+        <button class="modal-close" id="closePropertyModal">&times;</button>
+      </div>
+
+      <form id="addPropertyForm" class="modal-form">
+
+        <div class="form-section">
+          <h4 class="section-title">Property Details</h4>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Property Name</label>
+              <input type="text" id="name" required data-tutorial="property-name">
+            </div>
+
+            <div class="form-col">
+            <select id="propertyType" required data-tutorial="property-type">
+  <option value="house">House</option>
+  <option value="flat">Flats</option>
+  <option value="townhouse">Townhouse</option>
+  <option value="cottage">Cottage</option>
+  <option value="studio">Studio</option>
+  <option value="duplex">Duplex</option>
+  <option value="residence">Residence</option>
+  <option value="room">Room</option>
+  <option value="granny">Granny Flat</option>
+
+  <option value="block">Apartment Block</option>
+  <option value="multi_unit">Multi Unit</option>
+  <option value="mixed_use">Mixed Use</option>
+
+  <option value="office">Office</option>
+  <option value="retail">Retail</option>
+  <option value="warehouse">Warehouse</option>
+  <option value="industrial">Industrial</option>
+  <option value="storage">Storage</option>
+
+  <option value="other">Other</option>
+</select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">Address</h4>
+
+      <div class="form-row ">
+            <div class="form-col">
+              <label>Address Line 1</label>
+              <input type="text" id="addressLine1" required data-tutorial="property-address">
+            </div>
+            <div class="form-col">
+              <label>Address Line 2</label>
+              <input type="text" id="addressLine2">
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-col">
+              <label>City</label>
+              <input type="text" id="city" required>
+            </div>
+            <div class="form-col">
+              <label>Province</label>
+              <input type="text" id="province">
+            </div>
+            <div class="form-col">
+              <label>Postal Code</label>
+              <input type="text" id="postalCode">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label>Country</label>
+              <input type="text" id="country" value="South Africa">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="section-title">Notes</h4>
+          <textarea id="notes" rows="3" placeholder="Optional notes about this property"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" data-tutorial="save-property">Save Property</button>
+          <button type="button" class="btn-secondary" id="cancelPropertyBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/tutorial-markup.js"></script>
+  <script src="assets/js/tutorial-engine.js"></script>
+  <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/properties.js"></script>
+
+  <footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+
+

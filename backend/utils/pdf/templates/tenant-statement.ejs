@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      padding: 40px;
+      color: #111;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #000;
+      padding-bottom: 14px;
+      margin-bottom: 25px;
+    }
+
+    .business-info {
+      text-align: left;
+      font-size: 11px;
+      line-height: 1.4;
+      max-width: 300px;
+    }
+
+    .title {
+      text-align: right;
+    }
+
+    .title h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .title .sub {
+      font-size: 11px;
+      color: #555;
+    }
+
+    .meta {
+      margin: 20px 0 30px;
+    }
+
+    .meta strong {
+      width: 130px;
+      display: inline-block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      border-bottom: 2px solid #000;
+      background: #f3f4f6;
+      padding: 8px;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .amount {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .summary {
+      width: 40%;
+      margin-top: 30px;
+      float: right;
+      border-top: 2px solid #000;
+    }
+
+    .summary td {
+      padding: 6px;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      left: 40px;
+      right: 40px;
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 6px;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 64px;
+      color: rgba(0, 0, 0, 0.08);
+      font-weight: bold;
+      z-index: -1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- WATERMARK -->
+  <% if (Number(summary.balance) === 0) { %>
+    <div class="watermark">PAID IN FULL</div>
+  <% } %>
+
+  <!-- HEADER -->
+ <!-- HEADER -->
+<div class="header">
+  <div class="business-info">
+
+    <% 
+      const businessName = business?.businessName || "";
+      const tradingName = business?.tradingName || "";
+      const regNumber = business?.registrationNumber || "";
+      const vatNumber = business?.vatNumber || "";
+      const email = business?.email || "";
+      const phone = business?.phone || "";
+      const addressLine1 = business?.addressLine1 || "";
+      const city = business?.city || "";
+      const province = business?.province || "";
+    %>
+
+    <% if (businessName) { %>
+      <div style="font-size:18px; font-weight:700;">
+        <%= businessName %>
+      </div>
+    <% } %>
+
+    
+    <% if (regNumber) { %>
+      <div>Reg No: <%= regNumber %></div>
+    <% } %>
+
+    <% if (vatNumber && vatNumber !== "N/A") { %>
+      <div>VAT No: <%= vatNumber %></div>
+    <% } %>
+
+    <% if (addressLine1) { %>
+      <div style="margin-top:6px;">
+        <%= addressLine1 %><br>
+        <%= city %><%= city && province ? ", " : "" %><%= province %>
+      </div>
+    <% } %>
+
+    <% if (email || phone) { %>
+      <div style="margin-top:6px;">
+        <%= email %>
+        <%= phone ? " | " + phone : "" %>
+      </div>
+    <% } %>
+
+  </div>
+
+  <div class="title">
+    <h2>TENANT STATEMENT – <%= year %></h2>
+    <div class="sub">Generated on <%= generatedAt %></div>
+  </div>
+</div>
+  <!-- META -->
+  <div class="meta">
+    <div><strong>Tenant:</strong> <%= tenant?.fullName || "" %></div>
+
+    <% if (typeof rentalAddress !== "undefined" && rentalAddress) { %>
+      <div><strong>Rental Address:</strong> <%= rentalAddress %></div>
+    <% } %>
+
+    <% if (lease) { %>
+
+      <% if (lease.startDate && lease.endDate) { %>
+        <div>
+          <strong>Lease Period:</strong>
+          <%= new Date(lease.startDate).toLocaleDateString(locale) %>
+          –
+          <%= new Date(lease.endDate).toLocaleDateString(locale) %>
+        </div>
+      <% } %>
+
+      <% if (lease.unitId?.unitLabel) { %>
+        <div>
+          <strong>Unit / Room:</strong>
+          <%= lease.unitId.unitLabel %>
+        </div>
+      <% } %>
+
+      <% if (lease.rentAmount) { %>
+        <div>
+          <strong>Monthly Rent:</strong>
+          <%= formatter.format(lease.rentAmount) %>
+        </div>
+      <% } %>
+
+    <% } %>
+  </div>
+
+  <!-- TABLE -->
+  <table>
+    <thead>
+      <tr>
+        <th>Period</th>
+        <th>Description</th>
+        <th class="amount">Debit</th>
+        <th class="amount">Credit</th>
+        <th class="amount">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(row => { %>
+        <tr>
+          <td><%= row.period %></td>
+          <td><%= row.description %></td>
+          <td class="amount"><%= formatter.format(row.debit || 0) %></td>
+          <td class="amount"><%= formatter.format(row.credit || 0) %></td>
+          <td class="amount"><%= formatter.format(row.balance || 0) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- SUMMARY -->
+  <table class="summary">
+    <tr>
+      <td><strong>Total Charged</strong></td>
+      <td class="amount"><%= formatter.format(summary.totalCharged || 0) %></td>
+    </tr>
+    <tr>
+      <td><strong>Total Paid</strong></td>
+      <td class="amount"><%= formatter.format(summary.totalPaid || 0) %></td>
+    </tr>
+    <tr>
+      <td><strong>Closing Balance</strong></td>
+      <td class="amount">
+        <strong><%= formatter.format(summary.balance || 0) %></strong>
+      </td>
+    </tr>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Reference: <%= referenceNumber %> · This document is system-generated and valid without a signature.
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Expenses | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css" />
+  <script src="assets/js/config.js"></script>
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Menu</div>
+
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link active">Expenses</a>
+    <a href="invoices.html" class="sidebar-link">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+    <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+    <a href="notifications.html" class="sidebar-link">Notifications</a>
+     <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+    <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+    <div class="sidebar-section-title">Settings</div>
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>  
+    <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <h2 data-tutorial="expenses-heading">Expenses</h2>
+        <span class="tagline">Track owner expenses across properties</span>
+      </div>
+
+      <div class="header-right">
+        <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+        <button id="addExpenseBtn" class="btn-primary" data-tutorial="record-expense">+ Record Expense</button>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content operations-content">
+
+      <section class="page-hero operations-hero">
+        <div class="page-hero-copy">
+          <span class="page-eyebrow">Cost Tracking</span>
+          <h3>Capture owner expenses cleanly so profitability stays trustworthy.</h3>
+          <p>
+            Keep maintenance, utilities, insurance, cleaning, and admin costs easy to review by
+            property and category.
+          </p>
+        </div>
+
+        <div class="hero-metric-strip hero-metric-strip-compact">
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Record</span>
+            <strong>Costs as they happen</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Filter</span>
+            <strong>By property and category</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Support</span>
+            <strong>More accurate profit reporting</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card report-filter-panel operations-filter-panel">
+        <div class="report-filter-copy">
+          <span class="page-eyebrow">Expense Filters</span>
+          <h3>Search and narrow expenses without leaving the main table.</h3>
+          <p>
+            Use category and property filters to isolate the expenses that matter for month-end review.
+          </p>
+        </div>
+
+        <div class="operations-filter-grid">
+          <label class="filter-field filter-field-wide">
+            <span>Search</span>
+            <input type="text" id="searchExpense" class="search-input" placeholder="Description or category" data-tutorial="expense-search">
+          </label>
+
+          <label class="filter-field">
+            <span>Property</span>
+            <select id="propertyFilter" data-tutorial="expense-property-filter"></select>
+          </label>
+
+          <label class="filter-field">
+            <span>Category</span>
+            <select id="categoryFilter" data-tutorial="expense-category-filter">
+              <option value="">All</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="utilities">Utilities</option>
+              <option value="insurance">Insurance</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="table-box operations-table-box">
+        <div class="table-header">
+          <div>
+            <h3>Expense List</h3>
+            <span class="chart-subtitle">Review owner costs by property, category, description, and amount.</span>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Property</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="expensesTableBody">
+              <tr>
+                <td colspan="5" class="empty-row">Loading expenses...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal" id="expenseModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Record Expense</h3>
+      <button class="modal-close" id="closeExpenseModal">&times;</button>
+    </div>
+
+    <form id="expenseForm" class="modal-form">
+
+      <div class="form-section">
+        <h4 class="section-title">Expense Details</h4>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Property (optional)</label>
+            <select id="expenseProperty"></select>
+          </div>
+
+          <div class="form-col">
+            <label>Category</label>
+            <select id="expenseCategory" required>
+              <option value="">Select</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="utilities">Utilities</option>
+              <option value="insurance">Insurance</option>
+              <option value="cleaning">Cleaning</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div class="form-col">
+            <label>Amount</label>
+            <input type="number" id="expenseAmount" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Date</label>
+            <input type="date" id="expenseDate" required>
+          </div>
+
+          <div class="form-col">
+            <label>Description</label>
+            <input type="text" id="expenseDescription">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="cancelExpense" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary" data-tutorial="save-expense">Save Expense</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script src="assets/js/tutorial-markup.js"></script>
+<script src="assets/js/tutorial-engine.js"></script>
+<script src="assets/js/tutorial-catalog.js"></script>
+<script src="assets/js/expenses.js"></script>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+
+

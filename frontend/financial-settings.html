@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Settings | Track My Rent</title>
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- ================= SIDEBAR ================= -->
+  <nav class="sidebar">
+
+    <div class="logo">TMR</div>
+
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link">Expenses</a>
+    <a href="invoices.html" class="sidebar-link">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+    <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+    <a href="notifications.html" class="sidebar-link">Notifications</a>
+    <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+    <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+    <div class="sidebar-section-title">Settings</div>
+
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+
+    <a href="financial-settings.html" class="sidebar-link active">Financial Settings</a>
+
+    <a href="pricing.html" class="sidebar-link">Subscription</a>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+  </nav>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="content">
+
+    <div class="page-header">
+      <h1>Financial Settings</h1>
+      <p>Configure rent rules, VAT, and global preferences</p>
+    </div>
+
+    <div class="card">
+      <form id="financialSettingsForm" class="form-grid">
+
+        
+        <!-- ================= VAT SETTINGS ================= -->
+        <h4 class="section-title">VAT Settings</h4>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="vatEnabled">
+            <span>Enable VAT</span>
+          </label>
+        </div>
+
+        <div id="vatOptions" class="hidden">
+
+          <div class="form-group">
+            <label>VAT Percentage (%)</label>
+            <input type="number" id="vatPercent" min="0" step="0.01" />
+          </div>
+
+          <div class="form-group">
+            <label>VAT Mode</label>
+            <select id="vatMode">
+              <option value="exclusive">Exclusive (Add VAT on top)</option>
+              <option value="inclusive">Inclusive (VAT included in amount)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <hr class="settings-divider">
+
+        <!-- ================= GLOBAL PREFERENCES ================= -->
+        <h4 class="section-title">Global Preferences</h4>
+
+        <!-- Currency -->
+        <div class="form-group">
+          <label>Currency</label>
+          <select id="currencySelect">
+
+            <!-- Africa -->
+            <option value="ZAR">South African Rand (ZAR)</option>
+            <option value="NGN">Nigerian Naira (NGN)</option>
+            <option value="KES">Kenyan Shilling (KES)</option>
+            <option value="GHS">Ghanaian Cedi (GHS)</option>
+            <option value="UGX">Ugandan Shilling (UGX)</option>
+            <option value="TZS">Tanzanian Shilling (TZS)</option>
+            <option value="ZMW">Zambian Kwacha (ZMW)</option>
+            <option value="BWP">Botswana Pula (BWP)</option>
+
+            <!-- Global -->
+            <option value="USD">US Dollar (USD)</option>
+            <option value="GBP">British Pound (GBP)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="JPY">Japanese Yen (JPY)</option>
+            <option value="AUD">Australian Dollar (AUD)</option>
+            <option value="CAD">Canadian Dollar (CAD)</option>
+
+          </select>
+        </div>
+
+        <!-- Locale -->
+        <div class="form-group">
+          <label>Region / Formatting</label>
+          <select id="localeSelect">
+
+            <!-- Africa -->
+            <option value="en-ZA">South Africa</option>
+            <option value="en-NG">Nigeria</option>
+            <option value="en-KE">Kenya</option>
+            <option value="en-GH">Ghana</option>
+            <option value="en-UG">Uganda</option>
+            <option value="sw-TZ">Tanzania</option>
+            <option value="en-ZM">Zambia</option>
+            <option value="en-BW">Botswana</option>
+
+            <!-- Global -->
+            <option value="en-GB">United Kingdom</option>
+            <option value="de-DE">Germany</option>
+            <option value="en-US">United States</option>
+            <option value="ja-JP">Japan</option>
+            <option value="en-AU">Australia</option>
+
+          </select>
+        </div>
+
+        <!-- Timezone -->
+        <div class="form-group">
+          <label>Timezone</label>
+          <select id="timezoneSelect">
+
+            <!-- Africa -->
+            <option value="Africa/Johannesburg">Africa/Johannesburg</option>
+            <option value="Africa/Lagos">Africa/Lagos</option>
+            <option value="Africa/Nairobi">Africa/Nairobi</option>
+            <option value="Africa/Accra">Africa/Accra</option>
+            <option value="Africa/Kampala">Africa/Kampala</option>
+            <option value="Africa/Dar_es_Salaam">Africa/Dar_es_Salaam</option>
+
+            <!-- Global -->
+            <option value="Europe/London">Europe/London</option>
+            <option value="Europe/Berlin">Europe/Berlin</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+            <option value="Australia/Sydney">Australia/Sydney</option>
+
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          Save Financial Settings
+        </button>
+
+      </form>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/financial-settings.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+

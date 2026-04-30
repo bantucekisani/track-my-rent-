@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Units | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
+  <link rel="stylesheet" href="assets/css/tutorial.css" />
+  <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Menu</div>
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link active">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link">Expenses</a>
+    <a href="invoices.html" class="sidebar-link">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+    <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+    <a href="notifications.html" class="sidebar-link">Notifications</a>
+    <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+    <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+    <div class="sidebar-section-title">Settings</div>
+
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+    <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+    <a href="pricing.html" class="sidebar-link">Subscription</a>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <header class="header">
+      <div class="header-left">
+        <h2 id="propertyName" data-tutorial="units-heading">Units</h2>
+        <span class="tagline">Manage units for this property</span>
+      </div>
+
+      <div class="header-right">
+        <button id="startTutorialBtn" class="tutorial-trigger" type="button">Start tutorial</button>
+        <button id="addUnitBtn" class="btn-primary" data-tutorial="add-unit">+ Add Unit</button>
+      </div>
+    </header>
+
+    <main class="content operations-content">
+      <section class="page-hero operations-hero">
+        <div class="page-hero-copy">
+          <span class="page-eyebrow">Unit Management</span>
+          <h3>Keep every unit clear, rentable, and ready for lease activity.</h3>
+          <p>
+            Track vacancy, pricing, and setup details per unit so the rest of your workflow stays
+            consistent from tenant onboarding to month-end reporting.
+          </p>
+        </div>
+
+        <div class="hero-metric-strip hero-metric-strip-compact">
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Track</span>
+            <strong>Status and occupancy</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Store</span>
+            <strong>Rent, deposit, and details</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Use</span>
+            <strong>Accurate lease setup data</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="collection-shell">
+        <div class="collection-heading">
+          <div>
+            <span class="page-eyebrow">Unit List</span>
+            <h3>Units for this property</h3>
+            <p>Review the current unit mix and update any rent, status, or optional details.</p>
+          </div>
+        </div>
+
+        <section class="stats-grid collection-grid" id="unitsGrid"></section>
+      </section>
+    </main>
+
+  </div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal" id="unitModal">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h3 id="unitModalTitle">Add Unit</h3>
+      <button class="modal-close" id="closeUnitModal">&times;</button>
+    </div>
+
+    <form id="unitForm" class="modal-form">
+
+      <!-- BASIC -->
+      <div class="form-section">
+        <h4 class="section-title">Basic Details</h4>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Unit Label *</label>
+            <input type="text" id="unitLabel" required data-tutorial="unit-label">
+          </div>
+
+          <div class="form-col">
+            <label>Status</label>
+            <select id="status">
+              <option value="Vacant">Vacant</option>
+              <option value="Occupied">Occupied</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENT -->
+      <div class="form-section">
+        <h4 class="section-title">Rent & Deposit</h4>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Default Rent</label>
+            <input type="number" id="defaultRent" min="0" data-tutorial="unit-default-rent">
+          </div>
+
+          <div class="form-col">
+            <label>Deposit</label>
+            <input type="number" id="defaultDeposit" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONAL -->
+      <div class="form-section">
+        <h4 class="section-title">Optional Details</h4>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Bedrooms</label>
+            <input type="number" id="bedrooms" min="0">
+          </div>
+
+          <div class="form-col">
+            <label>Bathrooms</label>
+            <input type="number" id="bathrooms" min="0" step="0.5">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Size (sqm)</label>
+            <input type="number" id="sizeSqm" min="0">
+          </div>
+
+          <div class="form-col">
+            <label>Floor Level</label>
+            <input type="text" id="floorLevel">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Utilities Included</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" value="Water"> Water</label>
+              <label><input type="checkbox" value="Electricity"> Electricity</label>
+              <label><input type="checkbox" value="Refuse"> Refuse</label>
+              <label><input type="checkbox" value="WiFi"> WiFi</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
+            <label>Notes</label>
+            <textarea id="notes" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary" data-tutorial="save-unit">Save Unit</button>
+        <button type="button" class="btn-secondary" id="cancelUnitBtn">Cancel</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+<script src="assets/js/tutorial-markup.js"></script>
+<script src="assets/js/tutorial-engine.js"></script>
+<script src="assets/js/tutorial-catalog.js"></script>
+<script src="assets/js/units.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+
+

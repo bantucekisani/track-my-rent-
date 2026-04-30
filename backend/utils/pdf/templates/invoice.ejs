@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Tax Invoice</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #14213d;
+      margin: 0;
+      padding: 32px 34px;
+      background: #ffffff;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-24deg);
+      font-size: 104px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: rgba(15, 23, 42, 0.05);
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .top-shell,
+    .section-card,
+    .table-shell,
+    .totals-shell,
+    .bank-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .top-shell {
+      border: 1px solid #d8e2f0;
+      border-radius: 22px;
+      padding: 24px 24px 18px;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      margin-bottom: 18px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .brand-block {
+      max-width: 56%;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3556d5;
+      background: #e8efff;
+    }
+
+    .brand-name {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.1;
+      color: #0f172a;
+    }
+
+    .brand-subtext {
+      margin: 0 0 12px;
+      color: #52607a;
+      line-height: 1.6;
+    }
+
+    .contact-lines {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: #334155;
+      line-height: 1.7;
+    }
+
+    .invoice-meta {
+      min-width: 240px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+
+    .invoice-meta h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .meta-line {
+      margin: 0 0 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      color: #d7e3f8;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .status-paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-unpaid {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .summary-card {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #dce7f6;
+      min-height: 88px;
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+
+    .summary-subvalue {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #52607a;
+    }
+
+    .section {
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
+
+    .section-header {
+      margin-bottom: 10px;
+    }
+
+    .section-header h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      color: #0f172a;
+    }
+
+    .section-header p {
+      margin: 0;
+      font-size: 11px;
+      color: #52607a;
+      line-height: 1.5;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .section-card {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .section-card-head {
+      padding: 12px 16px;
+      background: #edf3ff;
+      border-bottom: 1px solid #dce7f6;
+    }
+
+    .section-card-head strong {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #3556d5;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #ecf1f8;
+      vertical-align: top;
+    }
+
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .label {
+      width: 38%;
+      font-weight: 700;
+      color: #52607a;
+    }
+
+    .value {
+      color: #0f172a;
+    }
+
+    .table-shell {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .table-head {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #dce7f6;
+      background: #fbfdff;
+    }
+
+    .table-head h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      color: #0f172a;
+    }
+
+    .table-head p {
+      margin: 0;
+      font-size: 11px;
+      color: #52607a;
+      line-height: 1.5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 11px 14px;
+      border-bottom: 1px solid #dce7f6;
+      background: #f8fbff;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #ecf1f8;
+      color: #0f172a;
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .muted {
+      color: #64748b;
+    }
+
+    .right {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .totals-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 14px;
+      margin-top: 16px;
+      page-break-inside: avoid;
+    }
+
+    .totals-shell,
+    .bank-shell {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .totals-body,
+    .bank-body {
+      padding: 16px 18px;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ecf1f8;
+      color: #0f172a;
+    }
+
+    .totals-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .totals-row strong {
+      font-size: 13px;
+    }
+
+    .due-row {
+      margin-top: 8px;
+      padding-top: 14px;
+      border-top: 2px solid #dce7f6;
+    }
+
+    .due-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .note-copy {
+      margin: 0 0 12px;
+      line-height: 1.65;
+      color: #334155;
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #334155;
+      line-height: 1.65;
+    }
+
+    .bank-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+    }
+
+    .bank-item span {
+      display: block;
+    }
+
+    .bank-label {
+      margin-bottom: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .bank-value {
+      color: #0f172a;
+      line-height: 1.5;
+    }
+
+    .footnote {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #64748b;
+      line-height: 1.6;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+<%
+  const money = (value) => {
+    const numeric = Number(value || 0);
+    const formatted = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency
+    }).format(Math.abs(numeric));
+    return numeric < 0 ? "-" + formatted : formatted;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleDateString(locale);
+  };
+
+  const invoiceDateLabel = formatDate(invoice?.invoiceDate);
+  const dueDateLabel = formatDate(invoice?.dueDate);
+  const generatedDateLabel = generatedAt ? formatDate(generatedAt) : formatDate(new Date());
+
+  const periodLabel = (() => {
+    if (invoice?.periodMonth && invoice?.periodYear) {
+      const date = new Date(invoice.periodYear, Number(invoice.periodMonth) - 1, 1);
+      return date.toLocaleDateString(locale, {
+        month: "long",
+        year: "numeric"
+      });
+    }
+    return "Current billing period";
+  })();
+
+  const statusClass =
+    status === "PAID"
+      ? "status-paid"
+      : status === "PARTIAL"
+      ? "status-partial"
+      : "status-unpaid";
+
+  const watermarkLabel =
+    status === "PARTIAL"
+      ? "PARTIAL"
+      : status === "PAID"
+      ? "PAID"
+      : "UNPAID";
+
+  const propertyAddress = lease?.propertyId && typeof lease.propertyId === "object"
+    ? [
+        lease.propertyId.name,
+        lease.propertyId.addressLine1,
+        lease.propertyId.addressLine2,
+        lease.propertyId.suburb,
+        lease.propertyId.city,
+        lease.propertyId.province,
+        lease.propertyId.postalCode
+      ].filter(Boolean).join(", ")
+    : "-";
+
+  const tenantAddress =
+    tenant?.address ||
+    propertyAddress;
+
+  const leaseStartLabel = formatDate(
+    lease?.leaseStart || tenant?.leaseStart
+  );
+
+  const leaseEndLabel =
+    lease?.leaseEnd || tenant?.leaseEnd
+      ? formatDate(lease?.leaseEnd || tenant?.leaseEnd)
+      : "Ongoing";
+
+  const bank = business?.bank || {};
+%>
+
+<div class="watermark"><%= watermarkLabel %></div>
+
+<div class="top-shell">
+  <div class="top-row">
+    <div class="brand-block">
+      <span class="eyebrow">Track My Rent Invoice</span>
+      <h1 class="brand-name"><%= business?.name || "Rental Business" %></h1>
+      <p class="brand-subtext">
+        A polished statement of rental charges, payments, and the remaining balance for this billing cycle.
+      </p>
+      <ul class="contact-lines">
+        <% if (business?.address) { %><li><strong>Address:</strong> <%= business.address %></li><% } %>
+        <% if (business?.email) { %><li><strong>Email:</strong> <%= business.email %></li><% } %>
+        <% if (business?.phone) { %><li><strong>Phone:</strong> <%= business.phone %></li><% } %>
+        <% if (business?.regNumber) { %><li><strong>Reg No:</strong> <%= business.regNumber %></li><% } %>
+        <% if (business?.vatNumber) { %><li><strong>VAT No:</strong> <%= business.vatNumber %></li><% } %>
+      </ul>
+    </div>
+
+    <div class="invoice-meta">
+      <h2>Tax Invoice</h2>
+      <p class="meta-line"><strong>Invoice No:</strong> <%= invoice?.invoiceNumber || "-" %></p>
+      <p class="meta-line"><strong>Invoice Date:</strong> <%= invoiceDateLabel %></p>
+      <p class="meta-line"><strong>Due Date:</strong> <%= dueDateLabel %></p>
+      <p class="meta-line"><strong>Generated:</strong> <%= generatedDateLabel %></p>
+      <p class="meta-line"><strong>Billing Period:</strong> <%= periodLabel %></p>
+      <span class="status-pill <%= statusClass %>"><%= watermarkLabel %></span>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="summary-label">Amount Due</span>
+      <span class="summary-value"><%= money(totals?.due) %></span>
+      <span class="summary-subvalue">Outstanding balance on this invoice</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Total Charged</span>
+      <span class="summary-value"><%= money(totals?.charged) %></span>
+      <span class="summary-subvalue">All debit entries billed for this period</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Total Paid</span>
+      <span class="summary-value"><%= money(totals?.paid) %></span>
+      <span class="summary-subvalue">Credits already received and allocated</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Payment Reference</span>
+      <span class="summary-value"><%= lease?.referenceCode || invoice?.invoiceNumber || "-" %></span>
+      <span class="summary-subvalue">Use this reference when making payment</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <h3>Who this invoice is for</h3>
+    <p>Review the billed tenant, property details, and lease context before sending or filing this invoice.</p>
+  </div>
+
+  <div class="info-grid">
+    <div class="section-card">
+      <div class="section-card-head"><strong>Bill To</strong></div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Tenant</td>
+          <td class="value"><%= tenant?.fullName || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Email</td>
+          <td class="value"><%= tenant?.email || "-" %></td>
+        </tr>
+        <tr>
+          <td class="label">Address</td>
+          <td class="value"><%= tenantAddress || "-" %></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-head"><strong>Rental Details</strong></div>
+      <table class="info-table">
+        <tr>
+          <td class="label">Property</td>
+          <td class="value"><%= propertyAddress %></td>
+        </tr>
+        <tr>
+          <td class="label">Lease Start</td>
+          <td class="value"><%= leaseStartLabel %></td>
+        </tr>
+        <tr>
+          <td class="label">Lease End</td>
+          <td class="value"><%= leaseEndLabel %></td>
+        </tr>
+        <tr>
+          <td class="label">Monthly Rent</td>
+          <td class="value"><%= money(lease?.monthlyRent) %></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="table-shell">
+  <div class="table-head">
+    <h3>Invoice line items</h3>
+    <p>Each debit and credit entry contributing to the billed total for the selected month is listed below.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th class="right">Qty</th>
+        <th class="right">Unit Price</th>
+        <th class="right">VAT</th>
+        <th class="right">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (items && items.length) { %>
+        <% items.forEach((item) => { %>
+          <tr>
+            <td><%= item.date || "-" %></td>
+            <td>
+              <strong><%= item.description || "-" %></strong>
+            </td>
+            <td class="right"><%= item.quantity || 1 %></td>
+            <td class="right"><%= money(item.unitPrice) %></td>
+            <td class="right"><%= item.vat || "-" %></td>
+            <td class="right"><%= money(item.amount) %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr>
+          <td colspan="6" class="muted">No invoice items were available for this billing period.</td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="totals-grid">
+  <div class="bank-shell">
+    <div class="section-card-head"><strong>Payment Instructions</strong></div>
+    <div class="bank-body">
+      <p class="note-copy">
+        Match the payment reference shown above when paying rent so the transaction can be allocated correctly in Track My Rent.
+      </p>
+      <div class="bank-grid">
+        <div class="bank-item">
+          <span class="bank-label">Bank</span>
+          <span class="bank-value"><%= bank.bankName || "-" %></span>
+        </div>
+        <div class="bank-item">
+          <span class="bank-label">Account Name</span>
+          <span class="bank-value"><%= bank.accountName || business?.name || "-" %></span>
+        </div>
+        <div class="bank-item">
+          <span class="bank-label">Account Number</span>
+          <span class="bank-value"><%= bank.accountNumber || "-" %></span>
+        </div>
+        <div class="bank-item">
+          <span class="bank-label">Branch Code</span>
+          <span class="bank-value"><%= bank.branchCode || "-" %></span>
+        </div>
+        <div class="bank-item">
+          <span class="bank-label">Account Type</span>
+          <span class="bank-value"><%= bank.accountType || "-" %></span>
+        </div>
+        <div class="bank-item">
+          <span class="bank-label">Invoice Reference</span>
+          <span class="bank-value"><%= invoice?.invoiceNumber || "-" %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="totals-shell">
+    <div class="section-card-head"><strong>Balance Summary</strong></div>
+    <div class="totals-body">
+      <div class="totals-row">
+        <span>Total Charged</span>
+        <strong><%= money(totals?.charged) %></strong>
+      </div>
+      <div class="totals-row">
+        <span>Total Paid</span>
+        <strong><%= money(totals?.paid) %></strong>
+      </div>
+      <div class="totals-row due-row">
+        <span><strong>Amount Due</strong></span>
+        <span class="due-amount"><%= money(totals?.due) %></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="footnote">
+  This is a system-generated invoice from Track My Rent. Keep it with your month-end records and tenant communication history.
+</p>
+</body>
+</html>

@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Assistant | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
+  <script src="assets/js/config.js"></script>
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR (reuse same sidebar) -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Menu</div>
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+      <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link ">Expenses</a>
+      <a href="invoices.html" class="sidebar-link ">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+ <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+      <a href="notifications.html" class="sidebar-link">Notifications</a>
+    <a href="ai-assistant.html" class="sidebar-link active">AI Assistant</a>
+    <div class="sidebar-section-title">Settings</div>
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+<a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+<a href="pricing.html" class="sidebar-link">Subscription</a>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <header class="header">
+      <div class="header-left">
+        <h2>AI Rent Assistant</h2>
+        <span class="tagline">
+          Ask questions about rent, arrears, tenants, maintenance and cashflow
+        </span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <section class="card" style="max-width:900px;">
+        <label for="aiQuestion" style="font-size:0.85rem; color:#6b7280;">
+          Ask a question
+        </label>
+
+        <textarea
+          id="aiQuestion"
+          placeholder="e.g. Who is behind on rent this month?"
+          style="
+            width:100%;
+            min-height:120px;
+            margin-top:6px;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid #d1d5db;
+            font-size:0.95rem;
+          "
+        ></textarea>
+
+        <div style="margin-top:10px;">
+          <button class="btn-primary" onclick="askAI()">
+            Ask AI
+          </button>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:16px;">
+        <h3>AI Response</h3>
+        <div
+          id="aiAnswer"
+          role="status"
+          aria-live="polite"
+          style="
+            white-space:pre-wrap;
+            font-size:0.95rem;
+            color:#111827;
+            margin-top:10px;
+          "
+        >
+          Ask a question to get started.
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="assets/js/ai-helper.js"></script>  
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+
+

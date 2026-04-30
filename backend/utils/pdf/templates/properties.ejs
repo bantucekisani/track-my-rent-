@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial; font-size: 12px; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; }
+    th { background: #f4f4f4; }
+  </style>
+</head>
+<body>
+
+<h1><%= title %></h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Address</th>
+      <th>Units</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% properties.forEach(p => { %>
+      <tr>
+        <td><%= p.name %></td>
+        <td><%= p.address %></td>
+        <td><%= p.unitCount %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+</body>
+</html>

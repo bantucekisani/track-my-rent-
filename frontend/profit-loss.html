@@ -1,0 +1,116 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profit & Loss | Track My Rent</title>
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <script src="assets/js/config.js"></script>
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="utilities.html" class="sidebar-link">Utilities</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="reports.html" class="sidebar-link active">Reports</a>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <h2>Profit & Loss</h2>
+      <p class="subtle">Income vs expenses for the selected period</p>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- FILTERS -->
+      <div class="card" style="max-width:520px">
+        <form id="plForm">
+
+          <label>From</label>
+          <input type="date" id="startDate">
+
+          <label>To</label>
+          <input type="date" id="endDate">
+
+          <button class="btn-primary" type="submit">
+            Generate Report
+          </button>
+
+        </form>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="card" id="plResults" style="display:none;max-width:520px">
+
+        <table class="table">
+          <tbody>
+            <tr>
+              <th>Total Income</th>
+              <td id="plIncome">--</td>
+            </tr>
+            <tr>
+              <th>Total Expenses</th>
+              <td id="plExpenses">--</td>
+            </tr>
+            <tr>
+              <th>Net Profit</th>
+              <td id="plProfit"><strong>--</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+    </main>
+
+  </div>
+</div>
+<div class="card" style="max-width:720px">
+  <h3>Monthly Breakdown</h3>
+
+  <label>Year</label>
+  <select id="plYear"></select>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Income</th>
+        <th>Expenses</th>
+        <th>Profit</th>
+      </tr>
+    </thead>
+    <tbody id="monthlyPlBody">
+      <tr><td colspan="4">Select a year</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="assets/js/profit-loss.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+</body>
+</html>
+
+
+

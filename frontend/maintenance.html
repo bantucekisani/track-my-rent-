@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Maintenance | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <script src="assets/js/config.js"></script>
+
+  <style>
+    .badge-open {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-resolved {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .row-resolved {
+      opacity: 0.6;
+    }
+  </style>
+  <link rel="stylesheet" href="assets/css/toast.css" />
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-circle">TMR</div>
+    <div class="brand">
+      <h1>Track My Rent</h1>
+      <span>Rental automation</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section-title">Menu</div>
+
+  <a href="dashboard.html" class="sidebar-link ">Dashboard</a>
+  <a href="properties.html" class="sidebar-link">Properties & Units</a>
+  <a href="tenants.html" class="sidebar-link">Tenants</a>
+  <a href="leases.html" class="sidebar-link">Leases</a>
+  <a href="payments.html" class="sidebar-link">Payments</a>
+<a href="expenses.html" class="sidebar-link ">Expenses</a>
+  <!-- âœ… INVOICES -->
+  <a href="invoices.html" class="sidebar-link">
+    Invoices
+  </a>
+
+  <a href="reports.html" class="sidebar-link">Reports</a>
+  <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+  <a href="notifications.html" class="sidebar-link">Notifications</a>
+   <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+  <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
+
+  <div class="sidebar-section-title">Settings</div>
+
+  <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+  <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+ <a href="pricing.html" class="sidebar-link">Subscription</a>
+
+<div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div>
+        <h2>Maintenance</h2>
+        <div class="ledger-meta">
+          <strong>Tenant:</strong> <span id="tenantName">All</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="openMaintenanceModal()">
+        + Add Job
+      </button>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Tenant</th>
+            <th>Title</th>
+            <th>Cost (R)</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody id="maintenanceTableBody">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+
+    </main>
+  </div>
+</div>
+
+<!-- ADD MAINTENANCE MODAL -->
+<div class="modal" id="maintenanceModal">
+  <form id="maintenanceForm" class="modal-content">
+
+    <h3>Add Maintenance Job</h3>
+
+    <select id="tenantId" required>
+      <option value="">Select tenant</option>
+    </select>
+
+    <input
+      type="text"
+      id="title"
+      placeholder="Job title (e.g. Plumbing repair)"
+      required
+    >
+
+    <textarea
+      id="description"
+      placeholder="Description (optional)"
+    ></textarea>
+
+    <input
+      type="number"
+      id="cost"
+      placeholder="Cost (R)"
+      min="0"
+      step="0.01"
+      required
+    >
+
+    <div class="modal-actions">
+      <button type="submit" class="btn-primary">Save</button>
+      <button
+        type="button"
+        class="btn-secondary"
+        onclick="closeMaintenanceModal()"
+      >
+        Cancel
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script src="assets/js/maintenance.js"></script>
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
+
+  <div class="footer-copy">
+    © 2026 Track My Rent
+  </div>
+</footer>
+  <script src="assets/js/toast.js"></script>
+</body>
+</html>
+
+
+
+

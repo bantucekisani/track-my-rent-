@@ -1,0 +1,166 @@
+.hidden {
+  display: none !important;
+}
+
+.tutorial-trigger {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 9998;
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  z-index: 10000;
+}
+
+.tutorial-step-count {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tutorial-tooltip h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.tutorial-tooltip p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.tutorial-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.tutorial-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tutorial-btn.primary {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.tutorial-btn.secondary {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+.tutorial-btn.ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 9999;
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
+}
+
+.tutorial-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.tutorial-page-title {
+  margin: 0 0 10px;
+  font-size: 40px;
+  color: #0f172a;
+}
+
+.tutorial-page-copy {
+  margin: 0 0 28px;
+  color: #475569;
+  font-size: 16px;
+}
+
+.tutorial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.tutorial-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.tutorial-card h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.tutorial-card p {
+  margin: 0 0 14px;
+  color: #64748b;
+  min-height: 48px;
+}
+
+.tutorial-progress {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+.tutorial-card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.tutorial-card-actions button {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tutorial-card-actions .start-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.tutorial-card-actions .reset-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}

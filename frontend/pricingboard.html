@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>Pricing | Track My Rent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="assets/css/dashboard.css">
+<script src="assets/js/config.js"></script>
+
+<style>
+
+body{
+background:#f3f4f6;
+font-family:system-ui;
+}
+
+.pricing-container{
+max-width:1200px;
+margin:auto;
+padding:60px 20px;
+}
+
+.pricing-header{
+text-align:center;
+margin-bottom:50px;
+}
+
+.pricing-header h1{
+font-size:36px;
+margin-bottom:10px;
+}
+
+.pricing-header p{
+color:#6b7280;
+}
+
+.pricing-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:30px;
+margin-top:40px;
+}
+
+.plan-card{
+background:white;
+border-radius:14px;
+padding:30px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+text-align:center;
+transition:0.2s;
+}
+
+.plan-card:hover{
+transform:translateY(-6px);
+}
+
+.plan-title{
+font-size:22px;
+font-weight:600;
+margin-bottom:10px;
+}
+
+.plan-price{
+font-size:36px;
+font-weight:700;
+color:#2563eb;
+margin-bottom:10px;
+}
+
+.plan-units{
+font-size:14px;
+color:#6b7280;
+margin-bottom:20px;
+}
+
+.plan-features{
+list-style:none;
+padding:0;
+margin-bottom:25px;
+font-size:14px;
+}
+
+.plan-features li{
+margin-bottom:8px;
+}
+
+.plan-btn{
+background:#2563eb;
+color:white;
+border:none;
+padding:12px 20px;
+border-radius:8px;
+cursor:pointer;
+font-weight:600;
+width:100%;
+}
+
+.plan-btn:hover{
+background:#1e40af;
+}
+
+.free{
+border:2px solid #10b981;
+}
+
+.current-plan{
+background:#e5e7eb;
+cursor:not-allowed;
+}
+
+.back-btn{
+display:inline-block;
+margin-top:20px;
+padding:8px 16px;
+background:#e5e7eb;
+border-radius:6px;
+text-decoration:none;
+color:#111;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="pricing-container">
+
+<div class="pricing-header">
+
+<h1>Track My Rent Pricing</h1>
+
+<p>Choose a plan that fits your property portfolio</p>
+
+<a href="index.html" class="back-btn">Back to Dashboard</a>
+
+</div>
+
+<div class="pricing-grid">
+
+<!-- FREE PLAN -->
+
+<div class="plan-card free">
+
+<div class="plan-title">Free</div>
+
+<div class="plan-price">R0</div>
+
+<div class="plan-units">Up to 2 Units</div>
+
+<ul class="plan-features">
+
+<li>- Tenant Management</li>
+<li>- Payment Tracking</li>
+<li>- Basic Reports</li>
+<li>- Property Dashboard</li>
+
+</ul>
+
+<button class="plan-btn current-plan" disabled>
+Current Plan
+</button>
+
+</div>
+
+<!-- STARTER -->
+
+<div class="plan-card">
+
+<div class="plan-title">Starter</div>
+
+<div class="plan-price">R99 / month</div>
+
+<div class="plan-units">Up to 10 Units</div>
+
+<ul class="plan-features">
+
+<li>- Everything in Free</li>
+<li>- Invoices</li>
+<li>- Notifications</li>
+<li>- Expense Tracking</li>
+
+</ul>
+
+<button class="plan-btn" onclick="upgradePlan('Starter')">
+Upgrade
+</button>
+
+</div>
+
+<!-- GROWTH -->
+
+<div class="plan-card">
+
+<div class="plan-title">Growth</div>
+
+<div class="plan-price">R199 / month</div>
+
+<div class="plan-units">Up to 50 Units</div>
+
+<ul class="plan-features">
+
+<li>- Everything in Starter</li>
+<li>- Advanced Reports</li>
+<li>- Bank Import</li>
+<li>- AI Assistant</li>
+
+</ul>
+
+<button class="plan-btn" onclick="upgradePlan('Growth')">
+Upgrade
+</button>
+
+</div>
+
+<!-- PRO -->
+
+<div class="plan-card">
+
+<div class="plan-title">Pro</div>
+
+<div class="plan-price">R399 / month</div>
+
+<div class="plan-units">Unlimited Units</div>
+
+<ul class="plan-features">
+
+<li>- Everything in Growth</li>
+<li>- Unlimited Properties</li>
+<li>- Priority Support</li>
+<li>- Future Features</li>
+
+</ul>
+
+<button class="plan-btn" onclick="upgradePlan('Pro')">
+Upgrade
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function upgradePlan(plan){
+
+if(!confirm(`Upgrade to ${plan} plan?`)) return;
+
+try{
+
+await fetch(`${API_URL}/subscription/upgrade`,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization:`Bearer ${user.token}`
+},
+
+body:JSON.stringify({plan})
+
+});
+
+alert("Subscription upgraded successfully");
+
+location.href="register.html";
+
+}catch(err){
+
+alert("Upgrade failed");
+
+}
+
+}
+
+</script>
+
+<footer class="site-footer">
+
+<a href="terms.html">Terms of Service</a>
+<a href="privacy.html">Privacy Policy</a>
+<a href="subscription-policy.html">Subscription Policy</a>
+<a href="acceptable-use.html">Acceptable Use</a>
+
+<p>© 2026 Track My Rent</p>
+
+</footer>
+
+</body>
+
+</html>
+
+
+

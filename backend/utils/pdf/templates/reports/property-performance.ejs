@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      padding: 40px;
+      color: #111;
+    }
+
+    h2 {
+      margin-bottom: 4px;
+    }
+
+    .sub {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #f3f4f6;
+      border-bottom: 2px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .amount {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      left: 40px;
+      right: 40px;
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      border-top: 1px solid #ddd;
+      padding-top: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Property Performance Report</h2>
+  <div class="sub">Generated on <%= generatedAt %></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Units</th>
+        <th>Occupied</th>
+        <th>Vacant</th>
+        <th>Occupancy %</th>
+        <th class="amount">Collected</th>
+        <th class="amount">Outstanding</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(r => { %>
+        <tr>
+          <td><%= r.name %></td>
+          <td><%= r.units %></td>
+          <td><%= r.occupied %></td>
+          <td><%= r.vacant %></td>
+          <td><%= r.occupancy %>%</td>
+          <td class="amount">R<%= r.collected %></td>
+          <td class="amount">R<%= r.outstanding %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Track My Rent · System-generated report
+  </div>
+
+</body>
+</html>
