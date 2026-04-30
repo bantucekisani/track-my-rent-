@@ -11,7 +11,6 @@ let dashboardLoaded = false;
 let dashboardLoading = false;
 
 const DASHBOARD_CACHE_KEY = "dashboardCache";
-const DASHBOARD_CACHE_TTL = 60 * 1000;
 const user = JSON.parse(localStorage.getItem("user"));
 
 if (!user || !user.token) {
@@ -40,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     setDashboardLoadingState(true);
-    hydrateFromCache();
+    clearDashboardCache();
 
     loadDashboard();
     loadSubscription();
@@ -565,38 +564,13 @@ function drawOccupancyChart(occupied, vacant) {
    CACHE
 ====================================================== */
 
-function cacheDashboard(data) {
-
-  localStorage.setItem(
-    DASHBOARD_CACHE_KEY,
-    JSON.stringify({
-      ts: Date.now(),
-      data
-    })
-  );
-
+function cacheDashboard() {
+  clearDashboardCache();
 }
 
 
-function hydrateFromCache() {
-
-  const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
-
-  if (!raw) return;
-
-  try {
-
-    const { ts, data } = JSON.parse(raw);
-
-    if (Date.now() - ts > DASHBOARD_CACHE_TTL)
-      return;
-
-    dashboardLoaded = true;
-
-    paintDashboard(data);
-
-  } catch {}
-
+function clearDashboardCache() {
+  localStorage.removeItem(DASHBOARD_CACHE_KEY);
 }
 
 
