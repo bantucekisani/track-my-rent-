@@ -16,6 +16,8 @@ services:
         value: https://trackmyrent.co.za,https://www.trackmyrent.co.za
       - key: FRONTEND_URL
         value: https://trackmyrent.co.za
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/backend/.cache/puppeteer
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET

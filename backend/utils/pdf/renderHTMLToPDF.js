@@ -1,52 +1,40 @@
 /**
- * Renders HTML string to PDF buffer
+ * Renders an HTML string to a PDF buffer.
  * @param {string} html
- * @returns {Buffer}
+ * @returns {Promise<Buffer>}
  */
 module.exports = async function renderHTMLToPDF(html) {
-  // ✅ Node 24 compatible Puppeteer import
-  const puppeteer = (await import("puppeteer")).default;
+  const puppeteer = require("puppeteer");
 
   const browser = await puppeteer.launch({
-    headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu"
+    ]
   });
 
   try {
     const page = await browser.newPage();
 
     await page.setContent(html, {
-      waitUntil: "networkidle0"
+      waitUntil: "domcontentloaded",
+      timeout: 30000
     });
 
     const pdfBuffer = await page.pdf({
-  format: "A4",
-  printBackground: true,
+      format: "A4",
+      printBackground: true,
+      margin: {
+        top: "20mm",
+        right: "15mm",
+        bottom: "20mm",
+        left: "15mm"
+      }
+    });
 
-  displayHeaderFooter: true,
-
-  headerTemplate: `<div></div>`,
-
-  footerTemplate: `
-    <div style="
-      width: 100%;
-      font-size: 10px;
-      padding: 5px 0;
-      text-align: center;
-      color: #555;
-    ">
-      Page <span class="pageNumber"></span> of 
-      <span class="totalPages"></span>
-    </div>
-  `,
-
-  margin: {
-    top: "20mm",
-    right: "15mm",
-    bottom: "25mm",
-    left: "15mm"
-  }
-});
     return pdfBuffer;
   } finally {
     await browser.close();
