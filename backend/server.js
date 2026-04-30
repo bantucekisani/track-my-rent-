@@ -9,6 +9,8 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === "production";
+const frontendDir = path.resolve(__dirname, "../frontend");
 const localOrigins = [
   "http://127.0.0.1:5500",
   "http://localhost:5000",
@@ -25,6 +27,8 @@ const configuredOrigins = (process.env.CORS_ORIGINS || "")
 
 const allowedOrigins = new Set([
   ...localOrigins,
+  "https://trackmyrent.co.za",
+  "https://www.trackmyrent.co.za",
   ...configuredOrigins
 ]);
 require("./cron");
@@ -58,6 +62,22 @@ app.use(
 
 app.use(morgan("dev"));
 app.use(express.json());
+app.set("trust proxy", 1);
+
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  if (isProduction) {
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains"
+    );
+  }
+
+  next();
+});
 
 /* ======================================================
    STATIC FILES
@@ -66,6 +86,7 @@ app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
 );
+app.use(express.static(frontendDir));
 
 /* ======================================================
    ROUTE IMPORTS – CORE
@@ -141,7 +162,23 @@ app.use("/api/financial-settings", settingsRoutes);
    HEALTH CHECK
 ====================================================== */
 app.get("/", (req, res) => {
-  res.send("✅ Track My Rent API Running");
+  res.sendFile(path.join(frontendDir, "index.html"));
+});
+
+app.get("/healthz", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "track-my-rent",
+    uptime: process.uptime()
+  });
+});
+
+app.get("/api/healthz", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "track-my-rent-api",
+    uptime: process.uptime()
+  });
 });
 
 /* ======================================================
@@ -152,6 +189,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     message: "Internal server error"
   });
+});
+
+app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => {
+  res.sendFile(path.join(frontendDir, "index.html"));
 });
 
 
