@@ -9,6 +9,8 @@ let occupancyChart = null;
 
 let dashboardLoaded = false;
 let dashboardLoading = false;
+let latestDashboardSummary = null;
+let latestRentStatus = null;
 
 const DASHBOARD_CACHE_KEY = "dashboardCache";
 const SETUP_GUARD_DISMISSED_KEY = "setupGuardDismissed";
@@ -174,6 +176,8 @@ function paintDashboard(data) {
     window.APP_LOCALE = data.locale || "en-ZA";
   }
   updateDashboardQuickstart(data);
+  latestDashboardSummary = data;
+  renderDashboardAttention();
 
   setText("totalProperties", data.totals.totalProperties);
   setText("totalUnits", data.totals.totalUnits);
@@ -188,6 +192,19 @@ function paintDashboard(data) {
   setText("rentExpected", formatMoney(expected));
   setText("rentCollected", formatMoney(collected));
   setText("rentOutstanding", formatMoney(outstanding));
+
+  const summaryArrearsAmount = Number(data.arrears?.totalOutstanding || 0);
+  const summaryArrearsTenants = Number(data.arrears?.lateTenantsCount || 0);
+
+  setText("arrearsTenants", summaryArrearsTenants);
+  setText("totalRollingArrears", formatMoney(summaryArrearsAmount));
+  setText("arrearsAmount", formatMoney(summaryArrearsAmount));
+  setText(
+    "arrearsInsight",
+    summaryArrearsAmount > 0
+      ? `${summaryArrearsTenants} tenant${summaryArrearsTenants === 1 ? "" : "s"} need follow-up.`
+      : "No tenant arrears are showing right now."
+  );
 
   setText(
     "vatCollected",
@@ -222,6 +239,8 @@ async function loadRentStatus() {
     setText("rentPartialCount", data.partial);
     setText("rentUnpaidCount", data.unpaid);
     setText("rentTotalCount", data.total);
+    latestRentStatus = data;
+    renderDashboardAttention();
 
   } catch (err) {
 
@@ -256,6 +275,21 @@ async function loadDashboardArrears() {
 
     setText("arrearsTenants", tenantCount);
     setText("arrearsAmount", formatMoney(totalOutstanding));
+    setText(
+      "arrearsInsight",
+      totalOutstanding > 0
+        ? `${tenantCount} tenant${tenantCount === 1 ? "" : "s"} need follow-up.`
+        : "No tenant arrears are showing right now."
+    );
+
+    if (latestDashboardSummary) {
+      latestDashboardSummary.arrears = {
+        ...(latestDashboardSummary.arrears || {}),
+        lateTenantsCount: tenantCount,
+        totalOutstanding
+      };
+      renderDashboardAttention();
+    }
 
     const rollingEl = document.getElementById("totalRollingArrears");
 
@@ -440,6 +474,122 @@ function updateDashboardQuickstart(data) {
   renderSetupGuardBubble(nextStep, complete);
   quickstart.classList.remove("hidden");
 }
+
+function getNextSetupStep(data) {
+  return getSetupGuideSteps(data).find(step => !step.done && !step.finalStep);
+}
+
+function getAttentionItems(summary, rentStatus) {
+  if (!summary) {
+    return [];
+  }
+
+  const totals = summary.totals || {};
+  const rent = summary.rent || {};
+  const arrears = summary.arrears || {};
+  const items = [];
+  const setupStep = getNextSetupStep(summary);
+  const outstandingThisMonth = Number(rent.outstandingThisMonth || 0);
+  const arrearsAmount = Number(arrears.totalOutstanding || 0);
+  const arrearsTenants = Number(arrears.lateTenantsCount || 0);
+  const unpaidCount = Number(rentStatus?.unpaid || 0);
+  const partialCount = Number(rentStatus?.partial || 0);
+  const vacantUnits = Number(totals.vacantUnits || 0);
+
+  if (setupStep) {
+    items.push({
+      tone: "setup",
+      label: "Setup",
+      title: setupStep.title,
+      text: setupStep.text,
+      href: setupStep.href,
+      action: setupStep.action
+    });
+  }
+
+  if (arrearsAmount > 0 || arrearsTenants > 0) {
+    items.push({
+      tone: "danger",
+      label: "Arrears",
+      title: `${arrearsTenants || "Some"} tenant${arrearsTenants === 1 ? "" : "s"} need follow-up`,
+      text: `${formatMoney(arrearsAmount)} is outstanding across previous periods.`,
+      href: "reports.html#arrears",
+      action: "View arrears"
+    });
+  }
+
+  if (outstandingThisMonth > 0) {
+    items.push({
+      tone: "warning",
+      label: "This month",
+      title: "Rent still outstanding",
+      text: `${formatMoney(outstandingThisMonth)} is not collected for the current month yet.`,
+      href: "payments.html",
+      action: "Record payments"
+    });
+  }
+
+  if (unpaidCount > 0 || partialCount > 0) {
+    items.push({
+      tone: "warning",
+      label: "Collection",
+      title: "Check unpaid and partial tenants",
+      text: `${unpaidCount} unpaid and ${partialCount} partially paid for this month.`,
+      href: "reports.html",
+      action: "Review rent status"
+    });
+  }
+
+  if (!setupStep && vacantUnits > 0) {
+    items.push({
+      tone: "neutral",
+      label: "Vacancy",
+      title: "Vacant units available",
+      text: `${vacantUnits} unit${vacantUnits === 1 ? "" : "s"} are vacant. Check if they should be leased.`,
+      href: "properties.html",
+      action: "View units"
+    });
+  }
+
+  if (!items.length) {
+    items.push({
+      tone: "success",
+      label: "Clear",
+      title: "Nothing urgent for today",
+      text: "Setup, arrears, and this month's rent position look calm right now.",
+      href: "reports.html",
+      action: "Open reports"
+    });
+  }
+
+  return items.slice(0, 4);
+}
+
+function renderDashboardAttention() {
+  const host = document.getElementById("attentionItems");
+  const summaryEl = document.getElementById("attentionSummary");
+
+  if (!host || !summaryEl || !latestDashboardSummary) {
+    return;
+  }
+
+  const items = getAttentionItems(latestDashboardSummary, latestRentStatus);
+  const urgentCount = items.filter(item => ["danger", "warning", "setup"].includes(item.tone)).length;
+
+  summaryEl.textContent =
+    urgentCount > 0
+      ? `${urgentCount} action${urgentCount === 1 ? "" : "s"} deserve attention before month-end.`
+      : "No urgent actions are showing right now.";
+
+  host.innerHTML = items.map(item => `
+    <article class="attention-item attention-${item.tone}">
+      <span class="attention-status">${safeText(item.label)}</span>
+      <strong>${safeText(item.title)}</strong>
+      <p>${safeText(item.text)}</p>
+      <a href="${item.href}">${safeText(item.action)}</a>
+    </article>
+  `).join("");
+}
 async function loadTutorialPrompt() {
   try {
     const res = await fetch(`${API_URL}/tutorials/me`, {
@@ -525,12 +675,12 @@ async function loadRecentPaymentsFast() {
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="empty-row">
-            <div style="padding:18px 8px;">
-              <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">No recent payments yet.</div>
-              <div style="color:#64748b; margin-bottom:12px;">Record your first tenant payment to start building cashflow history.</div>
-              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <div class="empty-state">
+              <strong>No recent payments yet.</strong>
+              <p>Record your first tenant payment to start building cashflow history.</p>
+              <div class="empty-state-actions">
                 <a class="primary-link" href="payments.html">Record Payment</a>
-                <a class="secondary-link" href="tenants.html">View Tenants</a>
+                <a class="secondary-link" href="tenants.html?setup=1">View Tenants</a>
               </div>
             </div>
           </td>

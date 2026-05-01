@@ -202,12 +202,12 @@ function renderLeases(list) {
     tbody.innerHTML =
       `<tr>
         <td colspan="8" class="empty-row">
-          <div style="padding:18px 8px;">
-            <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">No leases yet.</div>
-            <div style="color:#64748b; margin-bottom:12px;">Create a lease after you have added a tenant and linked unit.</div>
-            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <div class="empty-state">
+            <strong>No leases yet.</strong>
+            <p>Create a lease after you have added a tenant and linked unit.</p>
+            <div class="empty-state-actions">
               <button class="btn-primary btn-sm" onclick="document.getElementById('addLeaseBtn').click()">Create Lease</button>
-              <button class="btn-secondary btn-sm" onclick="window.location.href='tenants.html'">Review Tenants</button>
+              <button class="btn-secondary btn-sm" onclick="window.location.href='tenants.html?setup=1'">Review Tenants</button>
             </div>
           </div>
         </td>

@@ -226,12 +226,12 @@ function renderTenants(list) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="empty-row">
-          <div style="padding:18px 8px;">
-            <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">No tenants yet.</div>
-            <div style="color:#64748b; margin-bottom:12px;">Add your first tenant once you have a property or unit ready.</div>
-            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <div class="empty-state">
+            <strong>No tenants yet.</strong>
+            <p>Add your first tenant once you have a property or unit ready.</p>
+            <div class="empty-state-actions">
               <button class="btn-primary btn-sm" onclick="document.getElementById('addTenantBtn').click()">Add Tenant</button>
-              <button class="btn-secondary btn-sm" onclick="window.location.href='properties.html'">Go to Properties</button>
+              <button class="btn-secondary btn-sm" onclick="window.location.href='properties.html?setup=1'">Go to Properties</button>
             </div>
           </div>
         </td>

@@ -150,6 +150,27 @@ class="setup-guard-bubble hidden"
 aria-live="polite"
 ></aside>
 
+<section class="attention-panel" id="dashboardAttention">
+<div class="attention-heading">
+<div>
+<span class="page-eyebrow">Needs Attention</span>
+<h3>Today's landlord checklist</h3>
+<p id="attentionSummary">
+Loading the most important setup, rent, and arrears actions for today.
+</p>
+</div>
+<a class="secondary-link" href="reports.html">Open Reports</a>
+</div>
+
+<div class="attention-grid" id="attentionItems">
+<article class="attention-item">
+<span class="attention-status">Checking</span>
+<strong>Reviewing your portfolio</strong>
+<p>We are loading the latest rent and setup position.</p>
+</article>
+</div>
+</section>
+
 <!-- STATS -->
 <section class="stats-grid">
 
@@ -353,6 +374,10 @@ Upgrade Plan
 
 <p class="summary-line">
 <span id="arrearsAmount">--</span> total arrears
+</p>
+
+<p class="arrears-helper" id="arrearsInsight">
+Loading arrears position...
 </p>
 
 <a href="reports.html" class="link-sm">View arrears report</a>

@@ -53,12 +53,14 @@ async function loadUnits() {
 
   if (!data.units?.length) {
     grid.innerHTML = `
-      <div class="card">
-        <h3>No units yet.</h3>
+      <div class="card empty-state-card">
+        <div class="empty-state">
+        <strong>No units yet.</strong>
         <p>Add your first unit for this property so you can attach tenants and leases.</p>
-        <div class="card-actions">
+        <div class="empty-state-actions">
           <button class="btn-primary" onclick="openAddUnitModal()">Add Unit</button>
-          <button class="btn-secondary" onclick="window.location.href='tutorials.html'">View Tutorial</button>
+          <button class="btn-secondary" onclick="window.location.href='properties.html?setup=1'">View Properties</button>
+        </div>
         </div>
       </div>`;
     return;

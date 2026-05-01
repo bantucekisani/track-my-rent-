@@ -100,12 +100,14 @@ async function loadProperties() {
 
     if (!data.properties || !data.properties.length) {
       grid.innerHTML = `
-        <div class="card">
-          <div class="card-label">No properties yet.</div>
-          <div class="card-sub">Start by adding your first property so you can create units, tenants, and leases.</div>
-          <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="card empty-state-card">
+          <div class="empty-state">
+            <strong>No properties yet.</strong>
+            <p>Start by adding your first property so you can create units, tenants, and leases.</p>
+            <div class="empty-state-actions">
             <button class="btn-primary btn-sm" onclick="document.getElementById('addPropertyBtn').click()">Add Property</button>
-            <button class="btn-secondary btn-sm" onclick="window.location.href='tutorials.html'">View Tutorial</button>
+            <button class="btn-secondary btn-sm" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+            </div>
           </div>
         </div>`;
       return;

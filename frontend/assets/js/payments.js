@@ -531,12 +531,12 @@ function renderPayments(list){
     tbody.innerHTML =
       `<tr>
         <td colspan="8" class="empty-row">
-          <div style="padding:18px 8px;">
-            <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">No payments recorded yet.</div>
-            <div style="color:#64748b; margin-bottom:12px;">Once tenants start paying rent, you can capture each payment here.</div>
-            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <div class="empty-state">
+            <strong>No payments recorded yet.</strong>
+            <p>Once tenants start paying rent, you can capture each payment here.</p>
+            <div class="empty-state-actions">
               <button class="btn-primary btn-sm" onclick="document.getElementById('addPaymentBtn').click()">Record Payment</button>
-              <button class="btn-secondary btn-sm" onclick="window.location.href='tenants.html'">View Tenants</button>
+              <button class="btn-secondary btn-sm" onclick="window.location.href='tenants.html?setup=1'">View Tenants</button>
             </div>
           </div>
         </td>
