@@ -113,7 +113,7 @@ async function loadProperties() {
 
     data.properties.forEach(p => {
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = "card property-card";
 
       const address = [p.addressLine1, p.city]
         .filter(Boolean)
@@ -132,7 +132,7 @@ async function loadProperties() {
           Units: <strong>${p.unitCount || 0}</strong>
         </div>
 
-        <div style="margin-top:12px; display:flex; gap:8px;">
+        <div class="property-card-actions">
           <button class="btn-secondary btn-sm"
             onclick="editProperty('${p._id}')">
             Edit

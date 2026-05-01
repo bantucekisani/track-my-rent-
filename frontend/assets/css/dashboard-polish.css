@@ -596,6 +596,34 @@ table td {
   margin-bottom: 0;
 }
 
+.property-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 230px;
+  overflow: visible;
+}
+
+.property-card .card-value {
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.property-card-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.property-card-actions .btn-sm {
+  min-height: 40px;
+  width: 100%;
+  padding: 0 10px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
 .operations-filter-panel {
   grid-template-columns: minmax(260px, 0.92fr) minmax(0, 1.18fr);
 }
