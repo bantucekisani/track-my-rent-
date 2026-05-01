@@ -291,15 +291,15 @@ function getSetupGuideSteps(data) {
     ? String(totals.firstPropertyId)
     : "";
   const unitHref = firstPropertyId
-    ? `units.html?property=${encodeURIComponent(firstPropertyId)}&tutorial=units&autostart=1`
-    : "properties.html?tutorial=properties&autostart=1";
+    ? `units.html?property=${encodeURIComponent(firstPropertyId)}&setup=1`
+    : "properties.html?setup=1";
 
   return [
     {
       key: "property",
       title: "Create a property",
       text: "Start with the building, house, or rooming property you manage.",
-      href: "properties.html?tutorial=properties&autostart=1",
+      href: "properties.html?setup=1",
       action: "Add property",
       done: Number(totals.totalProperties || 0) > 0
     },
@@ -315,7 +315,7 @@ function getSetupGuideSteps(data) {
       key: "tenant",
       title: "Add a tenant",
       text: "Capture the tenant profile and contact details before creating a lease.",
-      href: "tenants.html?tutorial=tenants&autostart=1",
+      href: "tenants.html?setup=1",
       action: "Add tenant",
       done: Number(totals.totalTenants || 0) > 0
     },
@@ -323,7 +323,7 @@ function getSetupGuideSteps(data) {
       key: "lease",
       title: "Create the lease",
       text: "Link tenant, property, unit, rent amount, deposit, and due dates.",
-      href: "leases.html?tutorial=leases&autostart=1",
+      href: "leases.html?setup=1",
       action: "Create lease",
       done: Number(totals.totalActiveLeases || totals.occupiedUnits || 0) > 0
     },
@@ -331,7 +331,7 @@ function getSetupGuideSteps(data) {
       key: "payment",
       title: "Record the first payment",
       text: "Once money is received, record it so statements and arrears stay accurate.",
-      href: "payments.html?tutorial=payments&autostart=1",
+      href: "payments.html?setup=1",
       action: "Record payment",
       done:
         Number(totals.totalPayments || 0) > 0 ||
@@ -341,7 +341,7 @@ function getSetupGuideSteps(data) {
       key: "reports",
       title: "Review reports",
       text: "Use reports and PDF exports once the core rental workflow is alive.",
-      href: "reports.html?tutorial=reports&autostart=1",
+      href: "reports.html?setup=1",
       action: "Open reports",
       done: false,
       finalStep: true

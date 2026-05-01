@@ -1424,14 +1424,19 @@ display:none;
   line-height: 1.5;
 }
 
-.setup-guard-bubble a {
+.setup-guard-bubble a,
+.setup-guard-bubble .setup-guard-action {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 38px;
   padding: 0 14px;
+  border: 0;
   border-radius: 11px;
   background: #2563eb;
   color: #ffffff;
+  cursor: pointer;
+  font: inherit;
   font-weight: 800;
   text-decoration: none;
 }
@@ -1463,6 +1468,24 @@ display:none;
   cursor: pointer;
   font-size: 1.3rem;
   line-height: 1;
+}
+
+.setup-guard-target {
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.2),
+    0 18px 40px rgba(37, 99, 235, 0.22) !important;
+  animation: setupGuardPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes setupGuardPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
 }
 
 .dashboard-loading .card,
