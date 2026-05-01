@@ -13,6 +13,103 @@ const { emitLedgerNotification } = require("../services/ledgerNotifications");
 const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 const Settings = require("../models/Financial-Settings");
 const mongoose = require("mongoose");
+const renderHTMLToPDF = require("../utils/pdf/renderHTMLToPDF");
+const generateTabularReportHTML =
+  require("../utils/pdf/generateTabularReportHTML");
+
+function formatMoney(locale, currency, value) {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency
+  }).format(Number(value || 0));
+}
+
+function formatPaymentMethod(method, source) {
+  const value = String(method || source || "eft").trim().toLowerCase();
+  const labels = {
+    eft: "EFT",
+    cash: "Cash",
+    card: "Card",
+    debit_order: "Debit Order",
+    debitorder: "Debit Order",
+    bank_import: "Bank Import",
+    "bank import": "Bank Import",
+    other: "Other"
+  };
+
+  if (labels[value]) {
+    return labels[value];
+  }
+
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "EFT";
+}
+
+function formatPaymentPeriod(locale, entry) {
+  const month = Number(entry.periodMonth);
+  const year = Number(entry.periodYear);
+
+  if (month >= 1 && month <= 12 && year) {
+    return new Date(year, month - 1, 1).toLocaleDateString(locale, {
+      month: "long",
+      year: "numeric"
+    });
+  }
+
+  return "-";
+}
+
+function csvValue(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+async function loadPaymentExportData(ownerId) {
+  const settings = await Settings.findOne({ ownerId }).lean();
+  const currency = settings?.preferences?.currency || "ZAR";
+  const locale = settings?.preferences?.locale || "en-ZA";
+
+  const payments = await LedgerEntry.find({
+    ownerId,
+    type: "payment"
+  })
+    .sort({ date: -1, _id: -1 })
+    .populate("tenantId", "fullName")
+    .populate("leaseId", "referenceCode")
+    .populate("propertyId", "name")
+    .populate("unitId", "unitLabel")
+    .lean();
+
+  const rows = payments.map(payment => ({
+    paidOn: payment.date
+      ? new Date(payment.date).toLocaleDateString(locale)
+      : "-",
+    tenant: payment.tenantId?.fullName || "-",
+    propertyUnit:
+      [payment.propertyId?.name, payment.unitId?.unitLabel]
+        .filter(Boolean)
+        .join(" / ") || "-",
+    amount: Number(payment.credit || 0),
+    period: formatPaymentPeriod(locale, payment),
+    method: formatPaymentMethod(payment.method, payment.source),
+    reference:
+      payment.reference ||
+      payment.leaseId?.referenceCode ||
+      "-"
+  }));
+
+  return {
+    currency,
+    locale,
+    rows,
+    totalCollected: rows.reduce(
+      (sum, row) => sum + Number(row.amount || 0),
+      0
+    )
+  };
+}
 
 /* =========================================================
    RECORD PAYMENT → FIFO SAFE ALLOCATION (GLOBAL SAFE)
@@ -635,6 +732,91 @@ router.get("/", auth, async (req, res) => {
     res.status(500).json({ message: "Failed to load ledger" });
   }
 });  
+
+router.get("/export/payments", auth, async (req, res) => {
+  try {
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const { currency, locale, rows } = await loadPaymentExportData(ownerId);
+
+    const csvRows = [
+      "Paid On,Tenant,Property / Unit,Amount,Period,Method,Reference",
+      ...rows.map(row => [
+        row.paidOn,
+        row.tenant,
+        row.propertyUnit,
+        formatMoney(locale, currency, row.amount),
+        row.period,
+        row.method,
+        row.reference
+      ].map(csvValue).join(","))
+    ];
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=payments.csv");
+    res.send(csvRows.join("\n"));
+  } catch (err) {
+    console.error("PAYMENTS CSV EXPORT ERROR:", err);
+    res.status(500).json({
+      message: "Failed to export payments"
+    });
+  }
+});
+
+router.get("/export/payments/pdf", auth, async (req, res) => {
+  try {
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const { currency, locale, rows, totalCollected } =
+      await loadPaymentExportData(ownerId);
+
+    const paymentMethods = new Set(
+      rows.map(row => row.method).filter(Boolean)
+    ).size;
+
+    const html = await generateTabularReportHTML({
+      title: "Payments Register",
+      subtitle:
+        "All recorded rent payments, references, methods, and accounting periods.",
+      generatedAt: new Date().toLocaleDateString(locale),
+      summaryItems: [
+        { label: "Payments", value: String(rows.length) },
+        { label: "Total collected", value: formatMoney(locale, currency, totalCollected) },
+        { label: "Payment methods", value: String(paymentMethods) },
+        { label: "Scope", value: "All data" }
+      ],
+      columns: [
+        "Paid On",
+        "Tenant",
+        "Property / Unit",
+        "Amount",
+        "Period",
+        "Method",
+        "Reference"
+      ],
+      rows: rows.map(row => [
+        row.paidOn,
+        row.tenant,
+        row.propertyUnit,
+        formatMoney(locale, currency, row.amount),
+        row.period,
+        row.method,
+        row.reference
+      ]),
+      emptyMessage: "No payments have been recorded yet."
+    });
+
+    const pdf = await renderHTMLToPDF(html);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=payments.pdf");
+    res.setHeader("Content-Length", pdf.length);
+    res.end(pdf);
+  } catch (err) {
+    console.error("PAYMENTS PDF EXPORT ERROR:", err);
+    res.status(500).json({
+      message: "Failed to export payments PDF"
+    });
+  }
+});
 
 router.get("/expenses", auth, async (req, res) => {
   try {

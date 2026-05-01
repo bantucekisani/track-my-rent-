@@ -13,6 +13,8 @@ const Invoice = require("../models/Invoice");
 const path = require("path");
 const ejs = require("ejs");
 const renderHTMLToPDF = require("../utils/pdf/renderHTMLToPDF");
+const generateTabularReportHTML =
+  require("../utils/pdf/generateTabularReportHTML");
 
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email/sendEmail");
@@ -62,6 +64,75 @@ function buildReferenceCode(name, unit, phone) {
   return `TMR-${makeTenantShort(name)}-${cleanUnitLabel(unit)}-${getLast4(phone)}`;
 }
 
+function formatMoney(locale, currency, value) {
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency
+  }).format(Number(value || 0));
+}
+
+function formatDate(locale, value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleDateString(locale);
+}
+
+function csvValue(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+async function loadLeaseExportData(ownerId) {
+  const settings = await Settings.findOne({ ownerId }).lean();
+  const currency = settings?.preferences?.currency || "ZAR";
+  const locale = settings?.preferences?.locale || "en-ZA";
+
+  const leases = await Lease.find({ ownerId })
+    .populate("tenantId", "fullName")
+    .populate("propertyId", "name")
+    .populate("unitId", "unitLabel")
+    .sort({ leaseStart: -1, _id: -1 })
+    .lean();
+
+  const rows = leases.map(lease => ({
+    tenant: lease.tenantId?.fullName || "-",
+    propertyUnit:
+      [lease.propertyId?.name, lease.unitId?.unitLabel]
+        .filter(Boolean)
+        .join(" / ") || "-",
+    startDate: formatDate(locale, lease.leaseStart),
+    endDate: formatDate(locale, lease.leaseEnd),
+    monthlyRent: Number(lease.monthlyRent || 0),
+    deposit: Number(lease.deposit || 0),
+    status: lease.status || "-",
+    reference: lease.referenceCode || "-"
+  }));
+
+  return {
+    currency,
+    locale,
+    rows,
+    totals: rows.reduce(
+      (acc, row) => {
+        acc.monthlyRent += row.monthlyRent;
+        acc.deposit += row.deposit;
+        if (row.status === "Active") {
+          acc.active += 1;
+        }
+        return acc;
+      },
+      { monthlyRent: 0, deposit: 0, active: 0 }
+    )
+  };
+}
+
 /* ======================================================
    GET ACTIVE LEASE BY TENANT (MUST BE FIRST)
 ====================================================== */
@@ -77,6 +148,99 @@ router.get("/active/:tenantId", auth, async (req, res) => {
   }
 
   res.json({ lease });
+});
+
+/* ======================================================
+   EXPORT LEASES (CSV)
+====================================================== */
+router.get("/export", auth, async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const { currency, locale, rows } = await loadLeaseExportData(ownerId);
+
+    const csvRows = [
+      "Tenant,Property / Unit,Start Date,End Date,Monthly Rent,Deposit,Status,Reference",
+      ...rows.map(row => [
+        row.tenant,
+        row.propertyUnit,
+        row.startDate,
+        row.endDate,
+        formatMoney(locale, currency, row.monthlyRent),
+        formatMoney(locale, currency, row.deposit),
+        row.status,
+        row.reference
+      ].map(csvValue).join(","))
+    ];
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=leases.csv");
+    res.send(csvRows.join("\n"));
+  } catch (err) {
+    console.error("LEASES CSV EXPORT ERROR:", err);
+    res.status(500).json({
+      message: "Failed to export leases"
+    });
+  }
+});
+
+/* ======================================================
+   EXPORT LEASES (PDF)
+====================================================== */
+router.get("/export/pdf", auth, async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const { currency, locale, rows, totals } =
+      await loadLeaseExportData(ownerId);
+
+    const endedCount = rows.filter(row => row.status === "Ended").length;
+    const cancelledCount = rows.filter(row => row.status === "Cancelled").length;
+
+    const html = await generateTabularReportHTML({
+      title: "Lease Register",
+      subtitle:
+        "All lease agreements with rental values, dates, status, and payment references.",
+      generatedAt: new Date().toLocaleDateString(locale),
+      summaryItems: [
+        { label: "Leases", value: String(rows.length) },
+        { label: "Active", value: String(totals.active) },
+        { label: "Ended / Cancelled", value: String(endedCount + cancelledCount) },
+        { label: "Monthly rent", value: formatMoney(locale, currency, totals.monthlyRent) }
+      ],
+      columns: [
+        "Tenant",
+        "Property / Unit",
+        "Start",
+        "End",
+        "Monthly Rent",
+        "Deposit",
+        "Status",
+        "Reference"
+      ],
+      rows: rows.map(row => [
+        row.tenant,
+        row.propertyUnit,
+        row.startDate,
+        row.endDate,
+        formatMoney(locale, currency, row.monthlyRent),
+        formatMoney(locale, currency, row.deposit),
+        row.status,
+        row.reference
+      ]),
+      emptyMessage: "No leases have been created yet."
+    });
+
+    const pdf = await renderHTMLToPDF(html);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=leases.pdf");
+    res.setHeader("Content-Length", pdf.length);
+    res.end(pdf);
+  } catch (err) {
+    console.error("LEASES PDF EXPORT ERROR:", err);
+    res.status(500).json({
+      message: "Failed to export leases PDF"
+    });
+  }
 });
 
 /* ======================================================

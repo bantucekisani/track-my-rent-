@@ -2,68 +2,297 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <title>Tenant Statement</title>
   <style>
+    :root {
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, Helvetica, sans-serif;
       font-size: 12px;
-      padding: 40px;
-      color: #111;
+      color: #14213d;
+      margin: 0;
+      padding: 32px 34px;
+      background: #ffffff;
     }
 
-    .header {
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-24deg);
+      font-size: 86px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: rgba(15, 23, 42, 0.045);
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 0;
+      white-space: nowrap;
+    }
+
+    .top-shell,
+    .section-card,
+    .table-shell,
+    .totals-shell,
+    .footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    .top-shell {
+      border: 1px solid #d8e2f0;
+      border-radius: 22px;
+      padding: 24px 24px 18px;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      margin-bottom: 18px;
+    }
+
+    .top-row {
       display: flex;
       justify-content: space-between;
+      gap: 20px;
       align-items: flex-start;
-      border-bottom: 2px solid #000;
-      padding-bottom: 14px;
-      margin-bottom: 25px;
     }
 
-    .business-info {
-      text-align: left;
-      font-size: 11px;
-      line-height: 1.4;
-      max-width: 300px;
+    .brand-block {
+      max-width: 56%;
     }
 
-    .title {
-      text-align: right;
-    }
-
-    .title h2 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    .title .sub {
-      font-size: 11px;
-      color: #555;
-    }
-
-    .meta {
-      margin: 20px 0 30px;
-    }
-
-    .meta strong {
-      width: 130px;
+    .eyebrow {
       display: inline-block;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3556d5;
+      background: #e8efff;
     }
 
-    table {
+    .brand-name {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.1;
+      color: #0f172a;
+    }
+
+    .brand-subtext {
+      margin: 0 0 12px;
+      color: #52607a;
+      line-height: 1.6;
+    }
+
+    .contact-lines {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: #334155;
+      line-height: 1.7;
+    }
+
+    .statement-meta {
+      min-width: 240px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+
+    .statement-meta h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .meta-line {
+      margin: 0 0 8px;
+      font-size: 11px;
+      line-height: 1.55;
+      color: #d7e3f8;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .status-paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-due {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .summary-card {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid #dce7f6;
+      min-height: 88px;
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+
+    .summary-subvalue {
+      display: block;
+      margin-top: 6px;
+      font-size: 11px;
+      color: #52607a;
+    }
+
+    .section {
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
+
+    .section-header {
+      margin-bottom: 10px;
+    }
+
+    .section-header h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      color: #0f172a;
+    }
+
+    .section-header p {
+      margin: 0;
+      font-size: 11px;
+      color: #52607a;
+      line-height: 1.5;
+    }
+
+    .section-card {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+
+    .section-card-head {
+      padding: 12px 16px;
+      background: #edf3ff;
+      border-bottom: 1px solid #dce7f6;
+    }
+
+    .section-card-head strong {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #3556d5;
+    }
+
+    .info-table,
+    .statement-table,
+    .totals-table {
       width: 100%;
       border-collapse: collapse;
     }
 
-    thead th {
-      border-bottom: 2px solid #000;
-      background: #f3f4f6;
-      padding: 8px;
-      text-align: left;
+    .info-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #ecf1f8;
+      vertical-align: top;
     }
 
-    tbody td {
-      padding: 8px;
-      border-bottom: 1px solid #e5e7eb;
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .label {
+      width: 32%;
+      font-weight: 700;
+      color: #52607a;
+    }
+
+    .value {
+      color: #0f172a;
+    }
+
+    .table-shell {
+      border: 1px solid #dce7f6;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .statement-table thead th {
+      padding: 12px 14px;
+      background: #e9f1ff;
+      border-bottom: 1px solid #cdd9ee;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: left;
+      color: #27406d;
+    }
+
+    .statement-table tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e6edf7;
+      vertical-align: top;
+      color: #0f172a;
+    }
+
+    .statement-table tbody tr:nth-child(even) td {
+      background: #f8fbff;
+    }
+
+    .statement-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .period {
+      width: 18%;
+      color: #52607a;
+      white-space: nowrap;
+    }
+
+    .description {
+      width: 34%;
     }
 
     .amount {
@@ -71,188 +300,243 @@
       white-space: nowrap;
     }
 
-    tbody tr:nth-child(even) {
-      background: #fafafa;
+    .balance {
+      font-weight: 700;
+      color: #0f172a;
     }
 
-    .summary {
-      width: 40%;
-      margin-top: 30px;
-      float: right;
-      border-top: 2px solid #000;
+    .totals-shell {
+      width: 42%;
+      margin-top: 18px;
+      margin-left: auto;
+      border: 1px solid #dce7f6;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #ffffff;
+      page-break-inside: avoid;
     }
 
-    .summary td {
-      padding: 6px;
+    .totals-title {
+      padding: 12px 14px;
+      background: #edf3ff;
+      border-bottom: 1px solid #dce7f6;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #3556d5;
+    }
+
+    .totals-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #ecf1f8;
+    }
+
+    .totals-table tr:last-child td {
+      border-bottom: none;
+      font-weight: 700;
+      background: #f8fbff;
     }
 
     .footer {
       position: fixed;
       bottom: 20px;
-      left: 40px;
-      right: 40px;
+      left: 34px;
+      right: 34px;
       font-size: 10px;
-      color: #666;
+      color: #64748b;
       text-align: center;
-      border-top: 1px solid #ddd;
-      padding-top: 6px;
-    }
-
-    .watermark {
-      position: fixed;
-      top: 45%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-30deg);
-      font-size: 64px;
-      color: rgba(0, 0, 0, 0.08);
-      font-weight: bold;
-      z-index: -1;
+      border-top: 1px solid #dbe4f0;
+      padding-top: 8px;
+      background: #ffffff;
     }
   </style>
 </head>
 
 <body>
+  <%
+    const businessName = business?.businessName || business?.tradingName || "";
+    const tradingName = business?.tradingName || "";
+    const regNumber = business?.registrationNumber || "";
+    const vatNumber = business?.vatNumber || "";
+    const email = business?.email || "";
+    const phone = business?.phone || "";
+    const addressLine1 = business?.addressLine1 || "";
+    const city = business?.city || "";
+    const province = business?.province || "";
+    const monthLabel = new Date(year, month - 1, 1).toLocaleDateString(locale, {
+      month: "long",
+      year: "numeric"
+    });
+    const openingBalance = rows?.[0]?.balance || 0;
+    const closingBalance = summary?.balance || 0;
+    const isPaid = Number(closingBalance) === 0;
+  %>
 
-  <!-- WATERMARK -->
-  <% if (Number(summary.balance) === 0) { %>
-    <div class="watermark">PAID IN FULL</div>
+  <% if (isPaid) { %>
+    <div class="watermark">Paid in full</div>
   <% } %>
 
-  <!-- HEADER -->
- <!-- HEADER -->
-<div class="header">
-  <div class="business-info">
-
-    <% 
-      const businessName = business?.businessName || "";
-      const tradingName = business?.tradingName || "";
-      const regNumber = business?.registrationNumber || "";
-      const vatNumber = business?.vatNumber || "";
-      const email = business?.email || "";
-      const phone = business?.phone || "";
-      const addressLine1 = business?.addressLine1 || "";
-      const city = business?.city || "";
-      const province = business?.province || "";
-    %>
-
-    <% if (businessName) { %>
-      <div style="font-size:18px; font-weight:700;">
-        <%= businessName %>
+  <header class="top-shell">
+    <div class="top-row">
+      <div class="brand-block">
+        <span class="eyebrow">Tenant account statement</span>
+        <h1 class="brand-name"><%= businessName || "Track My Rent" %></h1>
+        <% if (tradingName && tradingName !== businessName) { %>
+          <p class="brand-subtext">Trading as <%= tradingName %></p>
+        <% } %>
+        <ul class="contact-lines">
+          <% if (regNumber) { %><li>Reg No: <%= regNumber %></li><% } %>
+          <% if (vatNumber && vatNumber !== "N/A") { %><li>VAT No: <%= vatNumber %></li><% } %>
+          <% if (addressLine1 || city || province) { %>
+            <li>
+              <%= addressLine1 %><%= addressLine1 && (city || province) ? ", " : "" %><%= city %><%= city && province ? ", " : "" %><%= province %>
+            </li>
+          <% } %>
+          <% if (email || phone) { %>
+            <li><%= email %><%= email && phone ? " | " : "" %><%= phone %></li>
+          <% } %>
+        </ul>
       </div>
-    <% } %>
 
-    
-    <% if (regNumber) { %>
-      <div>Reg No: <%= regNumber %></div>
-    <% } %>
-
-    <% if (vatNumber && vatNumber !== "N/A") { %>
-      <div>VAT No: <%= vatNumber %></div>
-    <% } %>
-
-    <% if (addressLine1) { %>
-      <div style="margin-top:6px;">
-        <%= addressLine1 %><br>
-        <%= city %><%= city && province ? ", " : "" %><%= province %>
+      <div class="statement-meta">
+        <h2>Tenant Statement</h2>
+        <p class="meta-line">Statement period: <strong><%= monthLabel %></strong></p>
+        <p class="meta-line">Generated: <strong><%= generatedAt %></strong></p>
+        <p class="meta-line">Reference: <strong><%= referenceNumber %></strong></p>
+        <span class="status-pill <%= isPaid ? "status-paid" : "status-due" %>">
+          <%= isPaid ? "Paid in full" : "Balance due" %>
+        </span>
       </div>
-    <% } %>
+    </div>
 
-    <% if (email || phone) { %>
-      <div style="margin-top:6px;">
-        <%= email %>
-        <%= phone ? " | " + phone : "" %>
+    <section class="summary-grid">
+      <article class="summary-card">
+        <span class="summary-label">Opening balance</span>
+        <strong class="summary-value"><%= formatter.format(openingBalance || 0) %></strong>
+        <span class="summary-subvalue">Before this period</span>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Total charged</span>
+        <strong class="summary-value"><%= formatter.format(summary.totalCharged || 0) %></strong>
+        <span class="summary-subvalue">Debits for <%= monthLabel %></span>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Total paid</span>
+        <strong class="summary-value"><%= formatter.format(summary.totalPaid || 0) %></strong>
+        <span class="summary-subvalue">Credits received</span>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Closing balance</span>
+        <strong class="summary-value"><%= formatter.format(closingBalance || 0) %></strong>
+        <span class="summary-subvalue"><%= isPaid ? "Nothing outstanding" : "Amount outstanding" %></span>
+      </article>
+    </section>
+  </header>
+
+  <section class="section">
+    <div class="section-header">
+      <h3>Tenant Details</h3>
+      <p>Rental and lease details used for this account statement.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="section-card-head">
+        <strong>Account holder</strong>
       </div>
-    <% } %>
+      <table class="info-table">
+        <tbody>
+          <tr>
+            <td class="label">Tenant</td>
+            <td class="value"><%= tenant?.fullName || "-" %></td>
+          </tr>
+          <% if (typeof rentalAddress !== "undefined" && rentalAddress) { %>
+            <tr>
+              <td class="label">Rental address</td>
+              <td class="value"><%= rentalAddress %></td>
+            </tr>
+          <% } %>
+          <% if (lease?.unitId?.unitLabel) { %>
+            <tr>
+              <td class="label">Unit / room</td>
+              <td class="value"><%= lease.unitId.unitLabel %></td>
+            </tr>
+          <% } %>
+          <% if (lease?.startDate && lease?.endDate) { %>
+            <tr>
+              <td class="label">Lease period</td>
+              <td class="value">
+                <%= new Date(lease.startDate).toLocaleDateString(locale) %>
+                to
+                <%= new Date(lease.endDate).toLocaleDateString(locale) %>
+              </td>
+            </tr>
+          <% } %>
+          <% if (lease?.rentAmount) { %>
+            <tr>
+              <td class="label">Monthly rent</td>
+              <td class="value"><%= formatter.format(lease.rentAmount) %></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-  </div>
+  <section class="section">
+    <div class="section-header">
+      <h3>Statement Activity</h3>
+      <p>All charges, payments, and balance movements for the selected period.</p>
+    </div>
 
-  <div class="title">
-    <h2>TENANT STATEMENT – <%= year %></h2>
-    <div class="sub">Generated on <%= generatedAt %></div>
-  </div>
-</div>
-  <!-- META -->
-  <div class="meta">
-    <div><strong>Tenant:</strong> <%= tenant?.fullName || "" %></div>
+    <div class="table-shell">
+      <table class="statement-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Description</th>
+            <th class="amount">Debit</th>
+            <th class="amount">Credit</th>
+            <th class="amount">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach(row => { %>
+            <tr>
+              <td class="period"><%= row.period %></td>
+              <td class="description"><%= row.description %></td>
+              <td class="amount"><%= formatter.format(row.debit || 0) %></td>
+              <td class="amount"><%= formatter.format(row.credit || 0) %></td>
+              <td class="amount balance"><%= formatter.format(row.balance || 0) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
 
-    <% if (typeof rentalAddress !== "undefined" && rentalAddress) { %>
-      <div><strong>Rental Address:</strong> <%= rentalAddress %></div>
-    <% } %>
+    <div class="totals-shell">
+      <div class="totals-title">Statement totals</div>
+      <table class="totals-table">
+        <tbody>
+          <tr>
+            <td>Total charged</td>
+            <td class="amount"><%= formatter.format(summary.totalCharged || 0) %></td>
+          </tr>
+          <tr>
+            <td>Total paid</td>
+            <td class="amount"><%= formatter.format(summary.totalPaid || 0) %></td>
+          </tr>
+          <tr>
+            <td>Closing balance</td>
+            <td class="amount"><%= formatter.format(closingBalance || 0) %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-    <% if (lease) { %>
-
-      <% if (lease.startDate && lease.endDate) { %>
-        <div>
-          <strong>Lease Period:</strong>
-          <%= new Date(lease.startDate).toLocaleDateString(locale) %>
-          –
-          <%= new Date(lease.endDate).toLocaleDateString(locale) %>
-        </div>
-      <% } %>
-
-      <% if (lease.unitId?.unitLabel) { %>
-        <div>
-          <strong>Unit / Room:</strong>
-          <%= lease.unitId.unitLabel %>
-        </div>
-      <% } %>
-
-      <% if (lease.rentAmount) { %>
-        <div>
-          <strong>Monthly Rent:</strong>
-          <%= formatter.format(lease.rentAmount) %>
-        </div>
-      <% } %>
-
-    <% } %>
-  </div>
-
-  <!-- TABLE -->
-  <table>
-    <thead>
-      <tr>
-        <th>Period</th>
-        <th>Description</th>
-        <th class="amount">Debit</th>
-        <th class="amount">Credit</th>
-        <th class="amount">Balance</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% rows.forEach(row => { %>
-        <tr>
-          <td><%= row.period %></td>
-          <td><%= row.description %></td>
-          <td class="amount"><%= formatter.format(row.debit || 0) %></td>
-          <td class="amount"><%= formatter.format(row.credit || 0) %></td>
-          <td class="amount"><%= formatter.format(row.balance || 0) %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- SUMMARY -->
-  <table class="summary">
-    <tr>
-      <td><strong>Total Charged</strong></td>
-      <td class="amount"><%= formatter.format(summary.totalCharged || 0) %></td>
-    </tr>
-    <tr>
-      <td><strong>Total Paid</strong></td>
-      <td class="amount"><%= formatter.format(summary.totalPaid || 0) %></td>
-    </tr>
-    <tr>
-      <td><strong>Closing Balance</strong></td>
-      <td class="amount">
-        <strong><%= formatter.format(summary.balance || 0) %></strong>
-      </td>
-    </tr>
-  </table>
-
-  <!-- FOOTER -->
   <div class="footer">
-    Reference: <%= referenceNumber %> · This document is system-generated and valid without a signature.
+    Reference: <%= referenceNumber %> | This document is system-generated and valid without a signature.
   </div>
-
 </body>
 </html>

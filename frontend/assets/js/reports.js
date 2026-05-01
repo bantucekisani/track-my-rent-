@@ -997,6 +997,10 @@ function exportTenantStatementCSV() {
 
 function exportArrearsCSV(){ downloadCSV("arrears.csv",arrearsData); }
 
+function exportArrearsPDF() {
+  downloadPDF("/reports/arrears/pdf", "rent-arrears.pdf");
+}
+
 function exportMonthlyIncomePDF() {
   const params = buildReportParams();
   downloadPDF(
@@ -1700,6 +1704,7 @@ window.exportTenantStatementPDF = exportTenantStatementPDF;
 
 window.exportPropertyPerformancePDF=exportPropertyPerformancePDF;
 window.exportPropertyHistoryPDF = exportPaymentHistoryPDF;
+window.exportArrearsPDF = exportArrearsPDF;
 /* ============================
    PDF EXPORT FUNCTIONS (GLOBAL)
 ============================ */
@@ -1710,6 +1715,14 @@ window.exportTenantsPDF = function () {
 
 window.exportPropertiesPDF = function () {
   downloadPDF("/properties/export/pdf", "properties.pdf");
+};
+
+window.exportPaymentsPDF = function () {
+  downloadPDF("/ledger/export/payments/pdf", "payments.pdf");
+};
+
+window.exportLeasesPDF = function () {
+  downloadPDF("/leases/export/pdf", "leases.pdf");
 };
 
 function initReportsTutorial() {

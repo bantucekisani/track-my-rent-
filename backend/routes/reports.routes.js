@@ -170,6 +170,155 @@ async function loadPeriodLedgerEntries(ownerId, { month, year, propertyId, types
   return LedgerEntry.find(query).lean();
 }
 
+async function buildArrearsReportData(ownerId) {
+  const settings =
+    (await FinancialSettings.findOne({ ownerId }).lean()) || {};
+
+  const currencyDefault =
+    settings?.preferences?.currency || "ZAR";
+
+  const locale =
+    settings?.preferences?.locale || "en-ZA";
+
+  const balances = await LedgerEntry.aggregate([
+    {
+      $match: {
+        ownerId,
+        tenantId: { $exists: true, $ne: null }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          tenantId: "$tenantId",
+          currency: { $ifNull: ["$currency", currencyDefault] }
+        },
+        totalExpected: {
+          $sum: {
+            $cond: [
+              { $gt: ["$debit", 0] },
+              { $ifNull: ["$debit", 0] },
+              0
+            ]
+          }
+        },
+        totalPaid: {
+          $sum: {
+            $cond: [
+              { $gt: ["$credit", 0] },
+              { $ifNull: ["$credit", 0] },
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        balance: {
+          $subtract: ["$totalExpected", "$totalPaid"]
+        }
+      }
+    },
+    {
+      $match: { balance: { $gt: 0.01 } }
+    },
+    {
+      $lookup: {
+        from: "tenants",
+        localField: "_id.tenantId",
+        foreignField: "_id",
+        as: "tenant"
+      }
+    },
+    { $unwind: "$tenant" },
+    {
+      $lookup: {
+        from: "leases",
+        let: { tenantId: "$_id.tenantId" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$tenantId", "$$tenantId"] },
+              status: "Active"
+            }
+          },
+          { $limit: 1 }
+        ],
+        as: "lease"
+      }
+    },
+    {
+      $unwind: {
+        path: "$lease",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "properties",
+        localField: "lease.propertyId",
+        foreignField: "_id",
+        as: "property"
+      }
+    },
+    {
+      $lookup: {
+        from: "units",
+        localField: "lease.unitId",
+        foreignField: "_id",
+        as: "unit"
+      }
+    },
+    {
+      $addFields: {
+        propertyName: {
+          $ifNull: [{ $arrayElemAt: ["$property.name", 0] }, "-"]
+        },
+        unitLabel: {
+          $ifNull: [{ $arrayElemAt: ["$unit.unitLabel", 0] }, "-"]
+        }
+      }
+    }
+  ]);
+
+  const totalsByCurrency = {};
+
+  balances.forEach(balance => {
+    const currency = balance._id.currency || currencyDefault;
+
+    if (!totalsByCurrency[currency]) {
+      totalsByCurrency[currency] = 0;
+    }
+
+    totalsByCurrency[currency] += Number(balance.balance || 0);
+  });
+
+  Object.keys(totalsByCurrency).forEach(currency => {
+    totalsByCurrency[currency] =
+      Number(totalsByCurrency[currency].toFixed(2));
+  });
+
+  const arrears = balances.map(balance => ({
+    tenantId: balance._id.tenantId,
+    currency: balance._id.currency || currencyDefault,
+    tenantName: balance.tenant?.fullName || "-",
+    property: balance.propertyName || "-",
+    unit: balance.unitLabel || "-",
+    expected: Number((balance.totalExpected || 0).toFixed(2)),
+    paid: Number((balance.totalPaid || 0).toFixed(2)),
+    outstanding: Number((balance.balance || 0).toFixed(2))
+  }));
+
+  return {
+    count: balances.length,
+    currency: currencyDefault,
+    locale,
+    totalsByCurrency,
+    arrears
+  };
+}
+
 async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
   try {
 
@@ -1595,6 +1744,66 @@ router.get("/arrears", auth, async (req, res) => {
       message: "Failed to load arrears"
     });
 
+  }
+});
+
+router.get("/arrears/pdf", auth, async (req, res) => {
+  try {
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const data = await buildArrearsReportData(ownerId);
+    const currencyEntries = Object.entries(data.totalsByCurrency || {});
+    const defaultTotal =
+      data.totalsByCurrency?.[data.currency] ??
+      data.arrears.reduce(
+        (sum, row) => sum + Number(row.outstanding || 0),
+        0
+      );
+    const totalLabel = currencyEntries.length > 1
+      ? currencyEntries
+          .map(([currency, amount]) =>
+            formatCurrency(data.locale, currency, amount)
+          )
+          .join(" | ")
+      : formatCurrency(data.locale, data.currency, defaultTotal);
+    const rows = [...data.arrears].sort(
+      (a, b) => Number(b.outstanding || 0) - Number(a.outstanding || 0)
+    );
+
+    await sendTabularPdfReport(res, {
+      title: "Rent Arrears",
+      subtitle:
+        "Rolling tenant balances where total charges are greater than payments received.",
+      generatedAt: new Date().toLocaleDateString(data.locale),
+      summaryItems: [
+        { label: "Tenants in arrears", value: String(data.count) },
+        { label: "Total outstanding", value: totalLabel },
+        { label: "Currencies", value: String(Math.max(currencyEntries.length, 1)) },
+        { label: "Scope", value: "All active balances" }
+      ],
+      columns: [
+        "Tenant",
+        "Property / Unit",
+        "Expected",
+        "Paid",
+        "Outstanding",
+        "Currency"
+      ],
+      rows: rows.map(row => [
+        row.tenantName,
+        [row.property, row.unit].filter(Boolean).join(" / ") || "-",
+        formatCurrency(data.locale, row.currency, row.expected),
+        formatCurrency(data.locale, row.currency, row.paid),
+        formatCurrency(data.locale, row.currency, row.outstanding),
+        row.currency
+      ]),
+      filename: "rent-arrears.pdf",
+      emptyMessage: "No tenants are currently in arrears."
+    });
+  } catch (err) {
+    console.error("ARREARS PDF ERROR:", err);
+    res.status(500).json({
+      message: "Failed to export arrears PDF"
+    });
   }
 });
 /* ======================================================
