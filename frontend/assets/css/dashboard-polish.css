@@ -667,6 +667,7 @@ table td {
 
 .table-toolbar,
 .action-cluster,
+.table-actions,
 .report-actions {
   display: flex;
   flex-wrap: wrap;
@@ -676,6 +677,28 @@ table td {
 
 .table-toolbar {
   justify-content: flex-end;
+}
+
+.table-actions {
+  min-width: 140px;
+}
+
+.tenant-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.btn-whatsapp {
+  border-color: rgba(22, 163, 74, 0.28);
+  background: #dcfce7;
+  color: #166534;
+}
+
+.btn-whatsapp:hover {
+  background: #bbf7d0;
 }
 
 .search-input {

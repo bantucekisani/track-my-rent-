@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link rel="stylesheet" href="assets/css/dashboard.css" />
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css" />
   <script src="assets/js/config.js"></script>
 
   <link rel="stylesheet" href="assets/css/toast.css" />
@@ -46,8 +47,9 @@
   <main class="content">
 
   <!-- ACTION BAR -->
-  <div style="margin-bottom:16px; display:flex; gap:10px;">
+  <div class="tenant-profile-actions">
     <a href="tenants.html" class="btn-secondary">Back to Tenants</a>
+    <button class="btn-secondary btn-whatsapp" type="button" onclick="sendWhatsAppReminder()">WhatsApp Reminder</button>
     <span id="tenantRiskBadge" class="status-badge risk-low">
       LOW RISK
     </span>
@@ -181,6 +183,7 @@
         <button class="btn-primary btn-sm" onclick="generateStatement()">Generate</button>
         <button class="btn-secondary btn-sm" onclick="exportStatementCSV()">Export CSV</button>
         <button class="btn-secondary btn-sm" onclick="exportTenantStatementPDF()">Export PDF</button>
+        <button class="btn-secondary btn-sm" onclick="shareTenantStatement()">Share Statement</button>
       </div>
     </div>
 

@@ -66,6 +66,14 @@ function csvValue(value) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function safeFilenamePart(value) {
+  return String(value || "receipt")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "receipt";
+}
+
 async function loadPaymentExportData(ownerId) {
   const settings = await Settings.findOne({ ownerId }).lean();
   const currency = settings?.preferences?.currency || "ZAR";
@@ -394,6 +402,93 @@ router.put("/payment/:id", auth, async (req, res) => {
 
     res.status(500).json({
       message: "Failed to update payment"
+    });
+  }
+});
+
+router.get("/payment/:id/receipt/pdf", auth, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid payment id"
+      });
+    }
+
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const settings = (await Settings.findOne({ ownerId }).lean()) || {};
+    const currency = settings?.preferences?.currency || "ZAR";
+    const locale = settings?.preferences?.locale || "en-ZA";
+
+    const payment = await LedgerEntry.findOne({
+      _id: req.params.id,
+      ownerId,
+      type: "payment"
+    })
+      .populate("tenantId", "fullName email phone whatsappNumber")
+      .populate("leaseId", "referenceCode")
+      .populate("propertyId", "name")
+      .populate("unitId", "unitLabel")
+      .lean();
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found"
+      });
+    }
+
+    const tenantName = payment.tenantId?.fullName || "Tenant";
+    const paidOn = payment.date
+      ? new Date(payment.date).toLocaleDateString(locale)
+      : "-";
+    const receiptNumber = `REC-${String(payment._id).slice(-8).toUpperCase()}`;
+    const propertyUnit =
+      [payment.propertyId?.name, payment.unitId?.unitLabel]
+        .filter(Boolean)
+        .join(" / ") || "-";
+    const amount = Number(payment.credit || 0);
+    const contact =
+      payment.tenantId?.email ||
+      payment.tenantId?.whatsappNumber ||
+      payment.tenantId?.phone ||
+      "-";
+
+    const html = await generateTabularReportHTML({
+      title: "Payment Receipt",
+      subtitle: `${tenantName} - ${propertyUnit}`,
+      generatedAt: new Date().toLocaleDateString(locale),
+      summaryItems: [
+        { label: "Receipt no.", value: receiptNumber },
+        { label: "Amount received", value: formatMoney(locale, currency, amount) },
+        { label: "Paid on", value: paidOn },
+        { label: "Method", value: formatPaymentMethod(payment.method, payment.source) }
+      ],
+      columns: ["Detail", "Value"],
+      rows: [
+        ["Tenant", tenantName],
+        ["Tenant contact", contact],
+        ["Property / Unit", propertyUnit],
+        ["Accounting period", formatPaymentPeriod(locale, payment)],
+        ["Lease reference", payment.leaseId?.referenceCode || "-"],
+        ["Payment reference", payment.reference || "-"],
+        ["Notes", payment.description || "Payment received"],
+        ["Status", "Received"]
+      ],
+      emptyMessage: "Payment receipt could not be built."
+    });
+
+    const pdf = await renderHTMLToPDF(html);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=payment-receipt-${safeFilenamePart(tenantName)}-${String(payment._id).slice(-6)}.pdf`
+    );
+    res.setHeader("Content-Length", pdf.length);
+    res.end(pdf);
+  } catch (err) {
+    console.error("PAYMENT RECEIPT PDF ERROR:", err);
+    res.status(500).json({
+      message: "Failed to generate payment receipt"
     });
   }
 });

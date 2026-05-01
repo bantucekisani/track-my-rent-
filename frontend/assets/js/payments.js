@@ -566,6 +566,14 @@ function renderPayments(list){
       <td>${safeText(formatPaymentMethod(p.method))}</td>
       <td>${safeText(getDisplayReference(p))}</td>
       <td>
+        <div class="table-actions">
+        <button
+          type="button"
+          class="btn-secondary btn-sm"
+          onclick="openPaymentReceipt('${p._id}')"
+        >
+          Receipt
+        </button>
         <button
           type="button"
           class="btn-secondary btn-sm"
@@ -573,6 +581,7 @@ function renderPayments(list){
         >
           Edit
         </button>
+        </div>
       </td>
     `;
 
@@ -580,6 +589,38 @@ function renderPayments(list){
 
   });
 
+}
+
+async function openPaymentReceipt(paymentId) {
+  if (!paymentId) {
+    notify("Payment not found", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/ledger/payment/${paymentId}/receipt/pdf`, auth());
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Failed to generate receipt");
+    }
+
+    const blob = await res.blob();
+
+    if (blob.type !== "application/pdf") {
+      throw new Error("Server did not return a PDF");
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, "_blank");
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 60_000);
+  } catch (err) {
+    console.error("PAYMENT RECEIPT ERROR:", err);
+    notify(err.message || "Payment receipt failed", "error");
+  }
 }
 
 
@@ -678,6 +719,7 @@ function logout(){
 window.logout = logout;
 window.loadTenantReference = loadTenantReference;
 window.openEditPayment = openEditPayment;
+window.openPaymentReceipt = openPaymentReceipt;
 window.openPaymentTutorialModal = openCreatePaymentModal;
 window.closePaymentTutorialModal = closeModal;
 

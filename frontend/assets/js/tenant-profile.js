@@ -98,6 +98,115 @@ function getPaymentReference(entry) {
   return entry?.reference || lease?.referenceCode || "-";
 }
 
+function filePart(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "tenant";
+}
+
+function normalizeWhatsAppNumber(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith("0")) {
+    digits = `27${digits.slice(1)}`;
+  }
+
+  return digits;
+}
+
+function getRollingBalance() {
+  return ledger.reduce(
+    (sum, entry) =>
+      sum + Number(entry.debit || 0) - Number(entry.credit || 0),
+    0
+  );
+}
+
+function buildTenantWhatsAppReminderUrl() {
+  const phone = tenant?.whatsappNumber || tenant?.phone || "";
+  const normalizedPhone = normalizeWhatsAppNumber(phone);
+
+  if (!normalizedPhone) {
+    return "";
+  }
+
+  const balance = Math.max(getRollingBalance(), 0);
+  const propertyUnit = [
+    tenant?.propertyId?.name,
+    tenant?.unitId?.unitLabel
+  ]
+    .filter(Boolean)
+    .join(" / ");
+  const amountText = balance > 0 ? money(balance) : "your rent account";
+  const message = [
+    `Hi ${tenant?.fullName || "there"},`,
+    "this is a rent reminder from Track My Rent.",
+    balance > 0
+      ? `Our records show ${amountText} outstanding${propertyUnit ? ` for ${propertyUnit}` : ""}.`
+      : `Please remember to keep ${amountText} up to date${propertyUnit ? ` for ${propertyUnit}` : ""}.`,
+    "Please contact us if you have already paid. Thank you."
+  ].join(" ");
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
+async function fetchTenantStatementPdfBlob() {
+  const res = await fetch(`${API_URL}/tenants/${tenantId}/statement/pdf`, {
+    headers: {
+      Authorization: `Bearer ${currentUser.token}`
+    }
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to generate tenant statement PDF");
+  }
+
+  const blob = await res.blob();
+
+  if (blob.type !== "application/pdf") {
+    throw new Error("Server did not return a PDF");
+  }
+
+  return blob;
+}
+
+async function sharePdfBlob(blob, filename, shareText) {
+  const file = new File([blob], filename, { type: "application/pdf" });
+
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: filename.replace(/-/g, " ").replace(/\.pdf$/i, ""),
+      text: shareText,
+      files: [file]
+    });
+    return;
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  window.open(url, "_blank");
+
+  if (navigator.clipboard) {
+    await navigator.clipboard.writeText(shareText).catch(() => {});
+  }
+
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+  }, 60_000);
+
+  notify("Statement opened. Share text copied where supported.");
+}
+
 /* ==========================================================
    INIT
 ========================================================== */
@@ -573,6 +682,83 @@ async function saveTenantNotes() {
 }
 window.saveTenantNotes = saveTenantNotes;
 
+function sendWhatsAppReminder() {
+  if (!tenant) {
+    notify("Tenant not loaded yet", "warning");
+    return;
+  }
+
+  if (!tenant.whatsappOptIn) {
+    const proceed = confirmAction(
+      "This tenant has not been marked as opted in for WhatsApp reminders. Continue anyway?"
+    );
+
+    if (!proceed) {
+      return;
+    }
+  }
+
+  const url = buildTenantWhatsAppReminderUrl();
+
+  if (!url) {
+    notify("No WhatsApp or phone number is saved for this tenant", "warning");
+    return;
+  }
+
+  window.open(url, "_blank", "noopener");
+}
+
+function exportStatementCSV() {
+  if (!ledger.length) {
+    notify("No statement data to export", "warning");
+    return;
+  }
+
+  let balance = 0;
+  const rows = ledger.map(entry => {
+    const debit = Number(entry.debit || 0);
+    const credit = Number(entry.credit || 0);
+
+    balance += debit - credit;
+
+    return {
+      Date: formatDate(entry.date),
+      Description: describeLedgerEntryForProfile(entry),
+      Debit: debit.toFixed(2),
+      Credit: credit.toFixed(2),
+      Balance: balance.toFixed(2)
+    };
+  });
+
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map(row =>
+      headers
+        .map(header => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
+        .join(",")
+    )
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = `tenant-statement-${filePart(tenant?.fullName)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function describeLedgerEntryForProfile(entry) {
+  if (entry.type === "rent") return "Monthly Rent";
+  if (entry.type === "payment") return "Payment received";
+  if (entry.type === "utility") return `${(entry.subtype || "Utility").toUpperCase()} charge`;
+  if (entry.type === "damage") return "Damage charge";
+  if (entry.type === "damage_reversal") return "Damage reversal";
+
+  return entry.description || "-";
+}
+
 async function exportTenantStatementPDF() {
   if (!tenantId) {
     notify("Tenant not specified");
@@ -580,31 +766,7 @@ async function exportTenantStatementPDF() {
   }
 
   try {
-    const res = await fetch(`${API_URL}/tenants/${tenantId}/statement/pdf`, {
-      headers: {
-        Authorization: `Bearer ${currentUser.token}`
-      }
-    });
-
-    if (!res.ok) {
-      let message = "Failed to generate PDF";
-
-      try {
-        const data = await res.json();
-        message = data.message || message;
-      } catch {}
-
-      notify(message);
-      return;
-    }
-
-    const blob = await res.blob();
-
-    if (blob.type !== "application/pdf") {
-      notify("Server did not return a PDF");
-      return;
-    }
-
+    const blob = await fetchTenantStatementPdfBlob();
     const url = window.URL.createObjectURL(blob);
     window.open(url, "_blank");
 
@@ -613,7 +775,25 @@ async function exportTenantStatementPDF() {
     }, 60_000);
   } catch (err) {
     console.error("TENANT PROFILE PDF ERROR:", err);
-    notify("PDF export failed");
+    notify(err.message || "PDF export failed");
+  }
+}
+
+async function shareTenantStatement() {
+  if (!tenantId) {
+    notify("Tenant not specified");
+    return;
+  }
+
+  try {
+    const blob = await fetchTenantStatementPdfBlob();
+    const filename = `tenant-statement-${filePart(tenant?.fullName)}.pdf`;
+    const shareText = `Tenant statement for ${tenant?.fullName || "tenant"}.`;
+
+    await sharePdfBlob(blob, filename, shareText);
+  } catch (err) {
+    console.error("TENANT STATEMENT SHARE ERROR:", err);
+    notify(err.message || "Failed to share statement");
   }
 }
 
@@ -671,6 +851,10 @@ function logout() {
   window.location.href = "login.html";
 }
 window.logout = logout;
+window.sendWhatsAppReminder = sendWhatsAppReminder;
+window.exportStatementCSV = exportStatementCSV;
+window.exportTenantStatementPDF = exportTenantStatementPDF;
+window.shareTenantStatement = shareTenantStatement;
 window.exportPaymentHistoryPDF = exportPaymentHistoryPDF;
 
 

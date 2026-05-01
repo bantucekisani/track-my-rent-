@@ -458,6 +458,7 @@
                 <button id="generateTenantStatementBtn" class="btn-primary btn-sm">Generate</button>
                 <button id="exportTenantStatementBtn" class="btn-secondary btn-sm">Export CSV</button>
                 <button class="btn-secondary btn-sm" onclick="exportTenantStatementPDF()">Export PDF</button>
+                <button class="btn-secondary btn-sm" onclick="shareTenantStatement()">Share Statement</button>
                 <button class="btn-secondary btn-sm" onclick="emailTenantStatement()">Email Statement</button>
               </div>
             </div>
@@ -503,10 +504,11 @@
                     <th>Expected</th>
                     <th>Paid</th>
                     <th>Outstanding</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="arrearsTableBody">
-                  <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+                  <tr><td colspan="6" class="empty-row">Loading...</td></tr>
                 </tbody>
               </table>
             </div>

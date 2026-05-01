@@ -724,11 +724,12 @@ async function renderArrearsFromAPI(){
   arrearsData = data.arrears || [];
 
   render("arrearsTableBody", arrearsData, r => `
-    <td>${r.tenantName}</td>
-    <td>${r.property} / ${r.unit}</td>
+    <td>${safeText(r.tenantName)}</td>
+    <td>${safeText(r.property)} / ${safeText(r.unit)}</td>
     <td>${formatter.format(Number(r.expected || 0))}</td>
     <td>${formatter.format(Number(r.paid || 0))}</td>
     <td>${formatter.format(Number(r.outstanding || 0))}</td>
+    <td>${renderWhatsAppReminderAction(r)}</td>
   `);
 
   const totalOutstanding = getArrearsTotal(data);
@@ -821,6 +822,156 @@ function fmt(d){
   return d ? new Date(d).toLocaleDateString() : "-";
 }
 function auth(){ return { headers:{ Authorization:`Bearer ${currentUser.token}` }}; }
+
+function safeText(value, fallback = "-") {
+  const text =
+    value === undefined || value === null || value === ""
+      ? fallback
+      : String(value);
+
+  return window.escapeHtml ? window.escapeHtml(text) : text;
+}
+
+function normalizeWhatsAppNumber(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith("0")) {
+    digits = `27${digits.slice(1)}`;
+  }
+
+  return digits;
+}
+
+function getTenantById(tenantId) {
+  return allTenants.find(tenant => tenant._id === String(tenantId));
+}
+
+function buildWhatsAppReminderUrl({ tenantName, phone, amount, propertyUnit }) {
+  const normalizedPhone = normalizeWhatsAppNumber(phone);
+
+  if (!normalizedPhone) {
+    return "";
+  }
+
+  const amountText = amount ? money(amount) : "an outstanding balance";
+  const message = [
+    `Hi ${tenantName || "there"},`,
+    `this is a rent reminder from Track My Rent.`,
+    `Our records show ${amountText} outstanding${propertyUnit ? ` for ${propertyUnit}` : ""}.`,
+    "Please arrange payment or contact us if you have already paid. Thank you."
+  ].join(" ");
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
+function renderWhatsAppReminderAction(row) {
+  const tenant = getTenantById(row.tenantId);
+  const phone =
+    row.tenantWhatsapp ||
+    row.tenantPhone ||
+    tenant?.whatsappNumber ||
+    tenant?.phone ||
+    "";
+  const propertyUnit = [row.property, row.unit]
+    .filter(value => value && value !== "-")
+    .join(" / ");
+  const url = buildWhatsAppReminderUrl({
+    tenantName: row.tenantName,
+    phone,
+    amount: row.outstanding,
+    propertyUnit
+  });
+
+  if (!url) {
+    return `<span class="muted">No WhatsApp</span>`;
+  }
+
+  return `
+    <a
+      class="btn-secondary btn-sm btn-whatsapp"
+      href="${url}"
+      target="_blank"
+      rel="noopener"
+    >WhatsApp</a>
+  `;
+}
+
+function getSelectedStatementContext() {
+  const tenantId = document.getElementById("reportTenant").value;
+  const year = Number(document.getElementById("reportYear").value);
+  const monthName = document.getElementById("reportMonth").value;
+  const monthIndex = MONTHS.indexOf(monthName);
+
+  if (!tenantId || monthIndex < 0 || !year) {
+    return null;
+  }
+
+  const tenant = getTenantById(tenantId);
+  const month = monthIndex + 1;
+
+  return {
+    tenantId,
+    tenant,
+    year,
+    month,
+    monthName,
+    filename: `tenant-statement-${filePart(tenant?.fullName || "tenant")}-${year}-${String(month).padStart(2, "0")}.pdf`
+  };
+}
+
+async function fetchTenantStatementPdfBlob(context) {
+  const res = await fetch(
+    `${API_URL}/reports/tenant-statement/${context.tenantId}/${context.year}/${context.month}/pdf`,
+    { headers: auth().headers }
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to generate statement PDF");
+  }
+
+  const blob = await res.blob();
+
+  if (blob.type !== "application/pdf") {
+    throw new Error("Server did not return a PDF");
+  }
+
+  return blob;
+}
+
+async function sharePdfBlob(blob, filename, shareText) {
+  const file = new File([blob], filename, { type: "application/pdf" });
+
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: filename.replace(/-/g, " ").replace(/\.pdf$/i, ""),
+      text: shareText,
+      files: [file]
+    });
+    return;
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  window.open(url, "_blank");
+
+  if (navigator.clipboard) {
+    await navigator.clipboard.writeText(shareText).catch(() => {});
+  }
+
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+  }, 60_000);
+
+  notify("Statement opened. Share text copied where supported.");
+}
 
 function getSelectedReportContext() {
   const monthName =
@@ -1039,37 +1190,48 @@ window.logout=logout;
 
 /* tenant statement pdf */
 async function exportTenantStatementPDF() {
-  const tenantId = document.getElementById("reportTenant").value;
-  const year = Number(document.getElementById("reportYear").value);
-  const monthName = document.getElementById("reportMonth").value;
+  const context = getSelectedStatementContext();
 
-  const monthIndex = MONTHS.indexOf(monthName);
-if (monthIndex < 0) return;
-const month = monthIndex + 1;
-
-  if (!tenantId) {
+  if (!context) {
     notify("Please select a tenant first");
     return;
   }
 
-  const res = await fetch(
-    `${API_URL}/reports/tenant-statement/${tenantId}/${year}/${month}/pdf`,
-    {
-      headers: {
-        Authorization: `Bearer ${currentUser.token}`
-      }
-    }
-  );
+  try {
+    const blob = await fetchTenantStatementPdfBlob(context);
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, "_blank");
 
-  if (!res.ok) {
-    notify("Failed to generate PDF");
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 60_000);
+  } catch (err) {
+    console.error("TENANT STATEMENT PDF ERROR:", err);
+    notify(err.message || "Failed to generate PDF");
+  }
+}
+
+async function shareTenantStatement() {
+  const context = getSelectedStatementContext();
+
+  if (!context) {
+    notify("Please select a tenant first");
     return;
   }
 
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  window.open(url, "_blank");
+  try {
+    const blob = await fetchTenantStatementPdfBlob(context);
+    const shareText =
+      `Tenant statement for ${context.tenant?.fullName || "tenant"} - ` +
+      `${context.monthName} ${context.year}.`;
+
+    await sharePdfBlob(blob, context.filename, shareText);
+  } catch (err) {
+    console.error("TENANT STATEMENT SHARE ERROR:", err);
+    notify(err.message || "Failed to share statement");
+  }
 }
+
 async function emailTenantStatement() {
   const tenantId = document.getElementById("reportTenant").value;
   const year = Number(document.getElementById("reportYear").value);
@@ -1701,6 +1863,7 @@ async function buildAllReports() {
 window.emailTenantStatement = emailTenantStatement;
 
 window.exportTenantStatementPDF = exportTenantStatementPDF;
+window.shareTenantStatement = shareTenantStatement;
 
 window.exportPropertyPerformancePDF=exportPropertyPerformancePDF;
 window.exportPropertyHistoryPDF = exportPaymentHistoryPDF;
