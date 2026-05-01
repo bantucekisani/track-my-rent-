@@ -93,12 +93,16 @@ router.get("/summary", auth, async (req, res) => {
       totalProperties,
       totalUnits,
       totalTenants,
-      occupiedUnits
+      occupiedUnits,
+      totalPayments,
+      firstProperty
     ] = await Promise.all([
       Property.countDocuments({ ownerId }),
       Unit.countDocuments({ ownerId }),
       Tenant.countDocuments({ ownerId }),
-      Lease.countDocuments({ ownerId, status: "Active" })
+      Lease.countDocuments({ ownerId, status: "Active" }),
+      LedgerEntry.countDocuments({ ownerId, type: "payment" }),
+      Property.findOne({ ownerId }).select("_id").sort({ createdAt: 1 }).lean()
     ]);
 
     const vacantUnits = Math.max(0, totalUnits - occupiedUnits);
@@ -259,7 +263,10 @@ try {
     totalUnits,
     occupiedUnits,
     vacantUnits,
-    totalTenants
+    totalTenants,
+    totalActiveLeases: occupiedUnits,
+    totalPayments,
+    firstPropertyId: firstProperty?._id || null
   },
 
   rent: {

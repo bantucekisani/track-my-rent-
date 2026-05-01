@@ -11,6 +11,7 @@ let dashboardLoaded = false;
 let dashboardLoading = false;
 
 const DASHBOARD_CACHE_KEY = "dashboardCache";
+const SETUP_GUARD_DISMISSED_KEY = "setupGuardDismissed";
 const user = JSON.parse(localStorage.getItem("user"));
 
 if (!user || !user.token) {
@@ -284,6 +285,110 @@ function setDashboardLoadingState(isLoading) {
   content.classList.toggle("dashboard-loading", isLoading);
 }
 
+function getSetupGuideSteps(data) {
+  const totals = data?.totals || {};
+  const firstPropertyId = totals.firstPropertyId
+    ? String(totals.firstPropertyId)
+    : "";
+  const unitHref = firstPropertyId
+    ? `units.html?property=${encodeURIComponent(firstPropertyId)}&tutorial=units&autostart=1`
+    : "properties.html?tutorial=properties&autostart=1";
+
+  return [
+    {
+      key: "property",
+      title: "Create a property",
+      text: "Start with the building, house, or rooming property you manage.",
+      href: "properties.html?tutorial=properties&autostart=1",
+      action: "Add property",
+      done: Number(totals.totalProperties || 0) > 0
+    },
+    {
+      key: "units",
+      title: "Add units to the property",
+      text: "Create each rentable room, flat, cottage, or unit before assigning people.",
+      href: unitHref,
+      action: "Add units",
+      done: Number(totals.totalUnits || 0) > 0
+    },
+    {
+      key: "tenant",
+      title: "Add a tenant",
+      text: "Capture the tenant profile and contact details before creating a lease.",
+      href: "tenants.html?tutorial=tenants&autostart=1",
+      action: "Add tenant",
+      done: Number(totals.totalTenants || 0) > 0
+    },
+    {
+      key: "lease",
+      title: "Create the lease",
+      text: "Link tenant, property, unit, rent amount, deposit, and due dates.",
+      href: "leases.html?tutorial=leases&autostart=1",
+      action: "Create lease",
+      done: Number(totals.totalActiveLeases || totals.occupiedUnits || 0) > 0
+    },
+    {
+      key: "payment",
+      title: "Record the first payment",
+      text: "Once money is received, record it so statements and arrears stay accurate.",
+      href: "payments.html?tutorial=payments&autostart=1",
+      action: "Record payment",
+      done:
+        Number(totals.totalPayments || 0) > 0 ||
+        Number(data?.rent?.collectedThisMonth || 0) > 0
+    },
+    {
+      key: "reports",
+      title: "Review reports",
+      text: "Use reports and PDF exports once the core rental workflow is alive.",
+      href: "reports.html?tutorial=reports&autostart=1",
+      action: "Open reports",
+      done: false,
+      finalStep: true
+    }
+  ];
+}
+
+function renderSetupGuardBubble(nextStep, complete) {
+  const bubble = document.getElementById("setupGuardBubble");
+
+  if (!bubble) {
+    return;
+  }
+
+  if (complete || !nextStep) {
+    bubble.classList.add("hidden");
+    bubble.innerHTML = "";
+    return;
+  }
+
+  const dismissedStep = localStorage.getItem(SETUP_GUARD_DISMISSED_KEY);
+  const dismissed = dismissedStep === nextStep.key;
+
+  if (dismissed) {
+    bubble.classList.add("hidden");
+    bubble.innerHTML = "";
+    return;
+  }
+
+  bubble.dataset.stepKey = nextStep.key;
+
+  bubble.innerHTML = `
+    <button
+      class="setup-guard-close"
+      type="button"
+      aria-label="Hide setup guide"
+      onclick="dismissSetupGuard()"
+    >&times;</button>
+    <span class="setup-guard-kicker">Next setup step</span>
+    <strong>${safeText(nextStep.title)}</strong>
+    <p>${safeText(nextStep.text)}</p>
+    <a href="${nextStep.href}">${safeText(nextStep.action)}</a>
+  `;
+
+  bubble.classList.remove("hidden");
+}
+
 function updateDashboardQuickstart(data) {
   const quickstart = document.getElementById("dashboardQuickstart");
   const stepsHost = document.getElementById("dashboardQuickstartSteps");
@@ -292,53 +397,47 @@ function updateDashboardQuickstart(data) {
     return;
   }
 
-  const totals = data?.totals || {};
-  const needsQuickstart =
-    Number(totals.totalProperties || 0) === 0 ||
-    Number(totals.totalTenants || 0) === 0 ||
-    Number(totals.totalUnits || 0) === 0;
+  const steps = getSetupGuideSteps(data);
+  const actionableSteps = steps.filter(step => !step.finalStep);
+  const complete = actionableSteps.every(step => step.done);
+  const nextStep =
+    steps.find(step => !step.done && !step.finalStep) ||
+    steps.find(step => step.finalStep);
 
-  if (!needsQuickstart) {
+  if (complete) {
     quickstart.classList.add("hidden");
     stepsHost.innerHTML = "";
+    renderSetupGuardBubble(null, true);
     return;
   }
 
-  const steps = [
-    {
-      title: "1. Business Profile",
-      text: "Add the identity details that appear on invoices and statements.",
-      href: "business-settings.html?tutorial=business-settings&autostart=1",
-      action: "Set up profile"
-    },
-    {
-      title: "2. Property",
-      text: "Create your first property so the rest of the workflow has somewhere to start.",
-      href: "properties.html?tutorial=properties&autostart=1",
-      action: "Add property"
-    },
-    {
-      title: "3. Tenant",
-      text: "Capture the tenant before you create leases or record payments.",
-      href: "tenants.html?tutorial=tenants&autostart=1",
-      action: "Add tenant"
-    },
-    {
-      title: "4. Lease",
-      text: "Link the tenant to a property or unit and define the rent terms.",
-      href: "leases.html?tutorial=leases&autostart=1",
-      action: "Create lease"
-    }
-  ];
+  stepsHost.innerHTML = steps.map((step, index) => {
+    const isNext = nextStep?.key === step.key;
+    const stateLabel = step.done ? "Done" : isNext ? "Next" : "Locked";
+    const stepClass = [
+      "quickstart-step",
+      step.done ? "is-done" : "",
+      isNext ? "is-next" : "",
+      !step.done && !isNext ? "is-locked" : ""
+    ].filter(Boolean).join(" ");
 
-  stepsHost.innerHTML = steps.map(step => `
-    <article class="quickstart-step">
-      <strong>${step.title}</strong>
-      <p>${step.text}</p>
-      <a href="${step.href}">${step.action}</a>
-    </article>
-  `).join("");
+    return `
+      <article class="${stepClass}">
+        <span class="quickstart-step-status">${stateLabel}</span>
+        <strong>${index + 1}. ${safeText(step.title)}</strong>
+        <p>${safeText(step.text)}</p>
+        ${
+          step.done
+            ? `<span class="quickstart-complete">Completed</span>`
+            : isNext
+              ? `<a href="${step.href}">${safeText(step.action)}</a>`
+              : `<span class="quickstart-wait">Complete the previous step first</span>`
+        }
+      </article>
+    `;
+  }).join("");
 
+  renderSetupGuardBubble(nextStep, complete);
   quickstart.classList.remove("hidden");
 }
 async function loadTutorialPrompt() {
@@ -741,6 +840,17 @@ document.getElementById("featureLockModal")
 
 }
 
+function dismissSetupGuard() {
+  const bubble = document.getElementById("setupGuardBubble");
+  const stepKey = bubble?.dataset.stepKey || "dismissed";
+
+  localStorage.setItem(SETUP_GUARD_DISMISSED_KEY, stepKey);
+
+  if (bubble) {
+    bubble.classList.add("hidden");
+  }
+}
+
 /* ======================================================
    LOGOUT
 ====================================================== */
@@ -753,6 +863,7 @@ function logout() {
 }
 
 window.logout = logout;
+window.dismissSetupGuard = dismissSetupGuard;
 
 function initDashboardTutorial() {
   if (!window.TutorialRegistry) {
