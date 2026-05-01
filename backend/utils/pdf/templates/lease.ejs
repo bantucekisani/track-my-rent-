@@ -260,6 +260,41 @@
       font-size: 11px;
     }
 
+    .signature-image-wrap {
+      height: 64px;
+      display: flex;
+      align-items: flex-end;
+      margin-top: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #94a3b8;
+    }
+
+    .signature-image {
+      max-width: 100%;
+      max-height: 58px;
+      object-fit: contain;
+    }
+
+    .signature-meta {
+      margin-top: 8px;
+      color: #475569;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .signature-status {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     .bank-card {
       border: 1px solid #dce7f6;
       border-radius: 18px;
@@ -297,6 +332,9 @@
   ].filter(Boolean).join(", ");
   const rentDueDay = lease?.paymentDueDay || 1;
   const escalationPercent = Number(lease?.escalationPercent || 0);
+  const signedDateLabel = lease?.signedAt
+    ? new Date(lease.signedAt).toLocaleDateString(locale)
+    : null;
 %>
 
 <section class="top-shell">
@@ -465,17 +503,36 @@
 <section class="section">
   <div class="section-header">
     <h3>Signatures</h3>
-    <p>Use this section when the lease is printed or reviewed in person.</p>
+    <p>Signed leases show captured signatures and signing details here.</p>
   </div>
 
   <div class="signature-grid">
     <article class="signature-card">
       <p class="signature-title">Landlord / Agent</p>
-      <div class="signature-line">Signature and date</div>
+      <% if (lease?.landlordSignatureUrl) { %>
+        <div class="signature-image-wrap">
+          <img class="signature-image" src="<%= lease.landlordSignatureUrl %>" alt="Landlord signature" />
+        </div>
+        <div class="signature-meta">Landlord / Agent signature</div>
+      <% } else { %>
+        <div class="signature-line">Signature and date</div>
+      <% } %>
     </article>
     <article class="signature-card">
       <p class="signature-title">Tenant</p>
-      <div class="signature-line">Signature and date</div>
+      <% if (lease?.tenantSignatureUrl) { %>
+        <div class="signature-image-wrap">
+          <img class="signature-image" src="<%= lease.tenantSignatureUrl %>" alt="Tenant signature" />
+        </div>
+        <div class="signature-meta">
+          <strong><%= lease?.tenantId?.fullName || "Tenant" %></strong>
+          <% if (signedDateLabel) { %><br />Signed on <%= signedDateLabel %><% } %>
+          <% if (lease?.signedByIp) { %><br />IP: <%= lease.signedByIp %><% } %>
+        </div>
+        <span class="signature-status">Digitally signed</span>
+      <% } else { %>
+        <div class="signature-line">Signature and date</div>
+      <% } %>
     </article>
   </div>
 
