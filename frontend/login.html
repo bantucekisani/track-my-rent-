@@ -1,63 +1,100 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Login | Track My Rent</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Login | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="/assets/css/auth.css">
-<link rel="stylesheet" href="/assets/css/toast.css">
-<script src="/assets/js/config.js"></script>
+  <link rel="stylesheet" href="/assets/css/auth.css">
+  <link rel="stylesheet" href="/assets/css/toast.css">
+  <script src="/assets/js/config.js"></script>
 </head>
 
 <body>
+  <header class="site-header">
+    <nav class="top-nav" aria-label="Main navigation">
+      <a class="brand-link" href="index.html" aria-label="Track My Rent home">
+        <span class="brand-mark">TMR</span>
+        <span>Track My Rent</span>
+      </a>
 
-<div class="auth-wrapper">
+      <div class="nav-actions">
+        <a href="index.html">Home</a>
+        <a class="nav-primary" href="register.html">Register</a>
+      </div>
+    </nav>
+  </header>
 
-  <div class="auth-card">
+  <main class="auth-page">
+    <div class="auth-shell">
+      <section class="auth-card" aria-labelledby="loginHeading">
+        <div class="auth-logo">
+          <span class="logo-circle">TMR</span>
+          <h1>Track My Rent</h1>
+          <p>Rental management for South African landlords</p>
+        </div>
 
-    <div class="auth-logo">
-      <span class="logo-circle">TMR</span>
-      <h1>Track My Rent</h1>
-      <p>Rental Automation Platform</p>
+        <div class="auth-heading">
+          <span class="eyebrow">Welcome back</span>
+          <h2 id="loginHeading">Login to your account</h2>
+          <p>Open your dashboard to review rent, arrears, tenants, and reports.</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" autocomplete="email" inputmode="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+          </div>
+
+          <button type="submit" class="auth-btn">Login</button>
+
+          <p class="switch">
+            <a href="forgot-password.html">Forgot password?</a>
+          </p>
+
+          <p class="switch">
+            Don't have an account?
+            <a href="register.html">Create account</a>
+          </p>
+        </form>
+      </section>
+
+      <aside class="auth-panel" aria-label="Track My Rent overview">
+        <span class="eyebrow">Portfolio pulse</span>
+        <h2>See what needs attention before rent becomes a surprise.</h2>
+        <p>
+          Track My Rent keeps your rent, tenants, leases, and payment follow-up
+          in one focused landlord workspace.
+        </p>
+
+        <div class="auth-preview-grid">
+          <div class="auth-preview-tile">
+            <span>Rent Collected</span>
+            <strong>R 4 500,00</strong>
+          </div>
+          <div class="auth-preview-tile danger">
+            <span>Outstanding</span>
+            <strong>R 4 500,00</strong>
+          </div>
+          <div class="auth-preview-tile">
+            <span>Active Tenants</span>
+            <strong>5</strong>
+          </div>
+          <div class="auth-preview-tile warning">
+            <span>Needs Follow-up</span>
+            <strong>1 arrears</strong>
+          </div>
+        </div>
+      </aside>
     </div>
+  </main>
 
-    <h2>Login to your account</h2>
-
-    <form id="loginForm">
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="Enter your email" autocomplete="email" inputmode="email" required>
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
-      </div>
-
-      <button type="submit" class="auth-btn">Login</button>
-
-      <p class="switch">
-        <a href="forgot-password.html">Forgot password?</a>
-      </p>
-
-      <p class="switch">
-        Don't have an account?
-        <a href="register.html">Create account</a>
-      </p>
-
-    </form>
-
-  </div>
-
-</div>
-
-<script src="/assets/js/toast.js"></script>
-<script src="/assets/js/auth.js"></script>
-
+  <script src="/assets/js/toast.js"></script>
+  <script src="/assets/js/auth.js"></script>
 </body>
 </html>
-
-
-

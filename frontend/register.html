@@ -1,74 +1,113 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Register | Track My Rent</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Register | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="/assets/css/auth.css">
-<link rel="stylesheet" href="/assets/css/toast.css">
-<script src="/assets/js/config.js"></script>
+  <link rel="stylesheet" href="/assets/css/auth.css">
+  <link rel="stylesheet" href="/assets/css/toast.css">
+  <script src="/assets/js/config.js"></script>
 </head>
 
 <body>
+  <header class="site-header">
+    <nav class="top-nav" aria-label="Main navigation">
+      <a class="brand-link" href="index.html" aria-label="Track My Rent home">
+        <span class="brand-mark">TMR</span>
+        <span>Track My Rent</span>
+      </a>
 
-<div class="auth-wrapper">
+      <div class="nav-actions">
+        <a href="index.html">Home</a>
+        <a class="nav-primary" href="login.html">Login</a>
+      </div>
+    </nav>
+  </header>
 
-  <div class="auth-card">
+  <main class="auth-page">
+    <div class="auth-shell auth-shell-register">
+      <section class="auth-card" aria-labelledby="registerHeading">
+        <div class="auth-logo">
+          <span class="logo-circle">TMR</span>
+          <h1>Track My Rent</h1>
+          <p>Create your landlord account</p>
+        </div>
 
-    <div class="auth-logo">
-      <span class="logo-circle">TMR</span>
-      <h1>Track My Rent</h1>
-      <p>Create your landlord account</p>
+        <div class="auth-heading">
+          <span class="eyebrow">Start free</span>
+          <h2 id="registerHeading">Create your account</h2>
+          <p>Add your first property, then connect units, tenants, leases, and rent payments.</p>
+        </div>
+
+        <form id="registerForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="fullName">Full Name</label>
+              <input type="text" id="fullName" placeholder="Enter your full name" autocomplete="name" required>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="Enter your email" autocomplete="email" inputmode="email" required>
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" placeholder="Create a password" autocomplete="new-password" minlength="8" required>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number (optional)</label>
+              <input type="text" id="phone" placeholder="Enter phone number" autocomplete="tel" inputmode="tel">
+            </div>
+
+            <div class="form-group form-group-wide">
+              <label for="businessName">Business Name (optional)</label>
+              <input type="text" id="businessName" placeholder="Enter business name" autocomplete="organization">
+            </div>
+          </div>
+
+          <button type="submit" class="auth-btn">Create Account</button>
+
+          <p class="switch">
+            Already have an account?
+            <a href="login.html">Login</a>
+          </p>
+        </form>
+      </section>
+
+      <aside class="auth-panel" aria-label="Getting started with Track My Rent">
+        <span class="eyebrow">Guided setup</span>
+        <h2>Build your landlord workspace in the right order.</h2>
+        <p>
+          Start with your property structure first so tenants, leases, rent rolls,
+          statements, and reports stay accurate later.
+        </p>
+
+        <ol class="auth-step-list">
+          <li>
+            <strong>Create a property</strong>
+            <span>Add a house, flat, townhouse, or building.</span>
+          </li>
+          <li>
+            <strong>Add units</strong>
+            <span>Keep rooms and units under the right property.</span>
+          </li>
+          <li>
+            <strong>Connect tenants and leases</strong>
+            <span>Set rent amounts, deposit details, and lease dates.</span>
+          </li>
+          <li>
+            <strong>Track payments</strong>
+            <span>Monitor arrears and export reports when needed.</span>
+          </li>
+        </ol>
+      </aside>
     </div>
+  </main>
 
-    <h2>Get Started</h2>
-
-    <form id="registerForm">
-
-      <div class="form-group">
-        <label for="fullName">Full Name</label>
-        <input type="text" id="fullName" placeholder="Enter your full name" autocomplete="name" required>
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="Enter your email" autocomplete="email" inputmode="email" required>
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Create a password" autocomplete="new-password" minlength="8" required>
-      </div>
-
-      <div class="form-group">
-        <label for="phone">Phone Number (optional)</label>
-        <input type="text" id="phone" placeholder="Enter phone number" autocomplete="tel" inputmode="tel">
-      </div>
-
-      <div class="form-group">
-        <label for="businessName">Business Name (optional)</label>
-        <input type="text" id="businessName" placeholder="Enter business name" autocomplete="organization">
-      </div>
-
-      <button type="submit" class="auth-btn">Create Account</button>
-
-      <p class="switch">
-        Already have an account?
-        <a href="login.html">Login</a>
-      </p>
-
-    </form>
-
-  </div>
-
-</div>
-
-<script src="/assets/js/toast.js"></script>
-<script src="/assets/js/auth.js"></script>
-
+  <script src="/assets/js/toast.js"></script>
+  <script src="/assets/js/auth.js"></script>
 </body>
 </html>
-
-
-
