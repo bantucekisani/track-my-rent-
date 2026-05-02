@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-await loadAppSettings();
+loadAppSettings();
 initTenantsPage();
 initTenantsTutorial();
 });
@@ -82,29 +82,20 @@ function closeTenantTutorialModal() {
 }
 
 
-async function loadAppSettings() {
-
-  try {
-
-    const res = await fetch(`${API_URL}/dashboard/summary`, {
-      headers: {
-        Authorization: `Bearer ${currentUser.token}`
-      }
-    });
-
-    const data = await res.json();
-
-    window.APP_CURRENCY = data.currency || "ZAR";
-    window.APP_LOCALE = data.locale || "en-ZA";
-
-  } catch (err) {
-
-    console.error("Failed to load currency", err);
-
-    window.APP_CURRENCY = "ZAR";
-    window.APP_LOCALE = "en-ZA";
+function loadAppSettings() {
+  if (window.getAppPreferences && window.applyAppPreferences) {
+    window.applyAppPreferences(window.getAppPreferences());
   }
 
+  if (window.refreshAppPreferencesFromSummary) {
+    window.refreshAppPreferencesFromSummary({
+      headers: { Authorization: `Bearer ${currentUser.token}` }
+    }).catch(err => console.warn("Failed to refresh tenant preferences:", err));
+    return;
+  }
+
+  window.APP_CURRENCY = window.APP_CURRENCY || "ZAR";
+  window.APP_LOCALE = window.APP_LOCALE || "en-ZA";
 }
 /* =========================
    LOAD PROPERTIES

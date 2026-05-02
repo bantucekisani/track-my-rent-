@@ -20,6 +20,8 @@ function resolveApiUrl() {
 window.API_URL = resolveApiUrl();
 
 const APP_PREFERENCES_KEY = "appPreferences";
+const APP_PREFERENCES_SYNCED_AT_KEY = "appPreferencesSyncedAt";
+const APP_PREFERENCES_MAX_AGE_MS = 5 * 60 * 1000;
 const DEFAULT_APP_PREFERENCES = {
   currency: "ZAR",
   locale: "en-ZA",
@@ -85,6 +87,65 @@ function applyAppPreferences(preferences = {}) {
   }
 
   return next;
+}
+
+function readAppPreferencesSyncedAt() {
+  try {
+    return Number(localStorage.getItem(APP_PREFERENCES_SYNCED_AT_KEY) || 0);
+  } catch (error) {
+    return 0;
+  }
+}
+
+function markAppPreferencesSynced() {
+  try {
+    localStorage.setItem(APP_PREFERENCES_SYNCED_AT_KEY, String(Date.now()));
+  } catch (error) {
+    // Ignore storage failures and continue with in-memory preferences.
+  }
+}
+
+function shouldRefreshAppPreferences(maxAgeMs = APP_PREFERENCES_MAX_AGE_MS) {
+  const syncedAt = readAppPreferencesSyncedAt();
+
+  return !syncedAt || Date.now() - syncedAt > maxAgeMs;
+}
+
+async function refreshAppPreferencesFromSummary(options = {}) {
+  const {
+    headers = {},
+    force = false,
+    maxAgeMs = APP_PREFERENCES_MAX_AGE_MS
+  } = options;
+
+  applyAppPreferences(readStoredAppPreferences());
+
+  if (!force && !shouldRefreshAppPreferences(maxAgeMs)) {
+    return getAppPreferences();
+  }
+
+  const res = await fetch(`${window.API_OVERRIDE || window.API_URL}/dashboard/summary`, {
+    headers: {
+      ...authHeader(),
+      ...headers
+    },
+    cache: "no-store"
+  });
+
+  if (!res.ok) {
+    throw new Error("Could not refresh app preferences");
+  }
+
+  const data = await res.json();
+  const preferences = applyAppPreferences({
+    currency: data.currency,
+    locale: data.locale,
+    timezone: data.timezone
+  });
+
+  markAppPreferencesSynced();
+
+  return preferences;
 }
 
 function formatAppCurrency(value, currencyOverride) {
@@ -193,6 +254,7 @@ applyAppPreferences(readStoredAppPreferences());
 
 window.getAppPreferences = getAppPreferences;
 window.applyAppPreferences = applyAppPreferences;
+window.refreshAppPreferencesFromSummary = refreshAppPreferencesFromSummary;
 window.formatAppCurrency = formatAppCurrency;
 window.formatAppNumber = formatAppNumber;
 window.formatAppDate = formatAppDate;

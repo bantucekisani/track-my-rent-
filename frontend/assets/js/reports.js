@@ -20,6 +20,8 @@ let arrearsData = [];
 
 let monthlyIncomeChart = null;
 let yearlySummaryChart = null;
+let reportRequestCache = new Map();
+let activeReportsBuild = 0;
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -40,18 +42,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupMonthSelect(document.getElementById("reportMonth"));
   setupYearSelect(document.getElementById("reportYear"));
 
-  await loadAppSettings();
+  loadAppSettings();
 
-await Promise.all([
-  loadProperties(),
-  loadTenants(),
-  loadLeases(),
-  loadLedger()
-  
-]);
+  await Promise.all([
+    loadProperties(),
+    loadTenants(),
+    loadLeases()
+  ]);
 
   bindEvents();
-  await buildAllReports(); // must be awaited
+  buildAllReports();
 });  
 
 function money(value){
@@ -62,41 +62,13 @@ function money(value){
   return `ZAR ${Number(value || 0).toFixed(2)}`;
 }
 
-async function loadAppSettings() {
-
-  try {
-
-    const res = await fetch(`${API_URL}/dashboard/summary`, auth());
-    const data = await res.json();
-
-    if (window.applyAppPreferences) {
-      window.applyAppPreferences({
-        currency: data.currency,
-        locale: data.locale,
-        timezone: data.timezone
-      });
-    } else {
-      window.APP_CURRENCY = data.currency || "ZAR";
-      window.APP_LOCALE = data.locale || "en-ZA";
-    }
-
-  } catch (err) {
-
-    console.error("Failed to load currency", err);
-
-    if (window.applyAppPreferences) {
-      window.applyAppPreferences({
-        currency: "ZAR",
-        locale: "en-ZA",
-        timezone: "Africa/Johannesburg"
-      });
-    } else {
-      window.APP_CURRENCY = "ZAR";
-      window.APP_LOCALE = "en-ZA";
-    }
-
+function loadAppSettings() {
+  if (window.getAppPreferences && window.applyAppPreferences) {
+    window.applyAppPreferences(window.getAppPreferences());
   }
 
+  window.APP_CURRENCY = window.APP_CURRENCY || "ZAR";
+  window.APP_LOCALE = window.APP_LOCALE || "en-ZA";
 }
 /* ==========================================================
    DROPDOWNS
@@ -235,14 +207,28 @@ document.getElementById("arrearsTotal").textContent =
 }
 
 async function fetchApiJson(url) {
-  const res = await fetch(url, auth());
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data.message || "Request failed");
+  if (reportRequestCache.has(url)) {
+    return reportRequestCache.get(url);
   }
 
-  return data;
+  const request = fetch(url, auth())
+    .then(async res => {
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+
+      return data;
+    })
+    .catch(err => {
+      reportRequestCache.delete(url);
+      throw err;
+    });
+
+  reportRequestCache.set(url, request);
+
+  return request;
 }
 
 
@@ -282,6 +268,14 @@ async function buildTopSummary(month, year, propertyId) {
       throw new Error("Summary payload missing");
     }
 
+    if (window.applyAppPreferences) {
+      window.applyAppPreferences({
+        currency: data.currency,
+        locale: data.locale,
+        timezone: data.timezone
+      });
+    }
+
     document.getElementById("repRentExpected").textContent =
       money(data.rent?.expectedThisMonth || 0);
 
@@ -299,6 +293,11 @@ async function buildTopSummary(month, year, propertyId) {
 
   }
 
+  paintTopSummaryFromLedger(month, year, propertyId);
+
+}
+
+function paintTopSummaryFromLedger(month, year, propertyId) {
   const entries = ledgerFilter(month, year)
     .filter(e => !propertyId || idOf(e.propertyId) === propertyId);
 
@@ -330,7 +329,6 @@ async function buildTopSummary(month, year, propertyId) {
 
   document.getElementById("repRentOutstanding").textContent =
     money(outstanding);
-
 }
 /* ==========================================================
    A) MONTHLY INCOME BY PROPERTY
@@ -1831,6 +1829,9 @@ if (month < 1 || isNaN(year)) {
    CORE BUILD (RENT-FIRST SAFE)
 ========================================================== */
 async function buildAllReports() {
+  const buildId = ++activeReportsBuild;
+  reportRequestCache = new Map();
+
   const month = document.getElementById("reportMonth").value;
   const year = Number(document.getElementById("reportYear").value);
   const propertyId = document.getElementById("reportProperty").value;
@@ -1838,25 +1839,43 @@ async function buildAllReports() {
   // Paint the headline numbers first; detailed sections can take longer.
   await buildTopSummary(month, year, propertyId);
 
+  if (buildId !== activeReportsBuild) return;
+
   await chargeRentIfNeeded();
+
+  if (buildId !== activeReportsBuild) return;
 
   await loadLedger();
 
-  await buildTopSummary(month, year, propertyId);
-  await buildProfitLoss(month, year, propertyId);
+  if (buildId !== activeReportsBuild) return;
 
-  await renderArrearsFromAPI();
+  paintTopSummaryFromLedger(month, year, propertyId);
+
+  buildPaymentHistory();
+  buildUtilitiesReport(month, year, propertyId);
+  buildDamageReport(month, year, propertyId);
+
+  const detailedTasks = [
+    buildProfitLoss(month, year, propertyId),
+    renderArrearsFromAPI(),
+    buildMonthlyIncome(month, year, propertyId),
+    buildYearlySummary(year, propertyId),
+    buildPropertyPerformance(month, year, propertyId)
+  ];
 
   if (document.getElementById("plTableBody")) {
-    await buildMonthlyProfitLoss(year, propertyId);
+    detailedTasks.push(buildMonthlyProfitLoss(year, propertyId));
   }
 
-  buildUtilitiesReport(month, year, propertyId);
-  await buildMonthlyIncome(month, year, propertyId);
-  await buildYearlySummary(year, propertyId);
-  buildPaymentHistory();
-  await buildPropertyPerformance(month, year, propertyId);
-  buildDamageReport(month, year, propertyId);
+  const results = await Promise.allSettled(detailedTasks);
+
+  results.forEach(result => {
+    if (result.status === "rejected") {
+      console.warn("Report section failed:", result.reason);
+    }
+  });
+
+  reportRequestCache.clear();
 }
 
 // REQUIRED for onclick=""
