@@ -18,6 +18,15 @@ let currentUser = null;
 let allExpenses = [];
 let allProperties = [];
 
+const EXPENSE_CATEGORY_LABELS = {
+  maintenance: "Maintenance",
+  utilities: "Utilities",
+  rates: "Rates & Taxes",
+  insurance: "Insurance",
+  cleaning: "Cleaning",
+  admin: "Admin"
+};
+
 function money(value) {
   if (window.formatAppCurrency) {
     return window.formatAppCurrency(value);
@@ -67,10 +76,23 @@ async function loadProperties() {
    LOAD EXPENSES
 ============================= */
 async function loadExpenses() {
-  const res = await fetch(`${API_URL}/ledger`, auth());
+  const res = await fetch(`${API_URL}/ledger/expenses`, auth());
   const data = await res.json();
 
-  allExpenses = (data.ledger || []).filter(e => e.type === "expense");
+  if (window.applyAppPreferences) {
+    const preferences = {
+      currency: data.currency,
+      locale: data.locale
+    };
+
+    if (data.timezone) {
+      preferences.timezone = data.timezone;
+    }
+
+    window.applyAppPreferences(preferences);
+  }
+
+  allExpenses = data.expenses || [];
   applyFilters();
 }
 
@@ -87,7 +109,8 @@ function applyFilters() {
   if (search) {
     filtered = filtered.filter(e =>
       (e.description || "").toLowerCase().includes(search) ||
-      (e.subtype || "").toLowerCase().includes(search)
+      getExpenseCategoryLabel(e).toLowerCase().includes(search) ||
+      getExpenseCategory(e).includes(search)
     );
   }
 
@@ -98,7 +121,7 @@ function applyFilters() {
   }
 
   if (category) {
-    filtered = filtered.filter(e => e.subtype === category);
+    filtered = filtered.filter(e => getExpenseCategory(e) === category);
   }
 
   renderExpenses(filtered);
@@ -122,7 +145,7 @@ function renderExpenses(list) {
       <tr>
         <td>${formatDate(e.date)}</td>
         <td>${e.propertyId?.name || "-"}</td>
-        <td>${e.subtype || "-"}</td>
+        <td>${getExpenseCategoryLabel(e)}</td>
         <td>${e.description || "-"}</td>
         <td style="color:#b91c1c;font-weight:600">
           -${money(Number(e.debit || 0))}
@@ -213,6 +236,38 @@ function formatDate(d) {
   }
 
   return d ? new Date(d).toLocaleDateString() : "-";
+}
+
+function getExpenseCategory(expense = {}) {
+  const raw = String(expense.subtype || expense.category || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  const aliases = {
+    rates_taxes: "rates",
+    rates_and_taxes: "rates",
+    tax: "rates",
+    taxes: "rates"
+  };
+  const normalized = aliases[raw] || raw;
+
+  if (EXPENSE_CATEGORY_LABELS[normalized]) {
+    return normalized;
+  }
+
+  const text = String(expense.description || "").toLowerCase();
+
+  if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
+  if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
+  if (/water|electricity|utility|utilities/.test(text)) return "utilities";
+  if (/insurance|insure/.test(text)) return "insurance";
+  if (/clean|cleaning/.test(text)) return "cleaning";
+
+  return "admin";
+}
+
+function getExpenseCategoryLabel(expense) {
+  return EXPENSE_CATEGORY_LABELS[getExpenseCategory(expense)] || "Admin";
 }
 
 /* =============================

@@ -34,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("vatEnabled")
     .addEventListener("change", toggleVatOptions);
+
+  ["currencySelect", "localeSelect", "timezoneSelect"].forEach(id => {
+    document.getElementById(id)?.addEventListener("change", updateSettingsPreview);
+  });
 });
 
 
@@ -52,7 +56,10 @@ async function loadSettings() {
     const data = await res.json();
     const s = data.settings;
 
-    if (!s) return;
+    if (!s) {
+      updateSettingsPreview();
+      return;
+    }
 
     /* ================= VAT ================= */
 
@@ -83,8 +90,11 @@ async function loadSettings() {
       window.applyAppPreferences(s.preferences || {});
     }
 
+    updateSettingsPreview();
+
   } catch (err) {
     console.error("LOAD SETTINGS ERROR:", err);
+    updateSettingsPreview();
   }
 }
 
@@ -143,6 +153,7 @@ async function saveFinancialSettings(e) {
       window.applyAppPreferences(body.preferences);
     }
 
+    updateSettingsPreview();
     notify("Financial settings saved successfully");
 
   } catch (err) {
@@ -165,3 +176,32 @@ function toggleVatOptions() {
   vatOptions.classList.toggle("hidden", !checkbox.checked);
 
 }
+
+function updateSettingsPreview() {
+  const currency = document.getElementById("currencySelect");
+  const locale = document.getElementById("localeSelect");
+  const timezone = document.getElementById("timezoneSelect");
+
+  setPreviewText("settingsCurrencyPreview", selectedText(currency));
+  setPreviewText("settingsRegionPreview", selectedText(locale));
+  setPreviewText("settingsTimezonePreview", timezone?.value || "Africa/Johannesburg");
+}
+
+function selectedText(select) {
+  return select?.selectedOptions?.[0]?.textContent?.trim() || "-";
+}
+
+function setPreviewText(id, value) {
+  const el = document.getElementById(id);
+
+  if (el) {
+    el.textContent = value;
+  }
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+window.logout = logout;

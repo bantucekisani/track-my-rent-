@@ -14,7 +14,7 @@ const ExpenseSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    enum: ["maintenance", "utilities", "insurance", "cleaning", "admin"],
+    enum: ["maintenance", "utilities", "rates", "insurance", "cleaning", "admin"],
     required: true
   },
 

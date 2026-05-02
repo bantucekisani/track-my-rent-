@@ -135,6 +135,12 @@ const LedgerEntrySchema = new mongoose.Schema(
       trim: true
     },
 
+    subtype: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
+
     source: {
       type: String, // manual | auto | import
       trim: true

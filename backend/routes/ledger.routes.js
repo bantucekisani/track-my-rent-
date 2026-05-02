@@ -74,6 +74,48 @@ function safeFilenamePart(value) {
     .replace(/^-+|-+$/g, "") || "receipt";
 }
 
+function normalizeExpenseCategory(value) {
+  const category = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  const aliases = {
+    rates_taxes: "rates",
+    rates_and_taxes: "rates",
+    tax: "rates",
+    taxes: "rates"
+  };
+  const normalized = aliases[category] || category;
+  const allowed = new Set([
+    "maintenance",
+    "utilities",
+    "insurance",
+    "cleaning",
+    "admin",
+    "rates"
+  ]);
+
+  return allowed.has(normalized) ? normalized : "";
+}
+
+function inferExpenseCategory(entry = {}) {
+  const savedCategory = normalizeExpenseCategory(entry.subtype);
+
+  if (savedCategory) {
+    return savedCategory;
+  }
+
+  const text = String(entry.description || "").toLowerCase();
+
+  if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
+  if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
+  if (/water|electricity|utility|utilities/.test(text)) return "utilities";
+  if (/insurance|insure/.test(text)) return "insurance";
+  if (/clean|cleaning/.test(text)) return "cleaning";
+
+  return "admin";
+}
+
 async function loadPaymentExportData(ownerId) {
   const settings = await Settings.findOne({ ownerId }).lean();
   const currency = settings?.preferences?.currency || "ZAR";
@@ -720,8 +762,9 @@ router.post("/damage/reverse", auth, async (req, res) => {
 
 router.post("/expense", auth, async (req, res) => {
   try {
-    const { propertyId, amount, description, date } = req.body;
-     const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const { propertyId, amount, description, date, category } = req.body;
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const expenseCategory = normalizeExpenseCategory(category) || "admin";
 
     /* ===============================
        VALIDATION
@@ -737,6 +780,18 @@ router.post("/expense", auth, async (req, res) => {
     if (isNaN(d.getTime())) {
       return res.status(400).json({
         message: "Invalid date format"
+      });
+    }
+
+    if (propertyId && !mongoose.isValidObjectId(propertyId)) {
+      return res.status(400).json({
+        message: "Invalid property id"
+      });
+    }
+
+    if (expenseCategory !== "admin" && !propertyId) {
+      return res.status(400).json({
+        message: "Please select a property for this expense category"
       });
     }
 
@@ -768,6 +823,7 @@ router.post("/expense", auth, async (req, res) => {
       periodYear: d.getFullYear(),
 
       type: "expense",
+      subtype: expenseCategory,
       debit: debitAmount,
       credit: 0,
 
@@ -924,6 +980,8 @@ const settings = await Settings.findOne({ ownerId }).lean();
 
     const locale =
       settings?.preferences?.locale || "en-ZA";
+    const timezone =
+      settings?.preferences?.timezone || "Africa/Johannesburg";
 
     /* ===============================
        SAFE PAGINATION
@@ -959,6 +1017,7 @@ const settings = await Settings.findOne({ ownerId }).lean();
       success: true,
       currency,
       locale,
+      timezone,
 
       pagination: {
         page: pageNum,
@@ -967,7 +1026,10 @@ const settings = await Settings.findOne({ ownerId }).lean();
         totalPages
       },
 
-      expenses
+      expenses: expenses.map(expense => ({
+        ...expense,
+        subtype: inferExpenseCategory(expense)
+      }))
     });
 
   } catch (err) {

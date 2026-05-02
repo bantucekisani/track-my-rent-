@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Financial Settings | Track My Rent</title>
   <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
   <link rel="stylesheet" href="assets/css/toast.css" />
 </head>
 
@@ -12,11 +13,16 @@
 
 <div class="layout">
 
-  <!-- ================= SIDEBAR ================= -->
   <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
 
-    <div class="logo">TMR</div>
-
+    <div class="sidebar-section-title">Menu</div>
     <a href="dashboard.html" class="sidebar-link">Dashboard</a>
     <a href="properties.html" class="sidebar-link">Properties & Units</a>
     <a href="tenants.html" class="sidebar-link">Tenants</a>
@@ -31,146 +37,159 @@
     <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
 
     <div class="sidebar-section-title">Settings</div>
-
     <a href="business-settings.html" class="sidebar-link">Business Profile</a>
-
     <a href="financial-settings.html" class="sidebar-link active">Financial Settings</a>
-
     <a href="pricing.html" class="sidebar-link">Subscription</a>
 
     <div class="sidebar-footer">
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
-
   </nav>
 
-  <!-- ================= MAIN CONTENT ================= -->
-  <main class="content">
-
-    <div class="page-header">
-      <h1>Financial Settings</h1>
-      <p>Configure rent rules, VAT, and global preferences</p>
-    </div>
-
-    <div class="card">
-      <form id="financialSettingsForm" class="form-grid">
-
-        
-        <!-- ================= VAT SETTINGS ================= -->
-        <h4 class="section-title">VAT Settings</h4>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="vatEnabled">
-            <span>Enable VAT</span>
-          </label>
-        </div>
-
-        <div id="vatOptions" class="hidden">
-
-          <div class="form-group">
-            <label>VAT Percentage (%)</label>
-            <input type="number" id="vatPercent" min="0" step="0.01" />
-          </div>
-
-          <div class="form-group">
-            <label>VAT Mode</label>
-            <select id="vatMode">
-              <option value="exclusive">Exclusive (Add VAT on top)</option>
-              <option value="inclusive">Inclusive (VAT included in amount)</option>
-            </select>
-          </div>
-
-        </div>
-
-        <hr class="settings-divider">
-
-        <!-- ================= GLOBAL PREFERENCES ================= -->
-        <h4 class="section-title">Global Preferences</h4>
-
-        <!-- Currency -->
-        <div class="form-group">
-          <label>Currency</label>
-          <select id="currencySelect">
-
-            <!-- Africa -->
-            <option value="ZAR">South African Rand (ZAR)</option>
-            <option value="NGN">Nigerian Naira (NGN)</option>
-            <option value="KES">Kenyan Shilling (KES)</option>
-            <option value="GHS">Ghanaian Cedi (GHS)</option>
-            <option value="UGX">Ugandan Shilling (UGX)</option>
-            <option value="TZS">Tanzanian Shilling (TZS)</option>
-            <option value="ZMW">Zambian Kwacha (ZMW)</option>
-            <option value="BWP">Botswana Pula (BWP)</option>
-
-            <!-- Global -->
-            <option value="USD">US Dollar (USD)</option>
-            <option value="GBP">British Pound (GBP)</option>
-            <option value="EUR">Euro (EUR)</option>
-            <option value="JPY">Japanese Yen (JPY)</option>
-            <option value="AUD">Australian Dollar (AUD)</option>
-            <option value="CAD">Canadian Dollar (CAD)</option>
-
-          </select>
-        </div>
-
-        <!-- Locale -->
-        <div class="form-group">
-          <label>Region / Formatting</label>
-          <select id="localeSelect">
-
-            <!-- Africa -->
-            <option value="en-ZA">South Africa</option>
-            <option value="en-NG">Nigeria</option>
-            <option value="en-KE">Kenya</option>
-            <option value="en-GH">Ghana</option>
-            <option value="en-UG">Uganda</option>
-            <option value="sw-TZ">Tanzania</option>
-            <option value="en-ZM">Zambia</option>
-            <option value="en-BW">Botswana</option>
-
-            <!-- Global -->
-            <option value="en-GB">United Kingdom</option>
-            <option value="de-DE">Germany</option>
-            <option value="en-US">United States</option>
-            <option value="ja-JP">Japan</option>
-            <option value="en-AU">Australia</option>
-
-          </select>
-        </div>
-
-        <!-- Timezone -->
-        <div class="form-group">
-          <label>Timezone</label>
-          <select id="timezoneSelect">
-
-            <!-- Africa -->
-            <option value="Africa/Johannesburg">Africa/Johannesburg</option>
-            <option value="Africa/Lagos">Africa/Lagos</option>
-            <option value="Africa/Nairobi">Africa/Nairobi</option>
-            <option value="Africa/Accra">Africa/Accra</option>
-            <option value="Africa/Kampala">Africa/Kampala</option>
-            <option value="Africa/Dar_es_Salaam">Africa/Dar_es_Salaam</option>
-
-            <!-- Global -->
-            <option value="Europe/London">Europe/London</option>
-            <option value="Europe/Berlin">Europe/Berlin</option>
-            <option value="America/New_York">America/New_York</option>
-            <option value="Asia/Tokyo">Asia/Tokyo</option>
-            <option value="Australia/Sydney">Australia/Sydney</option>
-
-          </select>
-        </div>
-
-        <button type="submit" class="btn-primary">
-          Save Financial Settings
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <h2>Financial Settings</h2>
+        <span class="tagline">Configure rent rules, VAT, and global preferences</span>
+      </div>
+      <div class="header-right">
+        <button type="submit" form="financialSettingsForm" class="btn-primary">
+          Save Settings
         </button>
+      </div>
+    </header>
 
+    <main class="content financial-settings-content">
+      <section class="page-hero settings-hero">
+        <div class="page-hero-copy">
+          <span class="page-eyebrow">Finance Controls</span>
+          <h3>Keep currency, VAT, and reporting rules aligned.</h3>
+          <p>
+            These settings drive how rent, invoices, statements, and reports display across the app.
+          </p>
+        </div>
+
+        <div class="hero-metric-strip hero-metric-strip-compact">
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Currency</span>
+            <strong id="settingsCurrencyPreview">South African Rand</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Region</span>
+            <strong id="settingsRegionPreview">South Africa</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Timezone</span>
+            <strong id="settingsTimezonePreview">Africa/Johannesburg</strong>
+          </div>
+        </div>
+      </section>
+
+      <form id="financialSettingsForm" class="financial-settings-form">
+        <section class="settings-panel">
+          <div class="settings-panel-header">
+            <span class="page-eyebrow">VAT Settings</span>
+            <h3>Tax treatment</h3>
+            <p>Turn VAT on only when your rental workflow needs tax-aware values.</p>
+          </div>
+
+          <label class="vat-toggle-card">
+            <input type="checkbox" id="vatEnabled">
+            <span>
+              <strong>Enable VAT</strong>
+              <small>Apply VAT rules to financial calculations.</small>
+            </span>
+          </label>
+
+          <div id="vatOptions" class="settings-fields-grid hidden">
+            <label class="settings-field">
+              <span>VAT Percentage (%)</span>
+              <input type="number" id="vatPercent" min="0" step="0.01" />
+            </label>
+
+            <label class="settings-field">
+              <span>VAT Mode</span>
+              <select id="vatMode">
+                <option value="exclusive">Exclusive (Add VAT on top)</option>
+                <option value="inclusive">Inclusive (VAT included in amount)</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-panel settings-panel-wide">
+          <div class="settings-panel-header">
+            <span class="page-eyebrow">Global Preferences</span>
+            <h3>Currency, region, and time</h3>
+            <p>Use South Africa and Africa/Johannesburg for Port Elizabeth and Gqeberha portfolios.</p>
+          </div>
+
+          <div class="settings-fields-grid settings-fields-grid-three">
+            <label class="settings-field">
+              <span>Currency</span>
+              <select id="currencySelect">
+                <option value="ZAR">South African Rand (ZAR)</option>
+                <option value="NGN">Nigerian Naira (NGN)</option>
+                <option value="KES">Kenyan Shilling (KES)</option>
+                <option value="GHS">Ghanaian Cedi (GHS)</option>
+                <option value="UGX">Ugandan Shilling (UGX)</option>
+                <option value="TZS">Tanzanian Shilling (TZS)</option>
+                <option value="ZMW">Zambian Kwacha (ZMW)</option>
+                <option value="BWP">Botswana Pula (BWP)</option>
+                <option value="USD">US Dollar (USD)</option>
+                <option value="GBP">British Pound (GBP)</option>
+                <option value="EUR">Euro (EUR)</option>
+                <option value="JPY">Japanese Yen (JPY)</option>
+                <option value="AUD">Australian Dollar (AUD)</option>
+                <option value="CAD">Canadian Dollar (CAD)</option>
+              </select>
+            </label>
+
+            <label class="settings-field">
+              <span>Region / Formatting</span>
+              <select id="localeSelect">
+                <option value="en-ZA">South Africa</option>
+                <option value="en-NG">Nigeria</option>
+                <option value="en-KE">Kenya</option>
+                <option value="en-GH">Ghana</option>
+                <option value="en-UG">Uganda</option>
+                <option value="sw-TZ">Tanzania</option>
+                <option value="en-ZM">Zambia</option>
+                <option value="en-BW">Botswana</option>
+                <option value="en-GB">United Kingdom</option>
+                <option value="de-DE">Germany</option>
+                <option value="en-US">United States</option>
+                <option value="ja-JP">Japan</option>
+                <option value="en-AU">Australia</option>
+              </select>
+            </label>
+
+            <label class="settings-field">
+              <span>Timezone</span>
+              <select id="timezoneSelect">
+                <option value="Africa/Johannesburg">Africa/Johannesburg</option>
+                <option value="Africa/Lagos">Africa/Lagos</option>
+                <option value="Africa/Nairobi">Africa/Nairobi</option>
+                <option value="Africa/Accra">Africa/Accra</option>
+                <option value="Africa/Kampala">Africa/Kampala</option>
+                <option value="Africa/Dar_es_Salaam">Africa/Dar_es_Salaam</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="Europe/Berlin">Europe/Berlin</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+                <option value="Australia/Sydney">Australia/Sydney</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <div class="settings-save-bar">
+          <span>Applies to invoices, statements, reports, and dashboards.</span>
+          <button type="submit" class="btn-primary">Save Financial Settings</button>
+        </div>
       </form>
-    </div>
-
-  </main>
-
+    </main>
+  </div>
 </div>
 
 <script src="assets/js/config.js"></script>

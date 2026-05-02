@@ -9,6 +9,48 @@ const mongoose = require("mongoose");
 
 const router = express.Router();
 
+function normalizeExpenseCategory(value) {
+  const category = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  const aliases = {
+    rates_taxes: "rates",
+    rates_and_taxes: "rates",
+    tax: "rates",
+    taxes: "rates"
+  };
+  const normalized = aliases[category] || category;
+  const allowed = new Set([
+    "maintenance",
+    "utilities",
+    "insurance",
+    "cleaning",
+    "admin",
+    "rates"
+  ]);
+
+  return allowed.has(normalized) ? normalized : "";
+}
+
+function inferExpenseCategory(entry = {}) {
+  const savedCategory = normalizeExpenseCategory(entry.subtype);
+
+  if (savedCategory) {
+    return savedCategory;
+  }
+
+  const text = String(entry.description || "").toLowerCase();
+
+  if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
+  if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
+  if (/water|electricity|utility|utilities/.test(text)) return "utilities";
+  if (/insurance|insure/.test(text)) return "insurance";
+  if (/clean|cleaning/.test(text)) return "cleaning";
+
+  return "admin";
+}
+
 /* =====================================================
    CREATE EXPENSE (LEDGER DRIVEN + GLOBAL SAFE)
 ===================================================== */
@@ -25,6 +67,7 @@ router.post("/", auth, async (req, res) => {
       date,
       currency: requestCurrency
     } = req.body;
+    const expenseCategory = normalizeExpenseCategory(category) || "admin";
 
     /* ===============================
        VALIDATION
@@ -41,6 +84,12 @@ router.post("/", auth, async (req, res) => {
     if (propertyId && !mongoose.isValidObjectId(propertyId)) {
       return res.status(400).json({
         message: "Invalid property id"
+      });
+    }
+
+    if (expenseCategory !== "admin" && !propertyId) {
+      return res.status(400).json({
+        message: "Please select a property for this expense category"
       });
     }
 
@@ -92,7 +141,7 @@ router.post("/", auth, async (req, res) => {
       });
     }
 
-    const periodMonth = entryDate.getMonth();
+    const periodMonth = entryDate.getMonth() + 1;
     const periodYear = entryDate.getFullYear();
 
     /* ===============================
@@ -113,10 +162,11 @@ router.post("/", auth, async (req, res) => {
       propertyId: propertyId || null,
 
       type: "expense",
+      subtype: expenseCategory,
 
       description:
         description ||
-        category ||
+        expenseCategory ||
         "Expense",
 
       currency: expenseCurrency,
@@ -180,6 +230,7 @@ router.get("/", auth, async (req, res) => {
       return {
 
         ...e,
+        subtype: inferExpenseCategory(e),
 
         formattedAmount:
           formatter.format(e.debit || 0),
