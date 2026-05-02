@@ -403,15 +403,17 @@ a {
   }
 
   .hero {
-    min-height: 720px;
+    min-height: 690px;
   }
 
   .hero h1 {
-    font-size: 4.9rem;
+    max-width: 10ch;
+    font-size: 4.4rem;
   }
 
   .hero p {
-    font-size: 1.28rem;
+    max-width: 520px;
+    font-size: 1.22rem;
   }
 
   .section-heading h2,
@@ -421,9 +423,9 @@ a {
 
   .hero::after {
     position: absolute;
-    right: max(-260px, calc((100vw - 1180px) / 2 - 120px));
-    bottom: 58px;
-    width: min(760px, 56vw);
+    right: max(-340px, calc((100vw - 1180px) / 2 - 320px));
+    bottom: 70px;
+    width: min(680px, 50vw);
     aspect-ratio: 1.55;
     border: 1px solid rgba(15, 23, 42, 0.12);
     border-radius: 24px;
@@ -468,15 +470,21 @@ a {
 
 @media (min-width: 1040px) {
   .hero-inner {
-    padding-top: 108px;
+    padding-top: 98px;
   }
 
   .hero h1 {
-    font-size: 5.8rem;
+    font-size: 5rem;
   }
 
   .hero p {
-    font-size: 1.42rem;
+    font-size: 1.32rem;
+  }
+
+  .hero::after {
+    right: max(-260px, calc((100vw - 1180px) / 2 - 360px));
+    bottom: 52px;
+    width: min(760px, 48vw);
   }
 
   .section-heading h2,
