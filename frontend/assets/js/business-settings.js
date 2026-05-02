@@ -5,6 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  if (!getToken()) {
+    window.location.href = "login.html";
+    return;
+  }
+
   const form = document.getElementById("settingsForm");
 
   if (!form) {
@@ -54,8 +59,10 @@ async function loadSettings() {
     accountType.value = s.bank?.accountType || "";
 
     // Logo preview
-    if (s.logoUrl) {
-      document.getElementById("logoPreview").innerHTML =
+    const logoPreview = document.getElementById("logoPreview");
+
+    if (s.logoUrl && logoPreview) {
+      logoPreview.innerHTML =
         `<img src="${API_URL.replace("/api", "")}${s.logoUrl}" />`;
     }
 
@@ -166,6 +173,18 @@ function getToken() {
 }
 
 window.uploadLogo = uploadLogo;
+
+function logout() {
+  if (window.appLogout) {
+    window.appLogout();
+    return;
+  }
+
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+window.logout = logout;
 
 function initBusinessSettingsTutorial() {
   if (!window.TutorialRegistry) {

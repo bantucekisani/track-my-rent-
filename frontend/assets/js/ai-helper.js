@@ -10,6 +10,27 @@
 function confirmAction(message) {
   return window.confirm(message);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
+  if (!user?.token) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  document.querySelectorAll("[data-prompt]").forEach(button => {
+    button.addEventListener("click", () => {
+      const input = document.getElementById("aiQuestion");
+
+      if (input) {
+        input.value = button.dataset.prompt || "";
+        input.focus();
+      }
+    });
+  });
+});
+
 async function askAI() {
   const input = document.getElementById("aiQuestion");
   const output = document.getElementById("aiAnswer");
@@ -57,4 +78,17 @@ async function askAI() {
     output.textContent = "Server error. Try again.";
   }
 }
+
+function logout() {
+  if (window.appLogout) {
+    window.appLogout();
+    return;
+  }
+
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+window.askAI = askAI;
+window.logout = logout;
 

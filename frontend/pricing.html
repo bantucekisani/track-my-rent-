@@ -1,300 +1,164 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8">
-<title>Pricing | Track My Rent</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Subscription | Track My Rent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="stylesheet" href="assets/css/dashboard.css">
-<script src="assets/js/config.js"></script>
-
-<style>
-
-body{
-background:#f3f4f6;
-font-family:system-ui;
-}
-
-.pricing-container{
-max-width:1200px;
-margin:auto;
-padding:60px 20px;
-}
-
-.pricing-header{
-text-align:center;
-margin-bottom:50px;
-}
-
-.pricing-header h1{
-font-size:36px;
-margin-bottom:10px;
-}
-
-.pricing-header p{
-color:#6b7280;
-}
-
-.pricing-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:30px;
-margin-top:40px;
-}
-
-.plan-card{
-background:white;
-border-radius:14px;
-padding:30px;
-box-shadow:0 10px 25px rgba(0,0,0,0.08);
-text-align:center;
-transition:0.2s;
-}
-
-.plan-card:hover{
-transform:translateY(-6px);
-}
-
-.plan-title{
-font-size:22px;
-font-weight:600;
-margin-bottom:10px;
-}
-
-.plan-price{
-font-size:36px;
-font-weight:700;
-color:#2563eb;
-margin-bottom:10px;
-}
-
-.plan-units{
-font-size:14px;
-color:#6b7280;
-margin-bottom:20px;
-}
-
-.plan-features{
-list-style:none;
-padding:0;
-margin-bottom:25px;
-font-size:14px;
-}
-
-.plan-features li{
-margin-bottom:8px;
-}
-
-.plan-btn{
-background:#2563eb;
-color:white;
-border:none;
-padding:12px 20px;
-border-radius:8px;
-cursor:pointer;
-font-weight:600;
-width:100%;
-}
-
-.plan-btn:hover{
-background:#1e40af;
-}
-
-.free{
-border:2px solid #10b981;
-}
-
-.current-plan{
-background:#e5e7eb;
-cursor:not-allowed;
-}
-
-.back-btn{
-display:inline-block;
-margin-top:20px;
-padding:8px 16px;
-background:#e5e7eb;
-border-radius:6px;
-text-decoration:none;
-color:#111;
-}
-
-</style>
-
+  <link rel="stylesheet" href="assets/css/dashboard.css" />
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css" />
+  <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="assets/js/config.js"></script>
 </head>
 
 <body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">TMR</div>
+      <div class="brand">
+        <h1>Track My Rent</h1>
+        <span>Rental automation</span>
+      </div>
+    </div>
 
-<div class="pricing-container">
+    <div class="sidebar-section-title">Menu</div>
+    <a href="dashboard.html" class="sidebar-link">Dashboard</a>
+    <a href="properties.html" class="sidebar-link">Properties & Units</a>
+    <a href="tenants.html" class="sidebar-link">Tenants</a>
+    <a href="leases.html" class="sidebar-link">Leases</a>
+    <a href="payments.html" class="sidebar-link">Payments</a>
+    <a href="expenses.html" class="sidebar-link">Expenses</a>
+    <a href="invoices.html" class="sidebar-link">Invoices</a>
+    <a href="reports.html" class="sidebar-link">Reports</a>
+    <a href="bank-import.html" class="sidebar-link">Bank Import</a>
+    <a href="notifications.html" class="sidebar-link">Notifications</a>
+    <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+    <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
 
-<div class="pricing-header">
+    <div class="sidebar-section-title">Settings</div>
+    <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+    <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+    <a href="pricing.html" class="sidebar-link active">Subscription</a>
 
-<h1>Track My Rent Pricing</h1>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
 
-<p>Choose a plan that fits your property portfolio</p>
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <h2>Subscription</h2>
+        <span class="tagline">Choose the unit limit and tools that match your portfolio</span>
+      </div>
+      <div class="header-right">
+        <a href="dashboard.html" class="btn-secondary">Back to Dashboard</a>
+      </div>
+    </header>
 
-<a href="dashboard.html" class="back-btn">Back to Dashboard</a>
+    <main class="content subscription-content">
+      <section class="page-hero subscription-hero">
+        <div class="page-hero-copy">
+          <span class="page-eyebrow">Plan Room</span>
+          <h3>Keep the test subscription simple until billing goes live.</h3>
+          <p>
+            These plan switches currently update your app limits while the product is still in testing.
+          </p>
+        </div>
 
+        <div class="hero-metric-strip hero-metric-strip-compact">
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Current Plan</span>
+            <strong id="currentPlanLabel">Loading</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Units Used</span>
+            <strong id="unitsUsedLabel">-</strong>
+          </div>
+          <div class="hero-metric-card">
+            <span class="hero-metric-label">Unit Limit</span>
+            <strong id="unitLimitLabel">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="subscription-grid">
+        <article class="subscription-card" data-plan-card="Free">
+          <span class="page-eyebrow">Free</span>
+          <h3>Free</h3>
+          <strong class="subscription-price">R0</strong>
+          <p>Up to 2 units for early setup and testing.</p>
+          <ul>
+            <li>Tenant management</li>
+            <li>Payment tracking</li>
+            <li>Basic reports</li>
+            <li>Property dashboard</li>
+          </ul>
+          <button class="btn-secondary" type="button" data-plan-button="Free" disabled>Current Plan</button>
+        </article>
+
+        <article class="subscription-card" data-plan-card="Starter">
+          <span class="page-eyebrow">Starter</span>
+          <h3>Starter</h3>
+          <strong class="subscription-price">R99 / month</strong>
+          <p>For small landlords who need more room.</p>
+          <ul>
+            <li>Up to 10 units</li>
+            <li>Invoices</li>
+            <li>Notifications</li>
+            <li>Expense tracking</li>
+          </ul>
+          <button class="btn-primary" type="button" data-plan-button="Starter">Upgrade</button>
+        </article>
+
+        <article class="subscription-card featured" data-plan-card="Growth">
+          <span class="page-eyebrow">Growth</span>
+          <h3>Growth</h3>
+          <strong class="subscription-price">R199 / month</strong>
+          <p>For active portfolios with deeper reporting.</p>
+          <ul>
+            <li>Up to 50 units</li>
+            <li>Advanced reports</li>
+            <li>Bank import</li>
+            <li>AI assistant</li>
+          </ul>
+          <button class="btn-primary" type="button" data-plan-button="Growth">Upgrade</button>
+        </article>
+
+        <article class="subscription-card" data-plan-card="Pro">
+          <span class="page-eyebrow">Pro</span>
+          <h3>Pro</h3>
+          <strong class="subscription-price">R399 / month</strong>
+          <p>For unlimited unit management.</p>
+          <ul>
+            <li>Unlimited units</li>
+            <li>Unlimited properties</li>
+            <li>Priority support</li>
+            <li>Future features</li>
+          </ul>
+          <button class="btn-primary" type="button" data-plan-button="Pro">Upgrade</button>
+        </article>
+      </section>
+    </main>
+  </div>
 </div>
 
-<div class="pricing-grid">
-
-<!-- FREE PLAN -->
-
-<div class="plan-card free">
-
-<div class="plan-title">Free</div>
-
-<div class="plan-price">R0</div>
-
-<div class="plan-units">Up to 2 Units</div>
-
-<ul class="plan-features">
-
-<li>- Tenant Management</li>
-<li>- Payment Tracking</li>
-<li>- Basic Reports</li>
-<li>- Property Dashboard</li>
-
-</ul>
-
-<button class="plan-btn current-plan" disabled>
-Current Plan
-</button>
-
-</div>
-
-<!-- STARTER -->
-
-<div class="plan-card">
-
-<div class="plan-title">Starter</div>
-
-<div class="plan-price">R99 / month</div>
-
-<div class="plan-units">Up to 10 Units</div>
-
-<ul class="plan-features">
-
-<li>- Everything in Free</li>
-<li>- Invoices</li>
-<li>- Notifications</li>
-<li>- Expense Tracking</li>
-
-</ul>
-
-<button class="plan-btn" onclick="upgradePlan('Starter')">
-Upgrade
-</button>
-
-</div>
-
-<!-- GROWTH -->
-
-<div class="plan-card">
-
-<div class="plan-title">Growth</div>
-
-<div class="plan-price">R199 / month</div>
-
-<div class="plan-units">Up to 50 Units</div>
-
-<ul class="plan-features">
-
-<li>- Everything in Starter</li>
-<li>- Advanced Reports</li>
-<li>- Bank Import</li>
-<li>- AI Assistant</li>
-
-</ul>
-
-<button class="plan-btn" onclick="upgradePlan('Growth')">
-Upgrade
-</button>
-
-</div>
-
-<!-- PRO -->
-
-<div class="plan-card">
-
-<div class="plan-title">Pro</div>
-
-<div class="plan-price">R399 / month</div>
-
-<div class="plan-units">Unlimited Units</div>
-
-<ul class="plan-features">
-
-<li>- Everything in Growth</li>
-<li>- Unlimited Properties</li>
-<li>- Priority Support</li>
-<li>- Future Features</li>
-
-</ul>
-
-<button class="plan-btn" onclick="upgradePlan('Pro')">
-Upgrade
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<script>
-
-const user = JSON.parse(localStorage.getItem("user"));
-
-async function upgradePlan(plan){
-
-if(!confirm(`Upgrade to ${plan} plan?`)) return;
-
-try{
-
-await fetch(`${API_URL}/subscription/upgrade`,{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json",
-Authorization:`Bearer ${user.token}`
-},
-
-body:JSON.stringify({plan})
-
-});
-
-alert("Subscription upgraded successfully");
-
-location.href="dashboard.html";
-
-}catch(err){
-
-alert("Upgrade failed");
-
-}
-
-}
-
-</script>
+<script src="assets/js/toast.js"></script>
+<script src="assets/js/app-ui.js"></script>
+<script src="assets/js/subscription.js"></script>
 
 <footer class="site-footer">
+  <div class="footer-links">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="subscription-policy.html">Subscription Policy</a>
+    <a href="acceptable-use.html">Acceptable Use</a>
+  </div>
 
-<a href="terms.html">Terms of Service</a>
-<a href="privacy.html">Privacy Policy</a>
-<a href="subscription-policy.html">Subscription Policy</a>
-<a href="acceptable-use.html">Acceptable Use</a>
-
-<p>© 2026 Track My Rent</p>
-
+  <div class="footer-copy">
+    &copy; 2026 Track My Rent
+  </div>
 </footer>
-
 </body>
-
 </html>
-
-
-
