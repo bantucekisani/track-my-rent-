@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -6,15 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="assets/css/dashboard.css">
-  <script src="assets/js/config.js"></script>
+  <link rel="stylesheet" href="assets/css/dashboard-polish.css">
   <link rel="stylesheet" href="assets/css/toast.css" />
+  <script src="assets/js/config.js"></script>
 </head>
 
 <body>
-
   <div class="layout">
-
-    <!-- SIDEBAR -->
     <nav class="sidebar">
       <div class="sidebar-header">
         <div class="logo-circle">TMR</div>
@@ -30,29 +28,25 @@
       <a href="tenants.html" class="sidebar-link">Tenants</a>
       <a href="leases.html" class="sidebar-link">Leases</a>
       <a href="payments.html" class="sidebar-link">Payments</a>
-      <a href="expenses.html" class="sidebar-link ">Expenses</a>
-        <a href="invoices.html" class="sidebar-link ">Invoices</a>
+      <a href="expenses.html" class="sidebar-link">Expenses</a>
+      <a href="invoices.html" class="sidebar-link">Invoices</a>
       <a href="reports.html" class="sidebar-link">Reports</a>
       <a href="bank-import.html" class="sidebar-link">Bank Import</a>
       <a href="notifications.html" class="sidebar-link active">Notifications</a>
-       <a href="tutorials.html" class="sidebar-link">Tutorials</a>
+      <a href="tutorials.html" class="sidebar-link">Tutorials</a>
       <a href="ai-assistant.html" class="sidebar-link">AI Assistant</a>
-  <div class="sidebar-section-title">Settings</div>
 
-<a href="business-settings.html" class="sidebar-link">Business Profile</a>   
-<a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
-<a href="pricing.html" class="sidebar-link">Subscription</a>
+      <div class="sidebar-section-title">Settings</div>
+      <a href="business-settings.html" class="sidebar-link">Business Profile</a>
+      <a href="financial-settings.html" class="sidebar-link">Financial Settings</a>
+      <a href="pricing.html" class="sidebar-link">Subscription</a>
 
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </nav>
 
-<div class="sidebar-footer">
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-  </nav>
-
-    <!-- MAIN AREA -->
     <div class="main">
-
-      <!-- HEADER -->
       <header class="header">
         <div class="header-left">
           <h2>Notifications</h2>
@@ -60,36 +54,52 @@
         </div>
 
         <div class="header-right">
-          <div class="notif-wrapper" onclick="goToNotifications()">
-            <span class="notif-icon">Alerts</span>
-            <span id="notifBadge" class="notif-badge">0</span>
-          </div>
+          <button id="markAllReadBtn" class="btn-secondary" type="button">Mark all as read</button>
         </div>
       </header>
 
-      <!-- CONTENT -->
-      <main class="content">
+      <main class="content notifications-content">
+        <section class="page-hero notifications-hero">
+          <div class="page-hero-copy">
+            <span class="page-eyebrow">Alert Centre</span>
+            <h3>Review the things that need your attention next.</h3>
+            <p>
+              Payment events, arrears warnings, lease reminders, and system alerts are grouped here.
+            </p>
+          </div>
 
-        <!-- FILTER BAR -->
-        <section class="card" style="margin-bottom:16px;">
-          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
-
-            <div style="flex:1 1 220px;">
-              <label style="font-size:0.8rem; color:#6b7280;">Search</label>
-              <input
-                type="text"
-                id="notifSearch"
-                placeholder="Search title or message..."
-                style="width:100%; border-radius:8px; border:1px solid #d1d5db; padding:7px 9px; font-size:0.85rem;"
-              >
+          <div class="hero-metric-strip hero-metric-strip-compact">
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Unread</span>
+              <strong id="notifBadge">0</strong>
             </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Filter</span>
+              <strong>By type and status</strong>
+            </div>
+            <div class="hero-metric-card">
+              <span class="hero-metric-label">Action</span>
+              <strong>Mark read or delete</strong>
+            </div>
+          </div>
+        </section>
 
-            <div style="flex:0 0 160px;">
-              <label style="font-size:0.8rem; color:#6b7280;">Type</label>
-              <select
-                id="notifTypeFilter"
-                style="width:100%; border-radius:8px; border:1px solid #d1d5db; padding:7px 9px; font-size:0.85rem;"
-              >
+        <section class="card report-filter-panel operations-filter-panel">
+          <div class="report-filter-copy">
+            <span class="page-eyebrow">Notification Filters</span>
+            <h3>Find the alert you need without scanning the whole list.</h3>
+            <p>Search by message, narrow by notification type, or show only unread items.</p>
+          </div>
+
+          <div class="operations-filter-grid notifications-filter-grid">
+            <label class="filter-field filter-field-wide">
+              <span>Search</span>
+              <input type="text" id="notifSearch" class="search-input" placeholder="Search title or message...">
+            </label>
+
+            <label class="filter-field">
+              <span>Type</span>
+              <select id="notifTypeFilter">
                 <option value="">All types</option>
                 <option value="late_rent">Late rent</option>
                 <option value="payment_full">Full payment</option>
@@ -100,31 +110,24 @@
                 <option value="system">System</option>
                 <option value="other">Other</option>
               </select>
-            </div>
+            </label>
 
-            <div style="flex:0 0 120px;">
-              <label style="font-size:0.8rem; color:#6b7280;">Show</label>
-              <select
-                id="notifUnreadFilter"
-                style="width:100%; border-radius:8px; border:1px solid #d1d5db; padding:7px 9px; font-size:0.85rem;"
-              >
+            <label class="filter-field">
+              <span>Show</span>
+              <select id="notifUnreadFilter">
                 <option value="all">All</option>
                 <option value="unread">Unread only</option>
               </select>
-            </div>
-
-            <div style="flex:0 0 140px;">
-              <button id="markAllReadBtn" class="btn-secondary" style="margin-top:20px; width:100%;">
-                Mark all as read
-              </button>
-            </div>
+            </label>
           </div>
         </section>
 
-        <!-- NOTIFICATIONS TABLE -->
-        <section class="table-box">
+        <section class="table-box operations-table-box">
           <div class="table-header">
-            <h3>Notifications</h3>
+            <div>
+              <h3>Notifications</h3>
+              <span class="chart-subtitle">Review alerts by type, related record, date, and status.</span>
+            </div>
           </div>
 
           <div class="table-wrapper">
@@ -145,30 +148,25 @@
             </table>
           </div>
         </section>
-
       </main>
     </div>
   </div>
 
-  <script src="assets/js/notifications.js"></script>
-  <footer class="site-footer">
-  <div class="footer-links">
-    <a href="terms.html">Terms of Service</a>
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="subscription-policy.html">Subscription Policy</a>
-    <a href="acceptable-use.html">Acceptable Use</a>
-  </div>
-
-  <div class="footer-copy">
-    © 2026 Track My Rent
-  </div>
-</footer>
   <script src="assets/js/toast.js"></script>
-<script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/app-ui.js"></script>
+  <script src="assets/js/notifications.js"></script>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="terms.html">Terms of Service</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="subscription-policy.html">Subscription Policy</a>
+      <a href="acceptable-use.html">Acceptable Use</a>
+    </div>
+
+    <div class="footer-copy">
+      &copy; 2026 Track My Rent
+    </div>
+  </footer>
 </body>
 </html>
-
-
-
-
-

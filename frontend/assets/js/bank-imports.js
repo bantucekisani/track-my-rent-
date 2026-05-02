@@ -16,6 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "login.html";
     return;
   }
+
+  const user = JSON.parse(stored);
+  if (!user?.token) {
+    window.location.href = "login.html";
+  }
 });
 
 const uploadForm = document.getElementById("uploadForm");
@@ -60,8 +65,7 @@ uploadForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  uploadStatus.textContent = "Uploading and processing...";
-  uploadStatus.style.color = "#555";
+  setUploadStatus("Uploading and processing...");
 
   const formData = new FormData();
 
@@ -80,8 +84,7 @@ uploadForm.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      uploadStatus.textContent = data.message || "Upload failed";
-      uploadStatus.style.color = "red";
+      setUploadStatus(data.message || "Upload failed", "error");
       return;
     }
 
@@ -98,16 +101,24 @@ uploadForm.addEventListener("submit", async (e) => {
         : 0;
 
     if (window.applyAppPreferences) {
-      window.applyAppPreferences({
+      const preferences = {
         currency: data.currency,
-        locale: data.locale,
-        timezone: data.timezone
-      });
+        locale: data.locale
+      };
+
+      if (data.timezone) {
+        preferences.timezone = data.timezone;
+      }
+
+      window.applyAppPreferences(preferences);
     }
 
-    uploadStatus.textContent =
-      `Auto-posted ${data.autoPosted}, Pending ${data.pendingReview}, Unmatched ${data.unmatched}`;
-    uploadStatus.style.color = "green";
+    setUploadStatus(
+      `Auto-posted ${data.autoPosted || 0}, Pending ${data.pendingReview || 0}, Unmatched ${
+        unmatchedEl.textContent || 0
+      }`,
+      "success"
+    );
 
     // ======================
     // COMBINE ALL ROWS
@@ -135,10 +146,15 @@ uploadForm.addEventListener("submit", async (e) => {
 
   } catch (err) {
     console.error(err);
-    uploadStatus.textContent = "Server error during upload";
-    uploadStatus.style.color = "red";
+    setUploadStatus("Server error during upload", "error");
   }
 });
+
+function setUploadStatus(message, type = "") {
+  uploadStatus.textContent = message;
+  uploadStatus.classList.toggle("success", type === "success");
+  uploadStatus.classList.toggle("error", type === "error");
+}
 
 function renderTable(rows) {
   if (!rows.length) {
@@ -200,6 +216,11 @@ async function approveImport(id) {
    LOGOUT
 ====================== */
 function logout() {
+  if (window.appLogout) {
+    window.appLogout();
+    return;
+  }
+
   localStorage.clear();
   window.location.href = "login.html";
 }

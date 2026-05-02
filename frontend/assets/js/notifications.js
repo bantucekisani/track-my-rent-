@@ -122,9 +122,9 @@ function renderNotifications(list) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="empty-row">
-          <div style="padding:18px 8px;">
-            <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">No notifications right now.</div>
-            <div style="color:#64748b;">You are all caught up. New alerts for payments, leases, and arrears will appear here.</div>
+          <div class="notification-empty">
+            <strong>No notifications right now.</strong>
+            <span>You are all caught up. New alerts for payments, leases, and arrears will appear here.</span>
           </div>
         </td>
       </tr>`;
@@ -134,20 +134,19 @@ function renderNotifications(list) {
   list.forEach(n => {
     const tr = document.createElement("tr");
 
-    // Slight highlight if unread
     if (!n.isRead) {
-      tr.style.background = "#eef2ff"; // light blue-ish
+      tr.classList.add("notification-row-unread");
     }
 
-    const badgeColor = getTypeColor(n.type);
-    const typeLabel = (n.type || "other").replace(/_/g, " ");
+    const type = n.type || "other";
+    const typeLabel = safeText(type.replace(/_/g, " "));
 
     const relatedBits = [];
     if (n.propertyId) relatedBits.push("Property");
     if (n.unitId) relatedBits.push("Unit");
     if (n.tenantId) relatedBits.push("Tenant");
     if (n.leaseId) relatedBits.push("Lease");
-    const relatedText = relatedBits.join(" / ") || "-";
+    const relatedText = safeText(relatedBits.join(" / ") || "-");
 
     let dateStr = "-";
     if (n.createdAt) {
@@ -161,46 +160,34 @@ function renderNotifications(list) {
 
     tr.innerHTML = `
       <td>
-        <span style="
-          display:inline-block;
-          padding:3px 8px;
-          border-radius:999px;
-          font-size:0.75rem;
-          text-transform:capitalize;
-          background:${badgeColor.bg};
-          color:${badgeColor.fg};
-        ">
+        <span class="notification-type-badge ${safeTypeClass(type)}">
           ${typeLabel}
         </span>
       </td>
       <td>
-        <div style="font-weight:600;">${n.title || ""}</div>
-        <div style="font-size:0.85rem; color:#4b5563; margin-top:2px;">
-          ${n.message || ""}
+        <div class="notification-title">${safeText(n.title || "")}</div>
+        <div class="notification-message">
+          ${safeText(n.message || "")}
         </div>
       </td>
-      <td style="font-size:0.85rem; color:#4b5563;">
+      <td class="notification-related">
         ${relatedText}
       </td>
-      <td style="font-size:0.85rem;">${dateStr}</td>
-      <td style="font-size:0.85rem;">
-        ${n.isRead ? "Read" : "Unread"}
+      <td class="notification-date">${safeText(dateStr)}</td>
+      <td>
+        <span class="notification-status-badge ${n.isRead ? "read" : "unread"}">
+          ${n.isRead ? "Read" : "Unread"}
+        </span>
       </td>
       <td>
-        <button
-          class="btn-secondary btn-sm"
-          style="margin-bottom:4px; width:80px;"
-          onclick="markOneRead('${n._id}')"
-        >
-          Mark read
-        </button>
-        <button
-          class="btn-primary btn-sm"
-          style="background:#b91c1c; width:80px;"
-          onclick="deleteNotification('${n._id}')"
-        >
-          Delete
-        </button>
+        <div class="notification-actions">
+          <button class="btn-secondary btn-sm" onclick="markOneRead('${n._id}')">
+            Mark read
+          </button>
+          <button class="btn-danger-soft btn-sm" onclick="deleteNotification('${n._id}')">
+            Delete
+          </button>
+        </div>
       </td>
     `;
 
@@ -208,27 +195,14 @@ function renderNotifications(list) {
   });
 }
 
-/* =========================
-   TYPE COLORS
-========================= */
-function getTypeColor(type) {
-  switch (type) {
-    case "late_rent":
-      return { bg: "#fee2e2", fg: "#b91c1c" };
-    case "payment_full":
-      return { bg: "#dcfce7", fg: "#166534" };
-    case "payment_partial":
-      return { bg: "#fef9c3", fg: "#854d0e" };
-    case "payment_over":
-      return { bg: "#e0f2fe", fg: "#075985" };
-    case "lease_missing":
-    case "lease_expiring":
-      return { bg: "#fef3c7", fg: "#92400e" };
-    case "system":
-      return { bg: "#e5e7eb", fg: "#111827" };
-    default:
-      return { bg: "#f3f4f6", fg: "#374151" };
-  }
+function safeTypeClass(type) {
+  return String(type || "other").replace(/[^a-z0-9_-]/gi, "_");
+}
+
+function safeText(value) {
+  const text = String(value ?? "");
+
+  return window.escapeHtml ? window.escapeHtml(text) : text;
 }
 
 /* =========================
@@ -332,7 +306,10 @@ async function refreshNotifBadge() {
 
     const count = data.count || 0;
     badge.textContent = count;
-    badge.style.display = count > 0 ? "inline-flex" : "none";
+
+    if (badge.classList.contains("notif-badge")) {
+      badge.style.display = count > 0 ? "inline-flex" : "none";
+    }
 
   } catch (err) {
     console.error("Error unread count:", err);
@@ -347,6 +324,11 @@ function goToNotifications() {
    LOGOUT
 ========================= */
 function logout() {
+  if (window.appLogout) {
+    window.appLogout();
+    return;
+  }
+
   localStorage.clear();
   window.location.href = "login.html";
 }

@@ -747,7 +747,9 @@ table td {
 .financial-settings-content,
 .business-settings-content,
 .subscription-content,
-.ai-assistant-content {
+.ai-assistant-content,
+.notifications-content,
+.bank-import-content {
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -755,7 +757,9 @@ table td {
 
 .settings-hero .page-hero-copy h3,
 .subscription-hero .page-hero-copy h3,
-.ai-hero .page-hero-copy h3 {
+.ai-hero .page-hero-copy h3,
+.notifications-hero .page-hero-copy h3,
+.bank-import-hero .page-hero-copy h3 {
   max-width: 16ch;
 }
 
@@ -1039,6 +1043,156 @@ table td {
   width: 100%;
 }
 
+.notifications-filter-grid {
+  grid-template-columns: minmax(260px, 1.4fr) minmax(180px, 0.8fr) minmax(160px, 0.6fr);
+}
+
+.notification-row-unread {
+  background: #eff6ff;
+}
+
+.notification-type-badge,
+.notification-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.notification-type-badge.late_rent,
+.notification-type-badge.other {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.notification-type-badge.payment_full {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.notification-type-badge.payment_partial,
+.notification-type-badge.lease_missing,
+.notification-type-badge.lease_expiring {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.notification-type-badge.payment_over {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.notification-type-badge.system {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.notification-title {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.notification-message,
+.notification-related,
+.notification-date {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.notification-message {
+  margin-top: 3px;
+}
+
+.notification-status-badge.read {
+  background: #e5e7eb;
+  color: #475569;
+}
+
+.notification-status-badge.unread {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 172px;
+}
+
+.notification-actions .btn-sm {
+  min-height: 36px;
+}
+
+.btn-danger-soft {
+  border: none;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-danger-soft:hover {
+  background: #fecaca;
+}
+
+.notification-empty {
+  padding: 18px 8px;
+}
+
+.notification-empty strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #0f172a;
+}
+
+.notification-empty span {
+  color: #64748b;
+}
+
+.bank-import-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.14fr);
+  gap: 18px;
+}
+
+.bank-upload-form {
+  display: grid;
+  gap: 14px;
+}
+
+.bank-upload-form .btn-primary {
+  justify-self: start;
+}
+
+.import-status {
+  min-height: 22px;
+  margin: 14px 0 0;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.import-status.success {
+  color: #166534;
+}
+
+.import-status.error {
+  color: #991b1b;
+}
+
+.matching-rule-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+  color: #334155;
+  line-height: 1.55;
+}
+
 .search-input {
   min-width: 220px;
 }
@@ -1297,7 +1451,9 @@ table td {
   .business-settings-form,
   .settings-fields-grid-three,
   .ai-workspace,
-  .subscription-grid {
+  .subscription-grid,
+  .notifications-filter-grid,
+  .bank-import-grid {
     grid-template-columns: 1fr;
   }
 
