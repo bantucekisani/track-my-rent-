@@ -2,6 +2,7 @@ const Invoice = require("../models/Invoice");
 
 async function ensureInvoiceForLedger(entry) {
   if (!entry.leaseId || !entry.ownerId) return null;
+  if (entry.type === "payment") return null;
 
   const date = new Date(entry.date);
   const month =

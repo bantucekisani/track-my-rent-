@@ -13,6 +13,125 @@ const BusinessSettings = require("../models/BusinessSettings");
 const mongoose = require("mongoose");
 const router = express.Router();
 
+function roundMoney(value) {
+  return Math.round(Number(value || 0) * 100) / 100;
+}
+
+function isChargeEntry(entry) {
+  return ["rent", "utility", "damage", "late_fee", "deposit"].includes(entry.type);
+}
+
+function buildInvoiceAllocationMap(invoices, ledgerEntries) {
+  const invoicesByLease = new Map();
+
+  for (const invoice of invoices) {
+    if (!invoice.leaseId) continue;
+
+    const leaseKey = invoice.leaseId.toString();
+    const periodKey = `${leaseKey}_${invoice.periodYear}_${invoice.periodMonth}`;
+
+    if (!invoicesByLease.has(leaseKey)) {
+      invoicesByLease.set(leaseKey, new Map());
+    }
+
+    invoicesByLease.get(leaseKey).set(periodKey, {
+      charged: 0,
+      paid: 0,
+      invoiceDate: invoice.invoiceDate,
+      periodMonth: invoice.periodMonth,
+      periodYear: invoice.periodYear
+    });
+  }
+
+  for (const entry of ledgerEntries) {
+    if (!entry.leaseId || !isChargeEntry(entry)) continue;
+
+    const leaseKey = entry.leaseId.toString();
+    const periodKey = `${leaseKey}_${entry.periodYear}_${entry.periodMonth}`;
+    const leaseInvoices = invoicesByLease.get(leaseKey);
+    const invoiceTotals = leaseInvoices?.get(periodKey);
+
+    if (invoiceTotals) {
+      invoiceTotals.charged = roundMoney(invoiceTotals.charged + (entry.debit || 0));
+    }
+  }
+
+  for (const [leaseKey, leaseInvoices] of invoicesByLease.entries()) {
+    const payments = ledgerEntries
+      .filter(entry => entry.leaseId?.toString() === leaseKey && entry.type === "payment")
+      .sort((a, b) => {
+        const dateDiff = new Date(a.date) - new Date(b.date);
+        if (dateDiff) return dateDiff;
+        return String(a._id).localeCompare(String(b._id));
+      });
+
+    const orderedInvoices = [...leaseInvoices.values()]
+      .sort((a, b) => {
+        if (a.invoiceDate && b.invoiceDate) {
+          const dateDiff = new Date(a.invoiceDate) - new Date(b.invoiceDate);
+          if (dateDiff) return dateDiff;
+        }
+
+        const yearDiff = Number(a.periodYear || 0) - Number(b.periodYear || 0);
+        if (yearDiff) return yearDiff;
+        return Number(a.periodMonth || 0) - Number(b.periodMonth || 0);
+      });
+
+    for (const payment of payments) {
+      let remaining = roundMoney(payment.credit || 0);
+
+      for (const invoiceTotals of orderedInvoices) {
+        if (remaining <= 0) break;
+
+        const due = roundMoney(invoiceTotals.charged - invoiceTotals.paid);
+        if (due <= 0) continue;
+
+        const applied = Math.min(due, remaining);
+        invoiceTotals.paid = roundMoney(invoiceTotals.paid + applied);
+        remaining = roundMoney(remaining - applied);
+      }
+    }
+  }
+
+  const allocationMap = {};
+
+  for (const [leaseKey, leaseInvoices] of invoicesByLease.entries()) {
+    for (const [periodKey, totals] of leaseInvoices.entries()) {
+      allocationMap[periodKey] = {
+        charged: roundMoney(totals.charged),
+        paid: roundMoney(totals.paid),
+        balance: roundMoney(Math.max(totals.charged - totals.paid, 0))
+      };
+    }
+  }
+
+  return allocationMap;
+}
+
+async function getAllocatedInvoiceTotals(ownerId, invoice) {
+  if (!invoice?.leaseId) {
+    return { charged: 0, paid: 0, balance: 0 };
+  }
+
+  const leaseInvoices = await Invoice.find({
+    ownerId,
+    leaseId: invoice.leaseId
+  }).lean();
+
+  const leaseLedgerEntries = await LedgerEntry.find({
+    ownerId,
+    leaseId: invoice.leaseId
+  }).lean();
+
+  const allocationMap =
+    buildInvoiceAllocationMap(leaseInvoices, leaseLedgerEntries);
+
+  const key =
+    `${invoice.leaseId}_${invoice.periodYear}_${invoice.periodMonth}`;
+
+  return allocationMap[key] || { charged: 0, paid: 0, balance: 0 };
+}
+
 /* =====================================================
    GET ALL INVOICES
 ===================================================== */
@@ -55,22 +174,8 @@ router.get("/", auth, async (req, res) => {
       leaseId: { $in: leaseIds }
     }).lean();
 
-    /* =========================
-       GROUP BY LEASE + PERIOD
-    ========================= */
-
-    const ledgerMap = {};
-
-    for (const e of ledgerEntries) {
-
-      const key =
-        `${e.leaseId}_${e.periodYear}_${e.periodMonth}`;
-
-      if (!ledgerMap[key]) ledgerMap[key] = [];
-
-      ledgerMap[key].push(e);
-
-    }
+    const allocationMap =
+      buildInvoiceAllocationMap(invoices, ledgerEntries);
 
     const results = [];
 
@@ -86,35 +191,15 @@ router.get("/", auth, async (req, res) => {
       const key =
         `${invoice.leaseId}_${invoice.periodYear}_${invoice.periodMonth}`;
 
-      const periodEntries = ledgerMap[key] || [];
+      const totals = allocationMap[key] || {
+        charged: 0,
+        paid: 0,
+        balance: 0
+      };
 
-      /* =========================
-         CALCULATE TOTALS
-      ========================= */
-
-      let totalCharged = 0;
-      let totalPaid = 0;
-
-      for (const entry of periodEntries) {
-
-        if (
-          ["rent","utility","damage","late_fee","deposit"]
-          .includes(entry.type)
-        ) {
-          totalCharged += entry.debit || 0;
-        }
-
-        if (entry.type === "payment") {
-          totalPaid += entry.credit || 0;
-        }
-
-      }
-
-      totalCharged = Math.round(totalCharged * 100) / 100;
-      totalPaid = Math.round(totalPaid * 100) / 100;
-
-      const balance =
-        Math.round(Math.max(totalCharged - totalPaid, 0) * 100) / 100;
+      const totalCharged = totals.charged;
+      const totalPaid = totals.paid;
+      const balance = totals.balance;
 
       /* =========================
          BUILD RESULT
@@ -254,21 +339,17 @@ router.get("/:id/pdf", auth, async (req, res) => {
       .sort({ date: 1, _id: 1 })
       .lean();
 
-    let totalDebit = 0;
-    let totalCredit = 0;
+    const allocatedTotals =
+      await getAllocatedInvoiceTotals(ownerId, invoice);
 
-    const items = ledgerEntries.map(e => {
+    const items = ledgerEntries
+      .filter(isChargeEntry)
+      .map(e => {
 
       const debit =
         Math.round((e.debit || 0) * 100) / 100;
 
-      const credit =
-        Math.round((e.credit || 0) * 100) / 100;
-
-      totalDebit += debit;
-      totalCredit += credit;
-
-      const amount = debit - credit;
+      const amount = debit;
 
      return {
   date: new Date(e.date).toLocaleDateString(locale),
@@ -281,23 +362,25 @@ router.get("/:id/pdf", auth, async (req, res) => {
 
     });
 
-    totalDebit =
-      Math.round(totalDebit * 100) / 100;
-
-    totalCredit =
-      Math.round(totalCredit * 100) / 100;
-
-    const balance =
-      Math.round((totalDebit - totalCredit) * 100) / 100;
+    if (allocatedTotals.paid > 0) {
+      items.push({
+        date: "-",
+        description: "Payments allocated to this invoice",
+        quantity: 1,
+        unitPrice: allocatedTotals.paid,
+        vat: null,
+        amount: -allocatedTotals.paid
+      });
+    }
 
     /* ==============================
        COMPUTE STATUS
     ============================== */
 
     const status =
-      balance <= 0
+      allocatedTotals.balance <= 0
         ? "PAID"
-        : totalCredit > 0
+        : allocatedTotals.paid > 0
         ? "PARTIAL"
         : "UNPAID";
 
@@ -329,9 +412,9 @@ router.get("/:id/pdf", auth, async (req, res) => {
       generatedAt: new Date(),
 
       totals: {
-  charged: totalDebit,
-  paid: totalCredit,
-  due: balance
+  charged: allocatedTotals.charged,
+  paid: allocatedTotals.paid,
+  due: allocatedTotals.balance
 }
 
     });
@@ -449,21 +532,17 @@ router.post("/:id/email", auth, async (req, res) => {
       .sort({ date: 1, _id: 1 })
       .lean();
 
-    let totalDebit = 0;
-    let totalCredit = 0;
+    const allocatedTotals =
+      await getAllocatedInvoiceTotals(ownerId, invoice);
 
-    const items = ledgerEntries.map(e => {
+    const items = ledgerEntries
+      .filter(isChargeEntry)
+      .map(e => {
 
       const debit =
         Math.round((e.debit || 0) * 100) / 100;
 
-      const credit =
-        Math.round((e.credit || 0) * 100) / 100;
-
-      totalDebit += debit;
-      totalCredit += credit;
-
-      const amount = debit - credit;
+      const amount = debit;
 
       return {
   date: new Date(e.date).toLocaleDateString(locale),
@@ -476,23 +555,25 @@ router.post("/:id/email", auth, async (req, res) => {
 
     });
 
-    totalDebit =
-      Math.round(totalDebit * 100) / 100;
-
-    totalCredit =
-      Math.round(totalCredit * 100) / 100;
-
-    const balance =
-      Math.round((totalDebit - totalCredit) * 100) / 100;
+    if (allocatedTotals.paid > 0) {
+      items.push({
+        date: "-",
+        description: "Payments allocated to this invoice",
+        quantity: 1,
+        unitPrice: allocatedTotals.paid,
+        vat: null,
+        amount: -allocatedTotals.paid
+      });
+    }
 
     /* ==============================
        STATUS
     ============================== */
 
     const status =
-      balance <= 0
+      allocatedTotals.balance <= 0
         ? "PAID"
-        : totalCredit > 0
+        : allocatedTotals.paid > 0
         ? "PARTIAL"
         : "UNPAID";
 
@@ -519,9 +600,9 @@ router.post("/:id/email", auth, async (req, res) => {
       locale,
       generatedAt: new Date(),
       totals: {
-  charged: totalDebit,
-  paid: totalCredit,
-  due: balance
+  charged: allocatedTotals.charged,
+  paid: allocatedTotals.paid,
+  due: allocatedTotals.balance
 }
     });
 
