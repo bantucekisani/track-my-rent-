@@ -316,6 +316,19 @@
       color: #64748b;
     }
 
+    .item-type {
+      display: block;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .item-description {
+      display: block;
+      margin-top: 3px;
+      color: #52607a;
+      line-height: 1.45;
+    }
+
     .right {
       text-align: right;
       white-space: nowrap;
@@ -605,11 +618,10 @@
     <thead>
       <tr>
         <th>Date</th>
-        <th>Description</th>
-        <th class="right">Qty</th>
-        <th class="right">Unit Price</th>
+        <th>Charge</th>
+        <th>Details</th>
         <th class="right">VAT</th>
-        <th class="right">Amount</th>
+        <th class="right">Amount Due</th>
       </tr>
     </thead>
     <tbody>
@@ -618,17 +630,18 @@
           <tr>
             <td><%= item.date || "-" %></td>
             <td>
-              <strong><%= item.description || "-" %></strong>
+              <span class="item-type"><%= item.typeLabel || "Tenant Charge" %></span>
             </td>
-            <td class="right"><%= item.quantity || 1 %></td>
-            <td class="right"><%= money(item.unitPrice) %></td>
+            <td>
+              <span class="item-description"><%= item.description || "-" %></span>
+            </td>
             <td class="right"><%= item.vat || "-" %></td>
             <td class="right"><%= money(item.amount) %></td>
           </tr>
         <% }) %>
       <% } else { %>
         <tr>
-          <td colspan="6" class="muted">No invoice items were available for this billing period.</td>
+          <td colspan="5" class="muted">No invoice items were available for this billing period.</td>
         </tr>
       <% } %>
     </tbody>

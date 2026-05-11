@@ -36,6 +36,65 @@ function invoiceChargeAmount(entry) {
   return roundMoney(Number(entry.debit || 0) - Number(entry.credit || 0));
 }
 
+function titleCase(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function subtypeLabel(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const labels = {
+    body_corporate: "Body Corporate",
+    hoa: "HOA",
+    levy: "Levy",
+    water: "Water",
+    electricity: "Electricity",
+    refuse: "Refuse"
+  };
+
+  return labels[normalized] || titleCase(normalized);
+}
+
+function invoiceChargeLabel(entry) {
+  const type = String(entry.type || "").toLowerCase();
+  const subtype = subtypeLabel(entry.subtype);
+
+  if (type === "rent") return "Monthly Rent";
+  if (type === "rent_reversal") return "Rent Reversal";
+  if (type === "utility") return subtype ? `${subtype} Charge` : "Utility Charge";
+  if (type === "utility_reversal") return subtype ? `${subtype} Reversal` : "Utility Reversal";
+  if (type === "levy") {
+    if (!subtype || subtype === "Levy") return "Levy Charge";
+    return `${subtype} Levy`;
+  }
+  if (type === "levy_reversal") {
+    if (!subtype || subtype === "Levy") return "Levy Reversal";
+    return `${subtype} Levy Reversal`;
+  }
+  if (type === "damage") return "Damage Charge";
+  if (type === "damage_reversal") return "Damage Reversal";
+  if (type === "late_fee") return "Late Fee";
+  if (type === "deposit") return "Security Deposit";
+
+  return titleCase(type) || "Tenant Charge";
+}
+
+function mapInvoiceItem(entry, locale) {
+  const amount = invoiceChargeAmount(entry);
+
+  return {
+    date: new Date(entry.date).toLocaleDateString(locale),
+    typeLabel: invoiceChargeLabel(entry),
+    description: entry.description || "",
+    quantity: 1,
+    unitPrice: Math.abs(amount),
+    vat: null,
+    amount
+  };
+}
+
 function buildInvoiceAllocationMap(invoices, ledgerEntries) {
   const invoicesByLease = new Map();
 
@@ -367,6 +426,7 @@ router.get("/:id/pdf", auth, async (req, res) => {
 
      return {
   date: new Date(e.date).toLocaleDateString(locale),
+  typeLabel: invoiceChargeLabel(e),
   description: e.description || "",
   quantity: 1,
   unitPrice: Math.abs(amount),   // ✅ NUMBER
@@ -379,6 +439,7 @@ router.get("/:id/pdf", auth, async (req, res) => {
     if (allocatedTotals.paid > 0) {
       items.push({
         date: "-",
+        typeLabel: "Payment",
         description: "Payments allocated to this invoice",
         quantity: 1,
         unitPrice: allocatedTotals.paid,
@@ -557,6 +618,7 @@ router.post("/:id/email", auth, async (req, res) => {
 
       return {
   date: new Date(e.date).toLocaleDateString(locale),
+  typeLabel: invoiceChargeLabel(e),
   description: e.description || "",
   quantity: 1,
   unitPrice: Math.abs(amount),
@@ -569,6 +631,7 @@ router.post("/:id/email", auth, async (req, res) => {
     if (allocatedTotals.paid > 0) {
       items.push({
         date: "-",
+        typeLabel: "Payment",
         description: "Payments allocated to this invoice",
         quantity: 1,
         unitPrice: allocatedTotals.paid,

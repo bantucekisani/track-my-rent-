@@ -62,6 +62,32 @@ function safeText(value, fallback = "-") {
   return window.escapeHtml ? window.escapeHtml(text) : text;
 }
 
+function titleCase(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function formatChargeLabel(entry = {}) {
+  const subtype = String(entry.subtype || "").toLowerCase();
+  const subtypeLabels = {
+    water: "Water",
+    electricity: "Electricity",
+    refuse: "Refuse",
+    body_corporate: "Body Corporate",
+    hoa: "HOA",
+    levy: "Levy"
+  };
+  const label = subtypeLabels[subtype] || titleCase(subtype);
+
+  if (entry.type === "levy" || entry.type === "levy_reversal") {
+    return label && label !== "Levy" ? `${label} Levy` : "Levy";
+  }
+
+  return label || "Utility";
+}
+
 function formatPaymentMethod(method, source = "") {
   const normalized =
     typeof method === "string" && method.trim()
@@ -538,8 +564,8 @@ function generateStatement() {
     if (e.type === "utility")
       label = `${(e.subtype || "Utility").toUpperCase()} charge`;
     if (e.type === "utility_reversal") label = "Utility reversal";
-    if (e.type === "levy") label = "Levy charge";
-    if (e.type === "levy_reversal") label = "Levy reversal";
+    if (e.type === "levy") label = `${formatChargeLabel(e)} charge`;
+    if (e.type === "levy_reversal") label = `${formatChargeLabel(e)} reversal`;
     if (e.type === "damage") label = "Damage charge";
     if (e.type === "damage_reversal") label = "Damage reversal";
 
@@ -653,10 +679,7 @@ function renderUtilities() {
   utilityEntries.forEach(u => {
     const isCredit = Number(u.credit || 0) > 0;
     const amount = isCredit ? Number(u.credit || 0) : Number(u.debit || 0);
-    const typeLabel =
-      u.type === "levy" || u.type === "levy_reversal"
-        ? "Levy"
-        : safeText(u.subtype || "Utility");
+    const typeLabel = formatChargeLabel(u);
 
     tbody.innerHTML += `
       <tr>
@@ -768,8 +791,8 @@ function describeLedgerEntryForProfile(entry) {
   if (entry.type === "payment") return "Payment received";
   if (entry.type === "utility") return `${(entry.subtype || "Utility").toUpperCase()} charge`;
   if (entry.type === "utility_reversal") return "Utility reversal";
-  if (entry.type === "levy") return "Levy charge";
-  if (entry.type === "levy_reversal") return "Levy reversal";
+  if (entry.type === "levy") return `${formatChargeLabel(entry)} charge`;
+  if (entry.type === "levy_reversal") return `${formatChargeLabel(entry)} reversal`;
   if (entry.type === "damage") return "Damage charge";
   if (entry.type === "damage_reversal") return "Damage reversal";
 

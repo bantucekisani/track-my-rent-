@@ -6,8 +6,110 @@ const { askAI } = require("../services/aiService");
 
 const router = express.Router();
 
+const REVERSAL_TYPES = new Set([
+  "rent_reversal",
+  "utility_reversal",
+  "damage_reversal",
+  "levy_reversal"
+]);
+
+function money(value) {
+  return Number(value || 0).toFixed(2);
+}
+
+function monthName(monthNumber) {
+  return new Date(2026, Number(monthNumber || 1) - 1, 1)
+    .toLocaleString("default", { month: "long" });
+}
+
+function normalizeMonth(value, fallback) {
+  const month = Number(value);
+
+  if (Number.isInteger(month) && month >= 1 && month <= 12) {
+    return month;
+  }
+
+  return fallback;
+}
+
+function normalizeYear(value, fallback) {
+  const year = Number(value);
+
+  if (Number.isInteger(year) && year >= 2000 && year <= 2100) {
+    return year;
+  }
+
+  return fallback;
+}
+
+function createTenantSummary() {
+  return {
+    totalDebits: 0,
+    totalPayments: 0,
+    totalReversalCredits: 0,
+    balance: 0,
+    breakdown: {},
+    recent: []
+  };
+}
+
+function addLedgerEntry(summary, entry) {
+  const type = entry.type || "unknown";
+  const debit = Number(entry.debit || 0);
+  const credit = Number(entry.credit || 0);
+
+  summary.totalDebits += debit;
+  summary.balance += debit - credit;
+
+  if (type === "payment") {
+    summary.totalPayments += credit;
+  } else if (REVERSAL_TYPES.has(type)) {
+    summary.totalReversalCredits += credit;
+  }
+
+  if (!summary.breakdown[type]) {
+    summary.breakdown[type] = { debit: 0, credit: 0, count: 0 };
+  }
+
+  summary.breakdown[type].debit += debit;
+  summary.breakdown[type].credit += credit;
+  summary.breakdown[type].count += 1;
+  summary.recent.push(entry);
+}
+
+function formatBreakdown(breakdown = {}) {
+  const rows = Object.entries(breakdown)
+    .filter(([, totals]) => totals.debit || totals.credit)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([type, totals]) => {
+      const parts = [];
+      if (totals.debit) parts.push(`debit R${money(totals.debit)}`);
+      if (totals.credit) parts.push(`credit R${money(totals.credit)}`);
+      return `${type}: ${parts.join(", ")}`;
+    });
+
+  return rows.length ? rows.join("; ") : "No activity";
+}
+
+function formatRecentEntries(entries = []) {
+  return entries
+    .slice(-6)
+    .map(entry => {
+      const date = entry.date
+        ? new Date(entry.date).toISOString().slice(0, 10)
+        : `${entry.periodYear}-${String(entry.periodMonth || "").padStart(2, "0")}`;
+      const amount =
+        Number(entry.debit || 0) > 0
+          ? `debit R${money(entry.debit)}`
+          : `credit R${money(entry.credit)}`;
+
+      return `${date} | ${entry.type} | ${amount} | ${entry.description || "-"}`;
+    })
+    .join("\n    ");
+}
+
 /* =========================================
-   AI HELPER – ASK (MONTH-AWARE)
+   AI HELPER - ASK (LEDGER-AWARE)
 ========================================= */
 router.post("/ask", auth, async (req, res) => {
   try {
@@ -18,66 +120,86 @@ router.post("/ask", auth, async (req, res) => {
       return res.status(400).json({ message: "Question required" });
     }
 
-    // 🔐 Default to CURRENT month if not provided
     const now = new Date();
-    const targetYear = year ?? now.getFullYear();
-    const targetMonth = month ?? now.getMonth(); // 0–11
+    const targetYear = normalizeYear(year, now.getFullYear());
+    const targetMonth = normalizeMonth(month, now.getMonth() + 1);
 
-    const start = new Date(targetYear, targetMonth, 1);
-    const end = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
-
-    /* ============================
-       LOAD TENANTS
-    ============================ */
     const tenants = await Tenant.find({ ownerId })
       .select("fullName status")
       .lean();
 
-    /* ============================
-       LOAD LEDGER (MONTH ONLY)
-    ============================ */
     const ledger = await LedgerEntry.find({
       ownerId,
-      date: { $gte: start, $lte: end }
-    }).lean();
+      tenantId: { $exists: true, $ne: null }
+    })
+      .select("tenantId leaseId propertyId unitId date periodMonth periodYear type subtype description debit credit")
+      .sort({ periodYear: 1, periodMonth: 1, date: 1, _id: 1 })
+      .lean();
 
-    /* ============================
-       CALCULATE PER-TENANT BALANCE
-    ============================ */
-    const tenantMap = {};
+    const accountMap = {};
+    const periodMap = {};
 
-    ledger.forEach(e => {
-      const id = String(e.tenantId);
-      if (!tenantMap[id]) {
-        tenantMap[id] = { charged: 0, paid: 0 };
+    ledger.forEach(entry => {
+      const id = String(entry.tenantId);
+      if (!accountMap[id]) accountMap[id] = createTenantSummary();
+      addLedgerEntry(accountMap[id], entry);
+
+      if (
+        Number(entry.periodYear) === targetYear &&
+        Number(entry.periodMonth) === targetMonth
+      ) {
+        if (!periodMap[id]) periodMap[id] = createTenantSummary();
+        addLedgerEntry(periodMap[id], entry);
       }
-      tenantMap[id].charged += e.debit || 0;
-      tenantMap[id].paid += e.credit || 0;
     });
 
-    /* ============================
-       BUILD AI CONTEXT (FACTUAL)
-    ============================ */
+    const portfolioDebits = ledger.reduce(
+      (sum, entry) => sum + Number(entry.debit || 0),
+      0
+    );
+    const portfolioCredits = ledger.reduce(
+      (sum, entry) => sum + Number(entry.credit || 0),
+      0
+    );
+
     const context = `
-MONTH: ${start.toLocaleString("default", { month: "long" })} ${targetYear}
+CURRENT ACCOUNTING PERIOD: ${monthName(targetMonth)} ${targetYear}
 
-TENANT RENT STATUS:
+RULES FOR ANSWERING:
+- Use all ledger types, not rent only.
+- Levies are tenant charges when type = "levy". Include them in balances and arrears.
+- Utility, damage, deposit, late_fee, and levy debits increase what the tenant owes.
+- Payments and reversal credits reduce what the tenant owes.
+- Account balance = all debits minus all credits.
+
+TENANT ACCOUNT STATUS:
 ${tenants.map(t => {
-  const data = tenantMap[t._id] || { charged: 0, paid: 0 };
-  const balance = data.charged - data.paid;
+  const account = accountMap[String(t._id)] || createTenantSummary();
+  const period = periodMap[String(t._id)] || createTenantSummary();
+  const accountBalance = account.balance;
+  const periodBalance = period.balance;
 
-  return `• ${t.fullName}
-  - Rent Charged: R${data.charged}
-  - Rent Paid: R${data.paid}
-  - Balance: R${balance} ${balance > 0 ? "(Arrears)" : balance < 0 ? "(Credit)" : "(Settled)"}`;
+  return `- ${t.fullName} (${t.status || "active"})
+  Current period debits: R${money(period.totalDebits)}
+  Current period payments: R${money(period.totalPayments)}
+  Current period reversals/credits: R${money(period.totalReversalCredits)}
+  Current period movement: R${money(periodBalance)} ${periodBalance > 0 ? "(Owes)" : periodBalance < 0 ? "(Credit movement)" : "(No movement due)"}
+  Current period breakdown: ${formatBreakdown(period.breakdown)}
+  Account total debits: R${money(account.totalDebits)}
+  Account total payments: R${money(account.totalPayments)}
+  Account total reversals/credits: R${money(account.totalReversalCredits)}
+  Account balance: R${money(accountBalance)} ${accountBalance > 0 ? "(Arrears)" : accountBalance < 0 ? "(Credit)" : "(Settled)"}
+  Account breakdown: ${formatBreakdown(account.breakdown)}
+  Recent entries:
+    ${formatRecentEntries(account.recent) || "No ledger entries"}`;
 }).join("\n")}
 
 TOTALS:
-- Total Rent Charged: R${ledger.reduce((s, e) => s + (e.debit || 0), 0)}
-- Total Rent Collected: R${ledger.reduce((s, e) => s + (e.credit || 0), 0)}
+- Portfolio debits: R${money(portfolioDebits)}
+- Portfolio credits: R${money(portfolioCredits)}
+- Portfolio balance: R${money(portfolioDebits - portfolioCredits)}
 `;
 
-    // 🤖 Ask AI to EXPLAIN (not calculate)
     const answer = await askAI(context, question);
 
     res.json({ success: true, answer });
