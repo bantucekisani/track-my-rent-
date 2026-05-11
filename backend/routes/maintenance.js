@@ -7,6 +7,7 @@ const Maintenance = require("../models/Maintenance");
 const Lease = require("../models/Lease");
 const LedgerEntry = require("../models/LedgerEntry");
 const Settings = require("../models/Financial-Settings");
+const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.post("/", auth, async (req, res) => {
       liability = "LANDLORD",
       currency: requestCurrency
     } = req.body;
+    const liabilityType = String(liability || "LANDLORD").toUpperCase();
 
     /* ===============================
        VALIDATION
@@ -69,7 +71,7 @@ router.post("/", auth, async (req, res) => {
       });
     }
 
-    if (!["TENANT", "LANDLORD"].includes(liability)) {
+    if (!["TENANT", "LANDLORD"].includes(liabilityType)) {
       await session.abortTransaction();
       session.endSession();
 
@@ -126,7 +128,7 @@ router.post("/", auth, async (req, res) => {
 
     const today = new Date();
 
-    const periodMonth = today.getMonth();
+    const periodMonth = today.getMonth() + 1;
     const periodYear = today.getFullYear();
 
     /* ===============================
@@ -147,8 +149,8 @@ router.post("/", auth, async (req, res) => {
 
       cost: safeAmount,
 
-      liability,
-      status: "Logged"
+      liability: liabilityType,
+      status: "reported"
 
     }], { session });
 
@@ -158,7 +160,7 @@ router.post("/", auth, async (req, res) => {
 
     let ledgerEntry;
 
-    if (liability === "TENANT") {
+    if (liabilityType === "TENANT") {
 
       ledgerEntry = await LedgerEntry.create([{
 
@@ -175,9 +177,10 @@ router.post("/", auth, async (req, res) => {
         periodMonth,
         periodYear,
 
-        type: "damage",
+        type: "maintenance",
+        subtype: "maintenance",
 
-        description: `Damage charge: ${title}`,
+        description: `Maintenance charge: ${title}`,
 
         debit: safeAmount,
         credit: 0,
@@ -204,6 +207,7 @@ router.post("/", auth, async (req, res) => {
         periodYear,
 
         type: "expense",
+        subtype: "maintenance",
 
         description: `Maintenance expense: ${title}`,
 
@@ -219,6 +223,14 @@ router.post("/", auth, async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    if (liabilityType === "TENANT" && ledgerEntry?.[0]) {
+      try {
+        await ensureInvoiceForLedger(ledgerEntry[0]);
+      } catch (invoiceErr) {
+        console.error("MAINTENANCE INVOICE ENSURE ERROR:", invoiceErr);
+      }
+    }
 
     res.json({
       success: true,
@@ -250,9 +262,13 @@ router.get("/", auth, async (req, res) => {
 
   try {
 
-    const records = await Maintenance.find({
-      ownerId: req.user.id
-    })
+    const query = { ownerId: req.user.id };
+
+    if (req.query.tenantId && mongoose.isValidObjectId(req.query.tenantId)) {
+      query.tenantId = req.query.tenantId;
+    }
+
+    const records = await Maintenance.find(query)
       .populate("tenantId", "fullName")
       .populate("propertyId", "name")
       .populate("unitId", "unitLabel")
@@ -260,7 +276,8 @@ router.get("/", auth, async (req, res) => {
 
     res.json({
       success: true,
-      records
+      records,
+      maintenance: records
     });
 
   } catch (err) {

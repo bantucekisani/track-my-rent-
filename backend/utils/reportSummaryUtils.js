@@ -103,7 +103,10 @@ function calculateProfitLoss(entries) {
       income += toNumber(entry.credit);
     }
 
-    if (["expense", "maintenance"].includes(entry.type)) {
+    if (
+      entry.type === "expense" ||
+      (entry.type === "maintenance" && !entry.tenantId)
+    ) {
       expenses += toNumber(entry.debit);
     }
   });

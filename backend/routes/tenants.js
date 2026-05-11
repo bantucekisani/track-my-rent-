@@ -11,23 +11,9 @@ const FinancialSettings = require("../models/Financial-Settings");
 const renderHTMLToPDF = require("../utils/pdf/renderHTMLToPDF");
 const generateTabularReportHTML =
   require("../utils/pdf/generateTabularReportHTML");
+const { describeLedgerEntry } = require("../utils/ledgerLabels");
 
 const router = express.Router();
-
-function describeLedgerEntry(entry) {
-  let label = entry.description || "";
-
-  if (entry.type === "rent") label = "Monthly Rent";
-  if (entry.type === "payment") label = "Payment received";
-  if (entry.type === "utility") {
-    label = `${String(entry.subtype || "Utility").toUpperCase()} charge`;
-  }
-  if (entry.type === "damage") label = "Damage charge";
-  if (entry.type === "damage_reversal") label = "Damage reversal";
-  if (entry.type === "expense") label = entry.description || "Expense";
-
-  return label || "-";
-}
 
 function describePaymentMethod(entry) {
   const normalized =

@@ -21,6 +21,7 @@ const generatePropertyPerformanceHTML =
   require("../utils/pdf/generatePropertyPerformanceHTML");
 const generateTabularReportHTML =
   require("../utils/pdf/generateTabularReportHTML");
+const { describeLedgerEntry } = require("../utils/ledgerLabels");
 const {
   calculateMonthlyIncomeByProperty,
   calculateProfitLoss,
@@ -450,7 +451,7 @@ async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
 
       rows.push({
         period: `${yearNum}-${String(monthNum).padStart(2, "0")}`,
-        description: e.description || "",
+        description: describeLedgerEntry(e),
         debit,
         credit,
         balance: runningBalance

@@ -1,8 +1,23 @@
 const Invoice = require("../models/Invoice");
 
+const INVOICE_LEDGER_TYPES = new Set([
+  "rent",
+  "rent_reversal",
+  "utility",
+  "utility_reversal",
+  "damage",
+  "damage_reversal",
+  "maintenance",
+  "maintenance_reversal",
+  "levy",
+  "levy_reversal",
+  "late_fee",
+  "deposit"
+]);
+
 async function ensureInvoiceForLedger(entry) {
-  if (!entry.leaseId || !entry.ownerId) return null;
-  if (entry.type === "payment") return null;
+  if (!entry.leaseId || !entry.ownerId || !entry.tenantId) return null;
+  if (!INVOICE_LEDGER_TYPES.has(entry.type)) return null;
 
   const date = new Date(entry.date);
   const month =

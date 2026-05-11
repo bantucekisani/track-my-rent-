@@ -16,6 +16,7 @@ const InvoiceItemSchema = new mongoose.Schema(
         "damage",
         "damage_reversal",
         "maintenance",
+        "maintenance_reversal",
         "levy",
         "levy_reversal",
         "late_fee",

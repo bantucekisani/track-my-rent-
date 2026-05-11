@@ -9,6 +9,7 @@ const Lease = require("../models/Lease");
 const sendInvoiceEmail = require("../utils/email/sendInvoiceEmail");
 const generateInvoicePDF = require("../utils/pdf/generateInvoicePDF");
 const BusinessSettings = require("../models/BusinessSettings");
+const { ledgerEntryLabel } = require("../utils/ledgerLabels");
 
 const mongoose = require("mongoose");
 const router = express.Router();
@@ -25,6 +26,8 @@ function isChargeEntry(entry) {
     "utility_reversal",
     "damage",
     "damage_reversal",
+    "maintenance",
+    "maintenance_reversal",
     "levy",
     "levy_reversal",
     "late_fee",
@@ -36,49 +39,8 @@ function invoiceChargeAmount(entry) {
   return roundMoney(Number(entry.debit || 0) - Number(entry.credit || 0));
 }
 
-function titleCase(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, char => char.toUpperCase());
-}
-
-function subtypeLabel(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  const labels = {
-    body_corporate: "Body Corporate",
-    hoa: "HOA",
-    levy: "Levy",
-    water: "Water",
-    electricity: "Electricity",
-    refuse: "Refuse"
-  };
-
-  return labels[normalized] || titleCase(normalized);
-}
-
 function invoiceChargeLabel(entry) {
-  const type = String(entry.type || "").toLowerCase();
-  const subtype = subtypeLabel(entry.subtype);
-
-  if (type === "rent") return "Monthly Rent";
-  if (type === "rent_reversal") return "Rent Reversal";
-  if (type === "utility") return subtype ? `${subtype} Charge` : "Utility Charge";
-  if (type === "utility_reversal") return subtype ? `${subtype} Reversal` : "Utility Reversal";
-  if (type === "levy") {
-    if (!subtype || subtype === "Levy") return "Levy Charge";
-    return `${subtype} Levy`;
-  }
-  if (type === "levy_reversal") {
-    if (!subtype || subtype === "Levy") return "Levy Reversal";
-    return `${subtype} Levy Reversal`;
-  }
-  if (type === "damage") return "Damage Charge";
-  if (type === "damage_reversal") return "Damage Reversal";
-  if (type === "late_fee") return "Late Fee";
-  if (type === "deposit") return "Security Deposit";
-
-  return titleCase(type) || "Tenant Charge";
+  return ledgerEntryLabel(entry) || "Tenant Charge";
 }
 
 function mapInvoiceItem(entry, locale) {

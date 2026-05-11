@@ -685,7 +685,7 @@ async function generateTenantStatement() {
 
       return {
         Date: fmt(e.date),
-        Description: e.description || "",
+        Description: describeLedgerEntryForReports(e),
         Debit: formatter.format(debit),
         Credit: formatter.format(credit),
         RunningBalance: formatter.format(balance)
@@ -744,6 +744,70 @@ async function renderArrearsFromAPI(){
     rollingEl.textContent = formatter.format(totalOutstanding);
   }
 
+}
+
+function titleCaseLedgerLabel(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function chargeSubtypeLabel(entry = {}) {
+  const subtype = String(entry.subtype || "").toLowerCase();
+  const labels = {
+    water: "Water",
+    electricity: "Electricity",
+    refuse: "Refuse",
+    body_corporate: "Body Corporate",
+    hoa: "HOA",
+    levy: "Levy",
+    maintenance: "Maintenance"
+  };
+
+  return labels[subtype] || titleCaseLedgerLabel(subtype);
+}
+
+function appendLedgerDescriptionForReports(label, entry = {}) {
+  const description = String(entry.description || "").trim();
+
+  if (!description) return label;
+
+  const labelCore = String(label || "")
+    .replace(/\s+(charge|reversal)$/i, "")
+    .toLowerCase();
+
+  if (labelCore && description.toLowerCase().includes(labelCore)) {
+    return description;
+  }
+
+  return `${label} - ${description}`;
+}
+
+function describeLedgerEntryForReports(entry = {}) {
+  const subtype = chargeSubtypeLabel(entry);
+
+  if (entry.type === "rent") return appendLedgerDescriptionForReports("Monthly Rent", entry);
+  if (entry.type === "rent_reversal") return appendLedgerDescriptionForReports("Rent reversal", entry);
+  if (entry.type === "payment") return appendLedgerDescriptionForReports("Payment received", entry);
+  if (entry.type === "utility") return appendLedgerDescriptionForReports(subtype ? `${subtype} Charge` : "Utility Charge", entry);
+  if (entry.type === "utility_reversal") return appendLedgerDescriptionForReports(subtype ? `${subtype} Reversal` : "Utility Reversal", entry);
+  if (entry.type === "levy") {
+    const label = subtype && subtype !== "Levy" ? `${subtype} Levy Charge` : "Levy Charge";
+    return appendLedgerDescriptionForReports(label, entry);
+  }
+  if (entry.type === "levy_reversal") {
+    const label = subtype && subtype !== "Levy" ? `${subtype} Levy Reversal` : "Levy Reversal";
+    return appendLedgerDescriptionForReports(label, entry);
+  }
+  if (entry.type === "maintenance") return appendLedgerDescriptionForReports("Maintenance Charge", entry);
+  if (entry.type === "maintenance_reversal") return appendLedgerDescriptionForReports("Maintenance Reversal", entry);
+  if (entry.type === "damage") return appendLedgerDescriptionForReports("Damage Charge", entry);
+  if (entry.type === "damage_reversal") return appendLedgerDescriptionForReports("Damage Reversal", entry);
+  if (entry.type === "late_fee") return appendLedgerDescriptionForReports("Late Fee", entry);
+  if (entry.type === "deposit") return appendLedgerDescriptionForReports("Security deposit", entry);
+
+  return entry.description || "-";
 }
 
 function getArrearsTotal(data) {

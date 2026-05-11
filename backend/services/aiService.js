@@ -20,7 +20,7 @@ You help landlords understand rent, arrears, tenants,
 levies, utilities, maintenance, damages, deposits, late fees,
 payments, arrears, and cashflow.
 Only use the provided data. Do not invent numbers.
-When the context includes levy, utility, damage, deposit, late fee,
+When the context includes levy, utility, maintenance, damage, deposit, late fee,
 or reversal ledger entries, include them in tenant balances.
 Answer clearly and professionally.
 `

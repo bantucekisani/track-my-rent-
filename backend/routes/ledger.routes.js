@@ -138,11 +138,20 @@ function normalizeTenantChargeType(value) {
     latefee: "late_fee",
     late_fee: "late_fee",
     deposit: "deposit",
-    damage: "damage"
+    damage: "damage",
+    maintenance: "maintenance",
+    maintenance_charge: "maintenance"
   };
 
   const normalized = aliases[type] || type;
-  const allowed = new Set(["utility", "damage", "levy", "late_fee", "deposit"]);
+  const allowed = new Set([
+    "utility",
+    "damage",
+    "maintenance",
+    "levy",
+    "late_fee",
+    "deposit"
+  ]);
 
   return allowed.has(normalized) ? normalized : "";
 }
@@ -169,6 +178,7 @@ function buildChargeDescription(type, subtype, description) {
   if (type === "levy") return label ? `Levy: ${label}` : "Levy charge";
   if (type === "utility") return label ? `Utility: ${label}` : "Utility charge";
   if (type === "damage") return "Damage charge";
+  if (type === "maintenance") return label ? `Maintenance: ${label}` : "Maintenance charge";
   if (type === "late_fee") return "Late fee";
   if (type === "deposit") return "Security deposit charged";
 

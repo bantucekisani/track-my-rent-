@@ -3,6 +3,7 @@ const auth = require("../middleware/authMiddleware");
 const Tenant = require("../models/Tenant");
 const LedgerEntry = require("../models/LedgerEntry");
 const { askAI } = require("../services/aiService");
+const { describeLedgerEntry } = require("../utils/ledgerLabels");
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ const REVERSAL_TYPES = new Set([
   "rent_reversal",
   "utility_reversal",
   "damage_reversal",
+  "maintenance_reversal",
   "levy_reversal"
 ]);
 
@@ -103,7 +105,7 @@ function formatRecentEntries(entries = []) {
           ? `debit R${money(entry.debit)}`
           : `credit R${money(entry.credit)}`;
 
-      return `${date} | ${entry.type} | ${amount} | ${entry.description || "-"}`;
+      return `${date} | ${describeLedgerEntry(entry)} | ${amount}`;
     })
     .join("\n    ");
 }
@@ -168,7 +170,7 @@ CURRENT ACCOUNTING PERIOD: ${monthName(targetMonth)} ${targetYear}
 RULES FOR ANSWERING:
 - Use all ledger types, not rent only.
 - Levies are tenant charges when type = "levy". Include them in balances and arrears.
-- Utility, damage, deposit, late_fee, and levy debits increase what the tenant owes.
+- Utility, levy, maintenance, damage, deposit, and late_fee debits increase what the tenant owes.
 - Payments and reversal credits reduce what the tenant owes.
 - Account balance = all debits minus all credits.
 

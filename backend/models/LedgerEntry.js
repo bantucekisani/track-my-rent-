@@ -71,6 +71,8 @@ const LedgerEntrySchema = new mongoose.Schema(
         "utility_reversal",
         "damage",
         "damage_reversal",
+        "maintenance",
+        "maintenance_reversal",
         "expense",
         "levy",
         "levy_reversal",

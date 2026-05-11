@@ -208,6 +208,8 @@ try {
               "damage",
               "payment",
               "damage_reversal",
+              "maintenance",
+              "maintenance_reversal",
               "levy",
               "levy_reversal",
               "late_fee",

@@ -6,6 +6,7 @@ const Tenant = require("../../models/Tenant");
 const Lease = require("../../models/Lease");
 const BusinessSettings = require("../../models/BusinessSettings");
 const { drawBusinessHeader, drawFooter } = require("./pdfLayout");
+const { describeLedgerEntry } = require("../ledgerLabels");
 
 function formatCurrency(amount) {
   return `R${(amount || 0).toLocaleString("en-ZA", {
@@ -77,7 +78,7 @@ module.exports = async function generateTenantStatementPDF({
         month: "long",
         year: "numeric"
       }),
-      description: e.description,
+      description: describeLedgerEntry(e),
       debit: formatCurrency(debit),
       credit: formatCurrency(credit),
       balance: formatCurrency(runningBalance)

@@ -68,6 +68,7 @@ test("calculateProfitLoss only counts payment income and expense debits", () => 
     { type: "expense", debit: 5000 },
     { type: "expense", subtype: "levies", debit: 1200 },
     { type: "maintenance", debit: 2500 },
+    { type: "maintenance", tenantId: "t1", debit: 900 },
     { type: "rent", debit: 33000 }
   ]);
 

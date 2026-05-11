@@ -77,7 +77,8 @@ function formatChargeLabel(entry = {}) {
     refuse: "Refuse",
     body_corporate: "Body Corporate",
     hoa: "HOA",
-    levy: "Levy"
+    levy: "Levy",
+    maintenance: "Maintenance"
   };
   const label = subtypeLabels[subtype] || titleCase(subtype);
 
@@ -86,6 +87,22 @@ function formatChargeLabel(entry = {}) {
   }
 
   return label || "Utility";
+}
+
+function appendLedgerDescription(label, entry = {}) {
+  const description = String(entry.description || "").trim();
+
+  if (!description) return label;
+
+  const labelCore = String(label || "")
+    .replace(/\s+(charge|reversal)$/i, "")
+    .toLowerCase();
+
+  if (labelCore && description.toLowerCase().includes(labelCore)) {
+    return description;
+  }
+
+  return `${label} - ${description}`;
 }
 
 function formatPaymentMethod(method, source = "") {
@@ -555,19 +572,7 @@ function generateStatement() {
     totalDebit += debit;
     totalCredit += credit;
 
-    let label = e.description || "";
-
-    // Make labels cleaner
-    if (e.type === "rent") label = "Monthly Rent";
-    if (e.type === "rent_reversal") label = "Rent reversal";
-    if (e.type === "payment") label = "Payment received";
-    if (e.type === "utility")
-      label = `${(e.subtype || "Utility").toUpperCase()} charge`;
-    if (e.type === "utility_reversal") label = "Utility reversal";
-    if (e.type === "levy") label = `${formatChargeLabel(e)} charge`;
-    if (e.type === "levy_reversal") label = `${formatChargeLabel(e)} reversal`;
-    if (e.type === "damage") label = "Damage charge";
-    if (e.type === "damage_reversal") label = "Damage reversal";
+    const label = describeLedgerEntryForProfile(e);
 
     tbody.innerHTML += `
       <tr>
@@ -786,15 +791,20 @@ function exportStatementCSV() {
 }
 
 function describeLedgerEntryForProfile(entry) {
-  if (entry.type === "rent") return "Monthly Rent";
-  if (entry.type === "rent_reversal") return "Rent reversal";
-  if (entry.type === "payment") return "Payment received";
-  if (entry.type === "utility") return `${(entry.subtype || "Utility").toUpperCase()} charge`;
-  if (entry.type === "utility_reversal") return "Utility reversal";
-  if (entry.type === "levy") return `${formatChargeLabel(entry)} charge`;
-  if (entry.type === "levy_reversal") return `${formatChargeLabel(entry)} reversal`;
-  if (entry.type === "damage") return "Damage charge";
-  if (entry.type === "damage_reversal") return "Damage reversal";
+  if (entry.type === "rent") return appendLedgerDescription("Monthly Rent", entry);
+  if (entry.type === "rent_reversal") return appendLedgerDescription("Rent reversal", entry);
+  if (entry.type === "payment") return appendLedgerDescription("Payment received", entry);
+  if (entry.type === "utility") return appendLedgerDescription(`${formatChargeLabel(entry)} Charge`, entry);
+  if (entry.type === "utility_reversal") return appendLedgerDescription(`${formatChargeLabel(entry)} Reversal`, entry);
+  if (entry.type === "levy") return appendLedgerDescription(`${formatChargeLabel(entry)} Charge`, entry);
+  if (entry.type === "levy_reversal") return appendLedgerDescription(`${formatChargeLabel(entry)} Reversal`, entry);
+  if (entry.type === "maintenance") return appendLedgerDescription("Maintenance Charge", entry);
+  if (entry.type === "maintenance_reversal") return appendLedgerDescription("Maintenance Reversal", entry);
+  if (entry.type === "damage") return appendLedgerDescription("Damage Charge", entry);
+  if (entry.type === "damage_reversal") return appendLedgerDescription("Damage Reversal", entry);
+  if (entry.type === "late_fee") return appendLedgerDescription("Late Fee", entry);
+  if (entry.type === "deposit") return appendLedgerDescription("Security deposit", entry);
+  if (entry.type === "expense") return entry.description || "Expense";
 
   return entry.description || "-";
 }
