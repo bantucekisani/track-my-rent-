@@ -251,7 +251,7 @@ function renderTenants(list) {
         <button class="btn-secondary btn-sm" onclick="openLedger('${t._id}')">Ledger</button>
          <button class="btn-secondary btn-sm"
     onclick="openUtilities('${t._id}', '${t.unitId?._id || ""}')">
-    Utilities
+    Charges
   </button>
         <button class="btn-secondary btn-sm" onclick="openMaintenance('${t._id}')">Maintenance</button>
         <button class="btn-danger btn-sm" onclick="openDamage('${t._id}')">Damage</button>

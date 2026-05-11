@@ -15,6 +15,7 @@ const ejs = require("ejs");
 const renderHTMLToPDF = require("../utils/pdf/renderHTMLToPDF");
 const generateTabularReportHTML =
   require("../utils/pdf/generateTabularReportHTML");
+const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email/sendEmail");
@@ -521,12 +522,13 @@ router.post("/", auth, async (req, res) => {
     }], { session });
 
     const leaseDoc = lease[0];
+    const invoiceLedgerEntries = [];
 
     /* ===============================
        RENT LEDGER ENTRY
     =============================== */
 
-    await LedgerEntry.create([{
+    const rentEntry = await LedgerEntry.create([{
       ownerId,
       tenantId,
       leaseId: leaseDoc._id,
@@ -543,12 +545,14 @@ router.post("/", auth, async (req, res) => {
       source: "lease-create"
     }], { session });
 
+    invoiceLedgerEntries.push(rentEntry[0]);
+
     /* ===============================
        DEPOSIT LEDGER ENTRY
     =============================== */
 
     if (safeDeposit > 0) {
-      await LedgerEntry.create([{
+      const depositEntry = await LedgerEntry.create([{
         ownerId,
         tenantId,
         leaseId: leaseDoc._id,
@@ -564,10 +568,20 @@ router.post("/", auth, async (req, res) => {
         credit: 0,
         source: "lease-create"
       }], { session });
+
+      invoiceLedgerEntries.push(depositEntry[0]);
     }
 
     await session.commitTransaction();
     session.endSession();
+
+    for (const entry of invoiceLedgerEntries) {
+      try {
+        await ensureInvoiceForLedger(entry);
+      } catch (invoiceErr) {
+        console.error("LEASE INVOICE ENSURE ERROR:", invoiceErr);
+      }
+    }
 
     res.json({
       success: true,
@@ -690,6 +704,7 @@ router.delete("/:id", auth, async (req, res) => {
       null,
       { session }
     );
+    const reversalEntries = [];
 
     /* ===============================
        CREATE REVERSALS
@@ -697,7 +712,7 @@ router.delete("/:id", auth, async (req, res) => {
     for (const entry of rentEntries) {
       const originalDate = new Date(entry.date);
 
-      await LedgerEntry.create(
+      const reversalEntry = await LedgerEntry.create(
         [{
           ownerId: entry.ownerId,
           tenantId: entry.tenantId,
@@ -717,6 +732,8 @@ router.delete("/:id", auth, async (req, res) => {
         }],
         { session }
       );
+
+      reversalEntries.push(reversalEntry[0]);
     }
 
     /* ===============================
@@ -755,6 +772,14 @@ router.delete("/:id", auth, async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    for (const entry of reversalEntries) {
+      try {
+        await ensureInvoiceForLedger(entry);
+      } catch (invoiceErr) {
+        console.error("LEASE REVERSAL INVOICE ENSURE ERROR:", invoiceErr);
+      }
+    }
 
     res.json({
       success: true,

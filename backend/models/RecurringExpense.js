@@ -6,7 +6,7 @@ const RecurringExpenseSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    enum: ["utilities", "rates", "insurance", "cleaning", "admin"],
+    enum: ["utilities", "levies", "rates", "insurance", "cleaning", "admin"],
     required: true
   },
 

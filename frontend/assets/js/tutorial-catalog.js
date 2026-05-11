@@ -390,7 +390,7 @@
           target: '[data-tutorial="expenses-heading"]',
           beforeShow: "closeExpenseTutorialModal",
           title: "Capture expense data here",
-          text: "Use expenses to keep maintenance, utilities, insurance, and admin costs inside the same operating system."
+          text: "Use expenses to keep maintenance, levies, utilities, insurance, and admin costs inside the same operating system."
         },
         {
           id: "expenses:record-expense",

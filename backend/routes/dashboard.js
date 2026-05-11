@@ -202,11 +202,16 @@ try {
           type: {
             $in: [
               "rent",
+              "rent_reversal",
               "utility",
+              "utility_reversal",
               "damage",
               "payment",
               "damage_reversal",
-              "late_fee"
+              "levy",
+              "levy_reversal",
+              "late_fee",
+              "deposit"
             ]
           }
         }

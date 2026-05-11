@@ -15,6 +15,9 @@ function normalizeExpenseCategory(value) {
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
   const aliases = {
+    levy: "levies",
+    body_corporate_levy: "levies",
+    hoa_levy: "levies",
     rates_taxes: "rates",
     rates_and_taxes: "rates",
     tax: "rates",
@@ -23,6 +26,7 @@ function normalizeExpenseCategory(value) {
   const normalized = aliases[category] || category;
   const allowed = new Set([
     "maintenance",
+    "levies",
     "utilities",
     "insurance",
     "cleaning",
@@ -42,6 +46,7 @@ function inferExpenseCategory(entry = {}) {
 
   const text = String(entry.description || "").toLowerCase();
 
+  if (/lev(y|ies)|body corporate|homeowners association|\bhoa\b/.test(text)) return "levies";
   if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
   if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
   if (/water|electricity|utility|utilities/.test(text)) return "utilities";

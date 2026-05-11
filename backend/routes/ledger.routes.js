@@ -80,6 +80,9 @@ function normalizeExpenseCategory(value) {
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
   const aliases = {
+    levy: "levies",
+    body_corporate_levy: "levies",
+    hoa_levy: "levies",
     rates_taxes: "rates",
     rates_and_taxes: "rates",
     tax: "rates",
@@ -88,6 +91,7 @@ function normalizeExpenseCategory(value) {
   const normalized = aliases[category] || category;
   const allowed = new Set([
     "maintenance",
+    "levies",
     "utilities",
     "insurance",
     "cleaning",
@@ -107,6 +111,7 @@ function inferExpenseCategory(entry = {}) {
 
   const text = String(entry.description || "").toLowerCase();
 
+  if (/lev(y|ies)|body corporate|homeowners association|\bhoa\b/.test(text)) return "levies";
   if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
   if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
   if (/water|electricity|utility|utilities/.test(text)) return "utilities";
@@ -114,6 +119,60 @@ function inferExpenseCategory(entry = {}) {
   if (/clean|cleaning/.test(text)) return "cleaning";
 
   return "admin";
+}
+
+function normalizeTenantChargeType(value) {
+  const type = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  const aliases = {
+    utilities: "utility",
+    levy: "levy",
+    levies: "levy",
+    body_corporate: "levy",
+    body_corporate_levy: "levy",
+    hoa: "levy",
+    hoa_levy: "levy",
+    latefee: "late_fee",
+    late_fee: "late_fee",
+    deposit: "deposit",
+    damage: "damage"
+  };
+
+  const normalized = aliases[type] || type;
+  const allowed = new Set(["utility", "damage", "levy", "late_fee", "deposit"]);
+
+  return allowed.has(normalized) ? normalized : "";
+}
+
+function normalizeSubtype(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function buildChargeDescription(type, subtype, description) {
+  const savedDescription = String(description || "").trim();
+
+  if (savedDescription) {
+    return savedDescription;
+  }
+
+  const label = String(subtype || "")
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+
+  if (type === "levy") return label ? `Levy: ${label}` : "Levy charge";
+  if (type === "utility") return label ? `Utility: ${label}` : "Utility charge";
+  if (type === "damage") return "Damage charge";
+  if (type === "late_fee") return "Late fee";
+  if (type === "deposit") return "Security deposit charged";
+
+  return "Tenant charge";
 }
 
 async function loadPaymentExportData(ownerId) {
@@ -756,6 +815,144 @@ router.post("/damage/reverse", auth, async (req, res) => {
     console.error("DAMAGE REVERSAL ERROR:", err);
     res.status(500).json({
       message: "Failed to reverse damage"
+    });
+  }
+});
+
+router.post("/charge", auth, async (req, res) => {
+  try {
+    const {
+      tenantId,
+      amount,
+      chargeType,
+      type,
+      subtype,
+      description,
+      date,
+      periodMonth,
+      periodYear
+    } = req.body;
+
+    const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const ledgerType = normalizeTenantChargeType(chargeType || type);
+    const amountNumber = Number(amount);
+
+    if (!tenantId || !mongoose.isValidObjectId(tenantId)) {
+      return res.status(400).json({
+        message: "Valid tenant required"
+      });
+    }
+
+    if (!ledgerType) {
+      return res.status(400).json({
+        message: "Valid charge type required"
+      });
+    }
+
+    if (!amountNumber || isNaN(amountNumber) || amountNumber <= 0) {
+      return res.status(400).json({
+        message: "Valid charge amount required"
+      });
+    }
+
+    const selectedPeriodMonth =
+      periodMonth !== undefined && periodMonth !== null
+        ? Number(periodMonth)
+        : null;
+
+    const selectedPeriodYear =
+      periodYear !== undefined && periodYear !== null
+        ? Number(periodYear)
+        : null;
+
+    if (
+      selectedPeriodMonth !== null &&
+      (!Number.isInteger(selectedPeriodMonth) ||
+        selectedPeriodMonth < 1 ||
+        selectedPeriodMonth > 12)
+    ) {
+      return res.status(400).json({
+        message: "Accounting month must be between 1 and 12"
+      });
+    }
+
+    if (
+      selectedPeriodYear !== null &&
+      (!Number.isInteger(selectedPeriodYear) ||
+        selectedPeriodYear < 2000 ||
+        selectedPeriodYear > 2100)
+    ) {
+      return res.status(400).json({
+        message: "Accounting year is invalid"
+      });
+    }
+
+    const entryDate = date
+      ? new Date(date)
+      : selectedPeriodMonth && selectedPeriodYear
+      ? new Date(selectedPeriodYear, selectedPeriodMonth - 1, 1)
+      : new Date();
+
+    if (isNaN(entryDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid charge date"
+      });
+    }
+
+    const lease = await Lease.findOne({
+      ownerId,
+      tenantId,
+      status: "Active"
+    });
+
+    if (!lease) {
+      return res.status(400).json({
+        message: "No active lease"
+      });
+    }
+
+    const settings = await Settings.findOne({ ownerId }).lean();
+
+    const currency =
+      settings?.preferences?.currency ||
+      lease.currency ||
+      "ZAR";
+
+    const debitAmount = Math.round(amountNumber * 100) / 100;
+    const savedSubtype = normalizeSubtype(subtype || ledgerType);
+
+    const entry = await LedgerEntry.create({
+      ownerId,
+      currency,
+      tenantId,
+      leaseId: lease._id,
+      propertyId: lease.propertyId,
+      unitId: lease.unitId || null,
+      date: entryDate,
+      periodMonth: selectedPeriodMonth || entryDate.getMonth() + 1,
+      periodYear: selectedPeriodYear || entryDate.getFullYear(),
+      type: ledgerType,
+      subtype: savedSubtype,
+      description: buildChargeDescription(ledgerType, savedSubtype, description),
+      debit: debitAmount,
+      credit: 0,
+      source: "manual-charge"
+    });
+
+    const invoice = await ensureInvoiceForLedger(entry);
+    await emitLedgerNotification(entry);
+
+    res.status(201).json({
+      success: true,
+      currency,
+      entry,
+      invoice
+    });
+
+  } catch (err) {
+    console.error("TENANT CHARGE ERROR:", err);
+    res.status(500).json({
+      message: "Failed to record tenant charge"
     });
   }
 });

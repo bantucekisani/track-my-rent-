@@ -6,6 +6,7 @@ const UtilityBill = require("../models/UtilityBill");
 const LedgerEntry = require("../models/LedgerEntry");
 const Lease = require("../models/Lease");
 const Settings = require("../models/Financial-Settings");
+const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 
 const router = express.Router();
 
@@ -90,6 +91,21 @@ router.post("/", auth, async (req, res) => {
         ? Number(periodYear)
         : today.getFullYear();
 
+    if (
+      !Number.isInteger(finalMonth) ||
+      finalMonth < 1 ||
+      finalMonth > 12 ||
+      !Number.isInteger(finalYear) ||
+      finalYear < 2000 ||
+      finalYear > 2100
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        message: "Invalid billing period"
+      });
+    }
+
     /* ===============================
        1️⃣ SAVE UTILITY BILL RECORD
     =============================== */
@@ -138,10 +154,18 @@ router.post("/", auth, async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    let invoice = null;
+    try {
+      invoice = await ensureInvoiceForLedger(entry[0]);
+    } catch (invoiceErr) {
+      console.error("UTILITY INVOICE ENSURE ERROR:", invoiceErr);
+    }
+
     res.status(201).json({
       success: true,
       bill: bill[0],
-      ledgerEntry: entry[0]
+      ledgerEntry: entry[0],
+      invoice
     });
 
   } catch (err) {
@@ -205,6 +229,12 @@ router.post("/:id/reverse", auth, async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    try {
+      await ensureInvoiceForLedger(reversal[0]);
+    } catch (invoiceErr) {
+      console.error("UTILITY REVERSAL INVOICE ENSURE ERROR:", invoiceErr);
+    }
 
     res.json({
       success: true,

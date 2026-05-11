@@ -20,6 +20,7 @@ let allProperties = [];
 
 const EXPENSE_CATEGORY_LABELS = {
   maintenance: "Maintenance",
+  levies: "Levies",
   utilities: "Utilities",
   rates: "Rates & Taxes",
   insurance: "Insurance",
@@ -244,6 +245,9 @@ function getExpenseCategory(expense = {}) {
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
   const aliases = {
+    levy: "levies",
+    body_corporate_levy: "levies",
+    hoa_levy: "levies",
     rates_taxes: "rates",
     rates_and_taxes: "rates",
     tax: "rates",
@@ -257,6 +261,7 @@ function getExpenseCategory(expense = {}) {
 
   const text = String(expense.description || "").toLowerCase();
 
+  if (/lev(y|ies)|body corporate|homeowners association|\bhoa\b/.test(text)) return "levies";
   if (/\brates?\b|\btax(es)?\b/.test(text)) return "rates";
   if (/repair|maintenance|fix|plumb|electric/.test(text)) return "maintenance";
   if (/water|electricity|utility|utilities/.test(text)) return "utilities";

@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const Lease = require("../models/Lease");
 const LedgerEntry = require("../models/LedgerEntry");
 const Settings = require("../models/Financial-Settings");
+const ensureInvoiceForLedger = require("./ensureInvoiceForLedger");
 
 async function runLateFeeCheck() {
   console.log("🔄 Running automatic late fee check...");
@@ -75,7 +76,7 @@ async function runLateFeeCheck() {
 
       if (lateFeeAmount <= 0) continue;
 
-      await LedgerEntry.create({
+      const lateFeeEntry = await LedgerEntry.create({
         ownerId,
         tenantId: lease.tenantId,
         leaseId: lease._id,
@@ -85,11 +86,13 @@ async function runLateFeeCheck() {
         periodMonth: month,
         periodYear: year,
         type: "late_fee",
-        description: `Auto late fee ${month + 1}/${year}`,
+        description: `Auto late fee ${month}/${year}`,
         debit: Math.round(lateFeeAmount),
         credit: 0,
         source: "auto"
       });
+
+      await ensureInvoiceForLedger(lateFeeEntry);
 
       console.log(`💰 Late fee applied to lease ${lease._id}`);
     }

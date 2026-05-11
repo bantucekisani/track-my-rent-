@@ -8,6 +8,7 @@ const Maintenance = require("../models/Maintenance");
 const LedgerEntry = require("../models/LedgerEntry");
 const Lease = require("../models/Lease");
 const Settings = require("../models/Financial-Settings");
+const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 
 /* ======================================================
    CREATE DAMAGE (LEDGER + MAINTENANCE RECORD)
@@ -113,7 +114,7 @@ router.post("/", auth, async (req, res) => {
 
     const today = new Date();
 
-    const periodMonth = today.getMonth();
+    const periodMonth = today.getMonth() + 1;
     const periodYear = today.getFullYear();
 
     const liabilityType =
@@ -182,6 +183,14 @@ router.post("/", auth, async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    if (ledgerEntry?.[0]) {
+      try {
+        await ensureInvoiceForLedger(ledgerEntry[0]);
+      } catch (invoiceErr) {
+        console.error("DAMAGE INVOICE ENSURE ERROR:", invoiceErr);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -325,6 +334,12 @@ router.post("/reverse", auth, async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    try {
+      await ensureInvoiceForLedger(reversal[0]);
+    } catch (invoiceErr) {
+      console.error("DAMAGE REVERSAL INVOICE ENSURE ERROR:", invoiceErr);
+    }
 
     res.status(201).json({
       success: true,

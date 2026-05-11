@@ -110,17 +110,42 @@ async function submitUtility(e) {
     return;
   }
 
+  const [chargeType, subtype] = String(utilityType.value || "").split(":");
+  const [periodYear, periodMonth] = String(periodInput.value || "")
+    .split("-")
+    .map(Number);
+
+  if (!chargeType || !subtype) {
+    notify("Please select a charge type");
+    return;
+  }
+
+  if (
+    !Number.isInteger(periodMonth) ||
+    periodMonth < 1 ||
+    periodMonth > 12 ||
+    !Number.isInteger(periodYear)
+  ) {
+    notify("Please select a valid billing month");
+    return;
+  }
+
+  const chargeLabel = utilityType.options[utilityType.selectedIndex]?.text || "Charge";
+  const periodLabel = periodInput.value;
+  const notes = notesInput.value.trim();
+
   const payload = {
     tenantId: tenantSelect.value,
     amount: Number(amountInput.value),
-    subtype: utilityType.value,
-    description: `${utilityType.value.toUpperCase()} - ${periodInput.value}${
-      notesInput.value ? " | " + notesInput.value : ""
-    }`
+    chargeType,
+    subtype,
+    periodMonth,
+    periodYear,
+    description: `${chargeLabel} - ${periodLabel}${notes ? " | " + notes : ""}`
   };
 
   try {
-    const res = await fetch(`${API_URL}/ledger/utility`, {
+    const res = await fetch(`${API_URL}/ledger/charge`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,7 +161,7 @@ async function submitUtility(e) {
       return;
     }
 
-    notify("Utility posted successfully");
+    notify("Charge posted successfully");
     e.target.reset();
 
   } catch (err) {

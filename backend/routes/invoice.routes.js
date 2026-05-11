@@ -18,7 +18,22 @@ function roundMoney(value) {
 }
 
 function isChargeEntry(entry) {
-  return ["rent", "utility", "damage", "late_fee", "deposit"].includes(entry.type);
+  return [
+    "rent",
+    "rent_reversal",
+    "utility",
+    "utility_reversal",
+    "damage",
+    "damage_reversal",
+    "levy",
+    "levy_reversal",
+    "late_fee",
+    "deposit"
+  ].includes(entry.type);
+}
+
+function invoiceChargeAmount(entry) {
+  return roundMoney(Number(entry.debit || 0) - Number(entry.credit || 0));
 }
 
 function buildInvoiceAllocationMap(invoices, ledgerEntries) {
@@ -52,7 +67,9 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
     const invoiceTotals = leaseInvoices?.get(periodKey);
 
     if (invoiceTotals) {
-      invoiceTotals.charged = roundMoney(invoiceTotals.charged + (entry.debit || 0));
+      invoiceTotals.charged = roundMoney(
+        invoiceTotals.charged + invoiceChargeAmount(entry)
+      );
     }
   }
 
@@ -346,10 +363,7 @@ router.get("/:id/pdf", auth, async (req, res) => {
       .filter(isChargeEntry)
       .map(e => {
 
-      const debit =
-        Math.round((e.debit || 0) * 100) / 100;
-
-      const amount = debit;
+      const amount = invoiceChargeAmount(e);
 
      return {
   date: new Date(e.date).toLocaleDateString(locale),
@@ -539,10 +553,7 @@ router.post("/:id/email", auth, async (req, res) => {
       .filter(isChargeEntry)
       .map(e => {
 
-      const debit =
-        Math.round((e.debit || 0) * 100) / 100;
-
-      const amount = debit;
+      const amount = invoiceChargeAmount(e);
 
       return {
   date: new Date(e.date).toLocaleDateString(locale),

@@ -10,10 +10,16 @@ const InvoiceItemSchema = new mongoose.Schema(
       type: String,
       enum: [
         "rent",
+        "rent_reversal",
         "utility",
+        "utility_reversal",
         "damage",
+        "damage_reversal",
         "maintenance",
-        "late_fee"
+        "levy",
+        "levy_reversal",
+        "late_fee",
+        "deposit"
       ],
       required: true
     },

@@ -74,7 +74,7 @@ async function runCatchUp() {
 
     if (!lastRent) {
       // First rent ever → start from lease start date
-      const leaseStart = new Date(lease.startDate);
+      const leaseStart = new Date(lease.leaseStart);
       startYear = leaseStart.getFullYear();
       startMonth = leaseStart.getMonth() + 1;
     } else {

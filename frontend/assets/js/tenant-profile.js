@@ -533,9 +533,13 @@ function generateStatement() {
 
     // Make labels cleaner
     if (e.type === "rent") label = "Monthly Rent";
+    if (e.type === "rent_reversal") label = "Rent reversal";
     if (e.type === "payment") label = "Payment received";
     if (e.type === "utility")
       label = `${(e.subtype || "Utility").toUpperCase()} charge`;
+    if (e.type === "utility_reversal") label = "Utility reversal";
+    if (e.type === "levy") label = "Levy charge";
+    if (e.type === "levy_reversal") label = "Levy reversal";
     if (e.type === "damage") label = "Damage charge";
     if (e.type === "damage_reversal") label = "Damage reversal";
 
@@ -636,7 +640,9 @@ function renderUtilities() {
 
   tbody.innerHTML = "";
 
-  const utilityEntries = ledger.filter(e => e.type === "utility");
+  const utilityEntries = ledger.filter(e =>
+    ["utility", "utility_reversal", "levy", "levy_reversal"].includes(e.type)
+  );
 
   if (!utilityEntries.length) {
     tbody.innerHTML =
@@ -645,11 +651,18 @@ function renderUtilities() {
   }
 
   utilityEntries.forEach(u => {
+    const isCredit = Number(u.credit || 0) > 0;
+    const amount = isCredit ? Number(u.credit || 0) : Number(u.debit || 0);
+    const typeLabel =
+      u.type === "levy" || u.type === "levy_reversal"
+        ? "Levy"
+        : safeText(u.subtype || "Utility");
+
     tbody.innerHTML += `
       <tr>
         <td>${formatDate(u.date, { year: "numeric", month: "short" })}</td>
-        <td>${safeText(u.subtype)}</td>
-        <td>${money(Number(u.debit || 0))}</td>
+        <td>${safeText(typeLabel)}</td>
+        <td>${isCredit ? "-" : ""}${money(amount)}</td>
         <td>${safeText(u.description)}</td>
       </tr>
     `;
@@ -751,8 +764,12 @@ function exportStatementCSV() {
 
 function describeLedgerEntryForProfile(entry) {
   if (entry.type === "rent") return "Monthly Rent";
+  if (entry.type === "rent_reversal") return "Rent reversal";
   if (entry.type === "payment") return "Payment received";
   if (entry.type === "utility") return `${(entry.subtype || "Utility").toUpperCase()} charge`;
+  if (entry.type === "utility_reversal") return "Utility reversal";
+  if (entry.type === "levy") return "Levy charge";
+  if (entry.type === "levy_reversal") return "Levy reversal";
   if (entry.type === "damage") return "Damage charge";
   if (entry.type === "damage_reversal") return "Damage reversal";
 

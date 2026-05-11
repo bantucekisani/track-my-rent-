@@ -66,14 +66,15 @@ test("calculateProfitLoss only counts payment income and expense debits", () => 
   const summary = calculateProfitLoss([
     { type: "payment", credit: 60000 },
     { type: "expense", debit: 5000 },
+    { type: "expense", subtype: "levies", debit: 1200 },
     { type: "maintenance", debit: 2500 },
     { type: "rent", debit: 33000 }
   ]);
 
   assert.deepEqual(summary, {
     income: 60000,
-    expenses: 7500,
-    profit: 52500
+    expenses: 8700,
+    profit: 51300
   });
 });
 
