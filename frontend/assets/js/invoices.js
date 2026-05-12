@@ -333,6 +333,53 @@ function safe(value){
   return value || "-";
 }
 
+function filePart(value, fallback = "invoice") {
+  return String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || fallback;
+}
+
+function getHeaderFilename(res, fallback) {
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const rawName = utfMatch?.[1] || plainMatch?.[1];
+
+  if (!rawName) return fallback;
+
+  try {
+    return decodeURIComponent(rawName);
+  } catch {
+    return rawName;
+  }
+}
+
+function invoicePdfFilename(invoiceId, res) {
+  const invoice = allInvoices.find(inv => inv._id === invoiceId);
+  const fallback = `invoice-${filePart(invoice?.invoiceNumber || invoiceId)}.pdf`;
+  const filename = getHeaderFilename(res, fallback);
+
+  return /\.pdf$/i.test(filename) ? filename : `${filename}.pdf`;
+}
+
+function downloadPdfBlob(blob, filename) {
+  const file = new File([blob], filename, { type: "application/pdf" });
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 60_000);
+}
+
 
 function statusBadge(status){
 
@@ -388,13 +435,7 @@ async function viewInvoice(invoiceId){
       return;
     }
 
-    const url = URL.createObjectURL(blob);
-
-    window.open(url, "_blank");
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 60_000);
+    downloadPdfBlob(blob, invoicePdfFilename(invoiceId, res));
 
   }
   catch(err){

@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadTenants();
   loadTenantContext();
+  periodInput.value = new Date().toISOString().slice(0, 7);
 
   document
     .getElementById("utilityForm")
@@ -91,7 +92,7 @@ async function loadTenantContext() {
 
     const tenantNameEl = document.getElementById("tenantName");
     if (tenantNameEl) {
-      tenantNameEl.textContent = data.fullName || "-";
+      tenantNameEl.textContent = data.tenant?.fullName || data.fullName || "-";
     }
 
   } catch (err) {
@@ -163,6 +164,7 @@ async function submitUtility(e) {
 
     notify("Charge posted successfully");
     e.target.reset();
+    periodInput.value = new Date().toISOString().slice(0, 7);
 
   } catch (err) {
     console.error("Post utility error:", err);
