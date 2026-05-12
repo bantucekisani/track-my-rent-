@@ -86,6 +86,15 @@
             <option value="levy:electricity">Electricity Levy</option>
             <option value="levy:body_corporate">Body Corporate Levy</option>
             <option value="levy:hoa">HOA Levy</option>
+            <option value="maintenance:repair">Maintenance Charge</option>
+            <option value="damage:damage">Damage Charge</option>
+            <option value="expense:rates">Rates & Taxes</option>
+          </select>
+
+          <label>Paid By</label>
+          <select id="paidBy" required>
+            <option value="TENANT">Tenant - add to invoice and statement</option>
+            <option value="OWNER">Owner - record as property expense</option>
           </select>
 
           <label>Billing Month</label>
@@ -96,6 +105,11 @@
 
           <label>Notes (optional)</label>
           <textarea id="notes" placeholder="e.g. Municipal bill split or monthly levy"></textarea>
+
+          <label id="recurringExpenseWrap" style="display:none;">
+            <input type="checkbox" id="recurringMonthly">
+            Repeat monthly as an owner expense
+          </label>
 
           <button type="submit" class="btn-primary">
             Post Charge

@@ -39,6 +39,7 @@ const {
   detectMissingLease
 } = require("./services/dailyNotificationChecks");
 const startLateFeeScheduler = require("./services/lateFeeScheduler");
+const startRecurringExpenseScheduler = require("./services/recurringExpenseScheduler");
 const adminRoutes = require("./routes/admin");
 const subscriptionRoutes = require("./routes/subscription");
 const sendRentReminders = require("./services/rentReminderService");
@@ -232,5 +233,6 @@ mongoose
   
 mongoose.connection.once("open", () => {
   startLateFeeScheduler();
+  startRecurringExpenseScheduler();
 });
 

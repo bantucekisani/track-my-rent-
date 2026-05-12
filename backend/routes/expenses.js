@@ -4,6 +4,10 @@ const auth = require("../middleware/authMiddleware");
 const LedgerEntry = require("../models/LedgerEntry");
 const Settings = require("../models/Financial-Settings");
 const Property = require("../models/Property");
+const RecurringExpense = require("../models/RecurringExpense");
+const {
+  createRecurringExpenseEntry
+} = require("../services/recurringExpenseScheduler");
 
 const mongoose = require("mongoose");
 
@@ -55,6 +59,131 @@ function inferExpenseCategory(entry = {}) {
 
   return "admin";
 }
+
+/* =====================================================
+   CREATE OR UPDATE MONTHLY OWNER EXPENSE
+===================================================== */
+router.post("/recurring", auth, async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+    const {
+      propertyId,
+      category,
+      amount,
+      description,
+      startMonth,
+      startYear,
+      currency: requestCurrency
+    } = req.body;
+
+    const expenseCategory = normalizeExpenseCategory(category);
+    const amountNumber = Number(amount);
+    const monthNumber = Number(startMonth);
+    const yearNumber = Number(startYear);
+
+    if (!expenseCategory) {
+      return res.status(400).json({
+        message: "Invalid recurring expense category"
+      });
+    }
+
+    if (!amountNumber || isNaN(amountNumber) || amountNumber <= 0) {
+      return res.status(400).json({
+        message: "Invalid recurring expense amount"
+      });
+    }
+
+    if (!mongoose.isValidObjectId(propertyId)) {
+      return res.status(400).json({
+        message: "Please select a valid property for this recurring expense"
+      });
+    }
+
+    if (
+      !Number.isInteger(monthNumber) ||
+      monthNumber < 1 ||
+      monthNumber > 12 ||
+      !Number.isInteger(yearNumber) ||
+      yearNumber < 2000 ||
+      yearNumber > 2100
+    ) {
+      return res.status(400).json({
+        message: "Please select a valid start month"
+      });
+    }
+
+    const property = await Property.findOne({
+      _id: propertyId,
+      ownerId
+    });
+
+    if (!property) {
+      return res.status(404).json({
+        message: "Property not found"
+      });
+    }
+
+    const settings = await Settings.findOne({ ownerId }).lean();
+    const allowedCurrencies = [
+      "ZAR", "USD", "EUR", "GBP", "AED", "AUD", "CAD", "NZD"
+    ];
+
+    let expenseCurrency =
+      (requestCurrency && requestCurrency.toUpperCase()) ||
+      settings?.preferences?.currency ||
+      "ZAR";
+
+    if (!allowedCurrencies.includes(expenseCurrency)) {
+      expenseCurrency = settings?.preferences?.currency || "ZAR";
+    }
+
+    const safeAmount = Math.round(amountNumber * 100) / 100;
+    const savedDescription =
+      String(description || expenseCategory || "Owner expense").trim();
+
+    const recurringExpense = await RecurringExpense.findOneAndUpdate(
+      {
+        ownerId,
+        propertyId,
+        category: expenseCategory,
+        description: savedDescription,
+        active: true
+      },
+      {
+        $set: {
+          amount: safeAmount,
+          currency: expenseCurrency,
+          frequency: "monthly",
+          startMonth: monthNumber,
+          startYear: yearNumber
+        }
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    const entry = await createRecurringExpenseEntry(
+      recurringExpense,
+      yearNumber,
+      monthNumber
+    );
+
+    res.status(201).json({
+      success: true,
+      recurringExpense,
+      entry
+    });
+
+  } catch (err) {
+    console.error("CREATE RECURRING EXPENSE ERROR:", err);
+    res.status(500).json({
+      message: "Failed to save recurring expense"
+    });
+  }
+});
 
 /* =====================================================
    CREATE EXPENSE (LEDGER DRIVEN + GLOBAL SAFE)
