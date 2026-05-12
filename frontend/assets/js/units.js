@@ -105,11 +105,23 @@ function openAddUnitModal() {
   editingUnitId = null;
   document.getElementById("unitForm").reset();
   document.getElementById("unitModalTitle").textContent = "Add Unit";
-  document.getElementById("unitModal").style.display = "flex";
+  showUnitModal();
 }
 
 function closeUnitModalFn() {
   document.getElementById("unitModal").style.display = "none";
+}
+
+function showUnitModal() {
+  const modal = document.getElementById("unitModal");
+  const form = document.getElementById("unitForm");
+
+  modal.style.display = "flex";
+  modal.scrollTop = 0;
+
+  if (form) {
+    form.scrollTop = 0;
+  }
 }
 
 /* SAVE */
@@ -172,7 +184,7 @@ async function editUnit(id) {
     .forEach(cb => cb.checked = unit.utilitiesIncluded?.includes(cb.value));
 
   unitModalTitle.textContent = "Edit Unit";
-  unitModal.style.display = "flex";
+  showUnitModal();
 }
 
 /* DELETE */
