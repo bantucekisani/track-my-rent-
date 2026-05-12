@@ -57,119 +57,22 @@ function mapInvoiceItem(entry, locale) {
   };
 }
 
-function periodValue({ periodYear, periodMonth } = {}) {
-  return Number(periodYear || 0) * 100 + Number(periodMonth || 0);
-}
-
-function formatEntryPeriod(entry, locale) {
-  const month = Number(entry.periodMonth);
-  const year = Number(entry.periodYear);
-
-  if (!Number.isInteger(month) || month < 1 || month > 12 || !year) {
-    return "";
-  }
-
-  return new Date(year, month - 1, 1).toLocaleDateString(locale, {
-    month: "long",
-    year: "numeric"
-  });
-}
-
-function isSameInvoicePeriod(entry, invoice) {
-  return (
-    Number(entry.periodMonth) === Number(invoice.periodMonth) &&
-    Number(entry.periodYear) === Number(invoice.periodYear)
-  );
-}
-
-function compareLedgerEntries(a, b) {
-  const periodDiff = periodValue(a) - periodValue(b);
-  if (periodDiff) return periodDiff;
-
-  const dateDiff = new Date(a.date) - new Date(b.date);
-  if (dateDiff) return dateDiff;
-
-  return String(a._id).localeCompare(String(b._id));
-}
-
-function calculateRemainingChargeRows(ledgerEntries) {
-  let creditPool = 0;
-  const remainingRows = [];
-
-  const ordered = (ledgerEntries || [])
-    .filter(entry => isChargeEntry(entry) || entry.type === "payment")
-    .sort(compareLedgerEntries);
-
-  for (const entry of ordered) {
-    if (entry.type === "payment") {
-      creditPool = roundMoney(creditPool + Number(entry.credit || 0));
-      continue;
-    }
-
-    const amount = invoiceChargeAmount(entry);
-
-    if (amount <= 0) {
-      creditPool = roundMoney(creditPool + Math.abs(amount));
-      continue;
-    }
-
-    const applied = Math.min(creditPool, amount);
-    creditPool = roundMoney(creditPool - applied);
-
-    remainingRows.push({
-      entry,
-      originalAmount: amount,
-      remainingAmount: roundMoney(amount - applied)
-    });
-  }
-
-  return remainingRows;
-}
-
 async function buildInvoicePdfItemsAndTotals(ownerId, invoice, locale) {
-  const leaseLedgerEntries = await LedgerEntry.find({
+  const ledgerEntries = await LedgerEntry.find({
     ownerId,
-    leaseId: invoice.leaseId
+    leaseId: invoice.leaseId,
+    periodMonth: invoice.periodMonth,
+    periodYear: invoice.periodYear
   })
-    .sort({ periodYear: 1, periodMonth: 1, date: 1, _id: 1 })
+    .sort({ date: 1, _id: 1 })
     .lean();
 
-  const invoicePeriod = periodValue(invoice);
-
-  const priorOutstandingItems = calculateRemainingChargeRows(leaseLedgerEntries)
-    .filter(row => (
-      row.remainingAmount > 0.01 &&
-      periodValue(row.entry) < invoicePeriod
-    ))
-    .map(row => {
-      const item = mapInvoiceItem(row.entry, locale);
-      const periodLabel = formatEntryPeriod(row.entry, locale);
-
-      return {
-        ...item,
-        typeLabel: `Brought Forward - ${item.typeLabel}`,
-        description: [periodLabel, item.description]
-          .filter(Boolean)
-          .join(" | "),
-        unitPrice: row.remainingAmount,
-        amount: row.remainingAmount
-      };
-    });
-
-  const currentItems = leaseLedgerEntries
-    .filter(entry => isSameInvoicePeriod(entry, invoice))
+  const items = ledgerEntries
     .filter(isChargeEntry)
     .map(entry => mapInvoiceItem(entry, locale));
 
   const allocatedTotals =
     await getAllocatedInvoiceTotals(ownerId, invoice);
-
-  const priorOutstanding = priorOutstandingItems.reduce(
-    (sum, item) => roundMoney(sum + Number(item.amount || 0)),
-    0
-  );
-
-  const items = [...priorOutstandingItems, ...currentItems];
 
   if (allocatedTotals.paid > 0) {
     items.push({
@@ -187,9 +90,9 @@ async function buildInvoicePdfItemsAndTotals(ownerId, invoice, locale) {
     items,
     allocatedTotals,
     totals: {
-      charged: roundMoney(priorOutstanding + allocatedTotals.charged),
+      charged: allocatedTotals.charged,
       paid: allocatedTotals.paid,
-      due: roundMoney(priorOutstanding + allocatedTotals.balance)
+      due: allocatedTotals.balance
     }
   };
 }
