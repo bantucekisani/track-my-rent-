@@ -77,6 +77,97 @@ function rowsToSeries(rows, buckets) {
   return buckets.map((bucket) => rowMap.get(bucket.key) || 0);
 }
 
+function escapeRegex(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function formatSubscriptionLabel(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function daysBetween(startDate, endDate = new Date()) {
+  if (!startDate) {
+    return 0;
+  }
+
+  const start = new Date(startDate);
+
+  if (Number.isNaN(start.getTime())) {
+    return 0;
+  }
+
+  const milliseconds = endDate.getTime() - start.getTime();
+  return Math.max(0, Math.floor(milliseconds / (1000 * 60 * 60 * 24)));
+}
+
+function latestDate(...values) {
+  return values
+    .filter(Boolean)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .sort((left, right) => right.getTime() - left.getTime())[0] || null;
+}
+
+function getSubscriptionRisk({ subscription, portfolio }) {
+  const reasons = [];
+  const plan = normalizePlan(subscription?.plan);
+  const status = subscription ? normalizeStatus(subscription.status) : "missing";
+  const maxUnits = Number(subscription?.maxUnits || 0);
+  const units = Number(portfolio?.units || 0);
+
+  if (!subscription) {
+    return {
+      label: "No subscription",
+      tone: "warning",
+      reasons: ["No subscription record is linked to this user."]
+    };
+  }
+
+  if (status === "past_due") {
+    reasons.push("Payment is marked past due.");
+  }
+
+  if (["cancelled", "expired"].includes(status)) {
+    reasons.push(`Subscription is ${formatSubscriptionLabel(status).toLowerCase()}.`);
+  }
+
+  if (maxUnits > 0 && units >= maxUnits) {
+    reasons.push("Portfolio has reached the current unit limit.");
+  }
+
+  if (plan === "free" && units > 0) {
+    reasons.push("Active portfolio is still on the free plan.");
+  }
+
+  if (["past_due", "cancelled", "expired"].includes(status)) {
+    return {
+      label: "Needs attention",
+      tone: "danger",
+      reasons
+    };
+  }
+
+  if (reasons.length > 0) {
+    return {
+      label: "Watch",
+      tone: "warning",
+      reasons
+    };
+  }
+
+  return {
+    label: plan === "free" ? "Free plan" : "Healthy",
+    tone: plan === "free" ? "neutral" : "success",
+    reasons: [
+      plan === "free"
+        ? "User is active on the free plan."
+        : "Paid subscription is active."
+    ]
+  };
+}
+
 async function requireAdmin(req, res, next) {
   try {
     const admin = await User.findById(req.user.id).select("role");
@@ -281,6 +372,261 @@ router.get("/stats", auth, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error("ADMIN STATS ERROR:", error);
     return res.status(500).json({ message: "Failed to load admin stats" });
+  }
+});
+
+router.get("/users", auth, requireAdmin, async (req, res) => {
+  try {
+    const search = String(req.query.search || "").trim();
+    const role = String(req.query.role || "").trim().toLowerCase();
+    const planFilter = String(req.query.plan || "").trim().toLowerCase();
+    const statusFilter = String(req.query.status || "").trim().toLowerCase();
+    const limit = Math.min(Math.max(Number(req.query.limit || 250), 25), 500);
+
+    const userQuery = {};
+
+    if (["owner", "staff", "admin"].includes(role)) {
+      userQuery.role = role;
+    }
+
+    if (search) {
+      const regex = new RegExp(escapeRegex(search), "i");
+      userQuery.$or = [
+        { fullName: regex },
+        { email: regex },
+        { businessName: regex },
+        { phone: regex }
+      ];
+    }
+
+    const users = await User.find(userQuery)
+      .select("fullName email phone businessName role createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    const userIds = users.map((user) => user._id);
+    const [
+      subscriptions,
+      propertyCounts,
+      unitCounts,
+      tenantCounts,
+      leaseCounts
+    ] = await Promise.all([
+      Subscription.find({ user: { $in: userIds } })
+        .select("user plan status maxUnits currency startedAt expiresAt nextBillingDate createdAt updatedAt")
+        .sort({ updatedAt: -1 })
+        .lean(),
+      Property.aggregate([
+        { $match: { ownerId: { $in: userIds } } },
+        {
+          $group: {
+            _id: "$ownerId",
+            count: { $sum: 1 },
+            latestUpdatedAt: { $max: "$updatedAt" }
+          }
+        }
+      ]),
+      Unit.aggregate([
+        { $match: { ownerId: { $in: userIds } } },
+        {
+          $group: {
+            _id: "$ownerId",
+            count: { $sum: 1 },
+            occupied: {
+              $sum: { $cond: [{ $eq: ["$status", "Occupied"] }, 1, 0] }
+            },
+            vacant: {
+              $sum: { $cond: [{ $eq: ["$status", "Vacant"] }, 1, 0] }
+            },
+            maintenance: {
+              $sum: { $cond: [{ $eq: ["$status", "Maintenance"] }, 1, 0] }
+            },
+            latestUpdatedAt: { $max: "$updatedAt" }
+          }
+        }
+      ]),
+      Tenant.aggregate([
+        { $match: { ownerId: { $in: userIds } } },
+        {
+          $group: {
+            _id: "$ownerId",
+            count: { $sum: 1 },
+            active: {
+              $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }
+            },
+            highRisk: {
+              $sum: { $cond: [{ $eq: ["$riskLevel", "HIGH"] }, 1, 0] }
+            },
+            latestUpdatedAt: { $max: "$updatedAt" }
+          }
+        }
+      ]),
+      Lease.aggregate([
+        { $match: { ownerId: { $in: userIds } } },
+        {
+          $group: {
+            _id: "$ownerId",
+            count: { $sum: 1 },
+            active: {
+              $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] }
+            },
+            signed: {
+              $sum: { $cond: ["$isSigned", 1, 0] }
+            },
+            latestUpdatedAt: { $max: "$updatedAt" }
+          }
+        }
+      ])
+    ]);
+
+    const subscriptionByUser = new Map();
+
+    subscriptions.forEach((subscription) => {
+      const key = String(subscription.user);
+
+      if (!subscriptionByUser.has(key)) {
+        subscriptionByUser.set(key, subscription);
+      }
+    });
+
+    const propertyByUser = new Map(
+      propertyCounts.map((row) => [String(row._id), row])
+    );
+    const unitByUser = new Map(unitCounts.map((row) => [String(row._id), row]));
+    const tenantByUser = new Map(
+      tenantCounts.map((row) => [String(row._id), row])
+    );
+    const leaseByUser = new Map(
+      leaseCounts.map((row) => [String(row._id), row])
+    );
+
+    let rows = users.map((user) => {
+      const userId = String(user._id);
+      const subscription = subscriptionByUser.get(userId);
+      const plan = subscription ? normalizePlan(subscription.plan) : "none";
+      const status = subscription
+        ? normalizeStatus(subscription.status)
+        : "no_subscription";
+      const planPrice = PLAN_PRICES[plan] || 0;
+      const propertyStats = propertyByUser.get(userId) || {};
+      const unitStats = unitByUser.get(userId) || {};
+      const tenantStats = tenantByUser.get(userId) || {};
+      const leaseStats = leaseByUser.get(userId) || {};
+      const portfolio = {
+        properties: Number(propertyStats.count || 0),
+        units: Number(unitStats.count || 0),
+        occupiedUnits: Number(unitStats.occupied || 0),
+        vacantUnits: Number(unitStats.vacant || 0),
+        maintenanceUnits: Number(unitStats.maintenance || 0),
+        tenants: Number(tenantStats.count || 0),
+        activeTenants: Number(tenantStats.active || 0),
+        highRiskTenants: Number(tenantStats.highRisk || 0),
+        leases: Number(leaseStats.count || 0),
+        activeLeases: Number(leaseStats.active || 0),
+        signedLeases: Number(leaseStats.signed || 0)
+      };
+      const lastActivityAt = latestDate(
+        user.updatedAt,
+        subscription?.updatedAt,
+        propertyStats.latestUpdatedAt,
+        unitStats.latestUpdatedAt,
+        tenantStats.latestUpdatedAt,
+        leaseStats.latestUpdatedAt
+      );
+      const health = getSubscriptionRisk({ subscription, portfolio });
+
+      return {
+        id: userId,
+        fullName: user.fullName || "Unnamed user",
+        email: user.email || "",
+        phone: user.phone || "",
+        businessName: user.businessName || "",
+        role: user.role || "owner",
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        accountAgeDays: daysBetween(user.createdAt),
+        lastActivityAt,
+        subscription: subscription
+          ? {
+              id: String(subscription._id),
+              plan,
+              status,
+              maxUnits: Number(subscription.maxUnits || 0),
+              currency: subscription.currency || "ZAR",
+              startedAt: subscription.startedAt,
+              expiresAt: subscription.expiresAt,
+              nextBillingDate: subscription.nextBillingDate,
+              estimatedMonthlyRevenue:
+                status === "active" && plan !== "free" ? planPrice : 0,
+              revenueAtRisk:
+                status === "past_due" && plan !== "free" ? planPrice : 0
+            }
+          : null,
+        portfolio,
+        health
+      };
+    });
+
+    if (PLAN_KEYS.includes(planFilter)) {
+      rows = rows.filter((row) => row.subscription?.plan === planFilter);
+    } else if (planFilter === "none") {
+      rows = rows.filter((row) => !row.subscription);
+    }
+
+    if (
+      SUBSCRIPTION_STATUSES.includes(statusFilter) ||
+      statusFilter === "no_subscription"
+    ) {
+      rows = rows.filter((row) => {
+        if (statusFilter === "no_subscription") {
+          return !row.subscription;
+        }
+
+        return row.subscription?.status === statusFilter;
+      });
+    }
+
+    const summary = rows.reduce(
+      (accumulator, row) => {
+        accumulator.total += 1;
+        accumulator.properties += row.portfolio.properties;
+        accumulator.units += row.portfolio.units;
+        accumulator.tenants += row.portfolio.tenants;
+
+        if (row.subscription?.plan && row.subscription.plan !== "free") {
+          accumulator.paid += 1;
+        }
+
+        if (row.health.tone === "danger") {
+          accumulator.needsAttention += 1;
+        }
+
+        return accumulator;
+      },
+      {
+        total: 0,
+        paid: 0,
+        needsAttention: 0,
+        properties: 0,
+        units: 0,
+        tenants: 0
+      }
+    );
+
+    return res.json({
+      users: rows,
+      summary,
+      filters: {
+        search,
+        role,
+        plan: planFilter,
+        status: statusFilter
+      }
+    });
+  } catch (error) {
+    console.error("ADMIN USERS ERROR:", error);
+    return res.status(500).json({ message: "Failed to load admin users" });
   }
 });
 

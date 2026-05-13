@@ -1,5 +1,7 @@
 let growthChartInstance = null;
 let revenueChartInstance = null;
+let adminUsers = [];
+let selectedAdminUserId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -23,6 +25,24 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "login.html";
   });
 
+  ["adminUserSearch", "adminUserRoleFilter", "adminUserPlanFilter", "adminUserStatusFilter"]
+    .forEach((id) => {
+      document.getElementById(id)?.addEventListener("input", () => {
+        renderAdminUsers();
+      });
+      document.getElementById(id)?.addEventListener("change", () => {
+        renderAdminUsers();
+      });
+    });
+
+  document.getElementById("clearUserFiltersBtn")?.addEventListener("click", () => {
+    setFilterValue("adminUserSearch", "");
+    setFilterValue("adminUserRoleFilter", "");
+    setFilterValue("adminUserPlanFilter", "");
+    setFilterValue("adminUserStatusFilter", "");
+    renderAdminUsers();
+  });
+
   loadAdminDashboard();
 });
 
@@ -30,9 +50,10 @@ async function loadAdminDashboard(showRefreshMessage = false) {
   try {
     setStatus("Loading admin dashboard...");
 
-    const [stats, growth] = await Promise.all([
+    const [stats, growth, userPayload] = await Promise.all([
       fetchJson("/admin/stats"),
-      fetchJson("/admin/growth")
+      fetchJson("/admin/growth"),
+      fetchJson("/admin/users")
     ]);
 
     if (window.applyAppPreferences) {
@@ -49,6 +70,9 @@ async function loadAdminDashboard(showRefreshMessage = false) {
     renderHealth(stats);
     renderStatusBreakdown(stats);
     renderCharts(stats, growth);
+    adminUsers = Array.isArray(userPayload.users) ? userPayload.users : [];
+    selectedAdminUserId = selectedAdminUserId || adminUsers[0]?.id || null;
+    renderAdminUsers();
 
     setStatus(
       showRefreshMessage
@@ -89,6 +113,232 @@ async function fetchJson(path) {
   }
 
   return data;
+}
+
+function renderAdminUsers() {
+  const tableBody = document.getElementById("adminUsersTableBody");
+
+  if (!tableBody) {
+    return;
+  }
+
+  const filteredUsers = getFilteredAdminUsers();
+
+  if (
+    filteredUsers.length > 0 &&
+    !filteredUsers.some((user) => user.id === selectedAdminUserId)
+  ) {
+    selectedAdminUserId = filteredUsers[0].id;
+  }
+
+  if (filteredUsers.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-table-cell">No users match these filters.</td>
+      </tr>
+    `;
+  } else {
+    tableBody.innerHTML = filteredUsers
+      .map((user) => renderAdminUserRow(user))
+      .join("");
+  }
+
+  tableBody.querySelectorAll("[data-admin-user-id]").forEach((element) => {
+    element.addEventListener("click", () => {
+      selectedAdminUserId = element.dataset.adminUserId;
+      renderAdminUsers();
+    });
+  });
+
+  renderUserSummary(filteredUsers);
+  renderSelectedUserDetail(filteredUsers);
+}
+
+function getFilteredAdminUsers() {
+  const search = getFilterValue("adminUserSearch").toLowerCase();
+  const role = getFilterValue("adminUserRoleFilter");
+  const plan = getFilterValue("adminUserPlanFilter");
+  const status = getFilterValue("adminUserStatusFilter");
+
+  return adminUsers.filter((user) => {
+    const subscription = user.subscription || {};
+    const searchable = [
+      user.fullName,
+      user.email,
+      user.businessName,
+      user.phone
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (search && !searchable.includes(search)) {
+      return false;
+    }
+
+    if (role && user.role !== role) {
+      return false;
+    }
+
+    if (plan) {
+      if (plan === "none" && user.subscription) {
+        return false;
+      }
+
+      if (plan !== "none" && subscription.plan !== plan) {
+        return false;
+      }
+    }
+
+    if (status) {
+      if (status === "no_subscription" && user.subscription) {
+        return false;
+      }
+
+      if (status !== "no_subscription" && subscription.status !== status) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+function renderAdminUserRow(user) {
+  const subscription = user.subscription || {};
+  const plan = subscription.plan || "none";
+  const status = subscription.status || "no_subscription";
+  const healthTone = user.health?.tone || "neutral";
+  const isSelected = user.id === selectedAdminUserId;
+  const portfolioSummary = [
+    `${formatNumber(user.portfolio?.properties)} properties`,
+    `${formatNumber(user.portfolio?.units)} units`,
+    `${formatNumber(user.portfolio?.tenants)} tenants`
+  ].join(" / ");
+
+  return `
+    <tr class="${isSelected ? "selected" : ""}" data-admin-user-id="${escapeAdminHtml(user.id)}">
+      <td>
+        <button type="button" class="user-name-button" data-admin-user-id="${escapeAdminHtml(user.id)}">
+          <strong>${escapeAdminHtml(user.fullName)}</strong>
+          <span>${escapeAdminHtml(user.email)}</span>
+          ${
+            user.businessName
+              ? `<small>${escapeAdminHtml(user.businessName)}</small>`
+              : ""
+          }
+        </button>
+      </td>
+      <td><span class="plan-badge plan-${escapeAdminHtml(plan)}">${formatTitle(plan)}</span></td>
+      <td><span class="subscription-badge status-${escapeAdminHtml(status)}">${formatTitle(status)}</span></td>
+      <td>${escapeAdminHtml(portfolioSummary)}</td>
+      <td>${formatAdminDate(user.lastActivityAt)}</td>
+      <td><span class="health-badge ${escapeAdminHtml(healthTone)}">${escapeAdminHtml(user.health?.label || "Unknown")}</span></td>
+      <td>
+        <button type="button" class="table-action-btn" data-admin-user-id="${escapeAdminHtml(user.id)}">View</button>
+      </td>
+    </tr>
+  `;
+}
+
+function renderUserSummary(users) {
+  const summary = users.reduce(
+    (accumulator, user) => {
+      accumulator.total += 1;
+      accumulator.units += Number(user.portfolio?.units || 0);
+
+      if (user.subscription?.plan && user.subscription.plan !== "free") {
+        accumulator.paid += 1;
+      }
+
+      if (["danger", "warning"].includes(user.health?.tone)) {
+        accumulator.needsAttention += 1;
+      }
+
+      return accumulator;
+    },
+    { total: 0, paid: 0, needsAttention: 0, units: 0 }
+  );
+
+  setText("userSummaryTotal", formatNumber(summary.total));
+  setText("userSummaryPaid", formatNumber(summary.paid));
+  setText("userSummaryAttention", formatNumber(summary.needsAttention));
+  setText("userSummaryPortfolio", formatNumber(summary.units));
+}
+
+function renderSelectedUserDetail(users) {
+  const detail = document.getElementById("adminUserDetail");
+
+  if (!detail) {
+    return;
+  }
+
+  const selectedUser =
+    users.find((user) => user.id === selectedAdminUserId) || users[0] || null;
+
+  if (!selectedUser) {
+    detail.innerHTML = `<p class="empty-detail">Select a user to review account details.</p>`;
+    return;
+  }
+
+  selectedAdminUserId = selectedUser.id;
+
+  const subscription = selectedUser.subscription;
+  const portfolio = selectedUser.portfolio || {};
+  const reasons = selectedUser.health?.reasons || [];
+
+  detail.innerHTML = `
+    <div class="user-detail-header">
+      <div>
+        <p class="admin-eyebrow">Selected user</p>
+        <h2>${escapeAdminHtml(selectedUser.fullName)}</h2>
+        <p>${escapeAdminHtml(selectedUser.email)}</p>
+      </div>
+      <span class="health-badge ${escapeAdminHtml(selectedUser.health?.tone || "neutral")}">
+        ${escapeAdminHtml(selectedUser.health?.label || "Unknown")}
+      </span>
+    </div>
+
+    <dl class="detail-list">
+      <div><dt>Business</dt><dd>${escapeAdminHtml(selectedUser.businessName || "-")}</dd></div>
+      <div><dt>Phone</dt><dd>${escapeAdminHtml(selectedUser.phone || "-")}</dd></div>
+      <div><dt>Role</dt><dd>${formatTitle(selectedUser.role)}</dd></div>
+      <div><dt>Joined</dt><dd>${formatAdminDate(selectedUser.createdAt)}</dd></div>
+      <div><dt>Last activity</dt><dd>${formatAdminDate(selectedUser.lastActivityAt)}</dd></div>
+      <div><dt>Account age</dt><dd>${formatNumber(selectedUser.accountAgeDays)} days</dd></div>
+    </dl>
+
+    <div class="detail-section">
+      <h3>Subscription</h3>
+      <dl class="detail-list">
+        <div><dt>Plan</dt><dd>${formatTitle(subscription?.plan || "none")}</dd></div>
+        <div><dt>Status</dt><dd>${formatTitle(subscription?.status || "no_subscription")}</dd></div>
+        <div><dt>Monthly value</dt><dd>${formatCurrency(subscription?.estimatedMonthlyRevenue || 0, subscription?.currency || "ZAR")}</dd></div>
+        <div><dt>Revenue at risk</dt><dd>${formatCurrency(subscription?.revenueAtRisk || 0, subscription?.currency || "ZAR")}</dd></div>
+        <div><dt>Unit limit</dt><dd>${formatNumber(subscription?.maxUnits || 0)}</dd></div>
+        <div><dt>Next billing</dt><dd>${formatAdminDate(subscription?.nextBillingDate)}</dd></div>
+      </dl>
+    </div>
+
+    <div class="detail-section">
+      <h3>Portfolio</h3>
+      <div class="detail-metric-grid">
+        <span><strong>${formatNumber(portfolio.properties)}</strong> Properties</span>
+        <span><strong>${formatNumber(portfolio.units)}</strong> Units</span>
+        <span><strong>${formatNumber(portfolio.occupiedUnits)}</strong> Occupied</span>
+        <span><strong>${formatNumber(portfolio.tenants)}</strong> Tenants</span>
+        <span><strong>${formatNumber(portfolio.activeLeases)}</strong> Active leases</span>
+        <span><strong>${formatNumber(portfolio.highRiskTenants)}</strong> High-risk tenants</span>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Admin signals</h3>
+      <ul class="detail-reasons">
+        ${reasons.map((reason) => `<li>${escapeAdminHtml(reason)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
 }
 
 function renderOverview(stats) {
@@ -343,4 +593,53 @@ function formatPercent(value) {
   }
 
   return Number(value || 0).toFixed(1);
+}
+
+function getFilterValue(id) {
+  return String(document.getElementById(id)?.value || "").trim();
+}
+
+function setFilterValue(id, value) {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.value = value;
+  }
+}
+
+function formatAdminDate(value) {
+  if (window.formatAppDate) {
+    return window.formatAppDate(value);
+  }
+
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleDateString();
+}
+
+function formatTitle(value) {
+  return String(value || "-")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function escapeAdminHtml(value) {
+  if (window.escapeHtml) {
+    return window.escapeHtml(value);
+  }
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }

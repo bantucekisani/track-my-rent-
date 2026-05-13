@@ -192,6 +192,115 @@ This view focuses on platform performance: how many landlords are subscribed, wh
 </div>
 </section>
 
+<section class="section-block">
+<div class="section-heading">
+<div>
+<h2>Users & Subscriptions</h2>
+<p>Account-level visibility for plans, billing status, portfolio usage, and support risk.</p>
+</div>
+</div>
+
+<div class="metric-grid user-summary-grid">
+<article class="metric-card">
+<span class="metric-label">Visible users</span>
+<strong id="userSummaryTotal" class="metric-value">0</strong>
+<span class="metric-note">Users matching the current filters</span>
+</article>
+
+<article class="metric-card accent-green">
+<span class="metric-label">Paid users</span>
+<strong id="userSummaryPaid" class="metric-value">0</strong>
+<span class="metric-note">Users on Starter, Growth, or Pro</span>
+</article>
+
+<article class="metric-card accent-red">
+<span class="metric-label">Needs attention</span>
+<strong id="userSummaryAttention" class="metric-value">0</strong>
+<span class="metric-note">Past due, expired, cancelled, or missing subscriptions</span>
+</article>
+
+<article class="metric-card accent-blue">
+<span class="metric-label">Portfolio footprint</span>
+<strong id="userSummaryPortfolio" class="metric-value">0</strong>
+<span class="metric-note">Total units across visible users</span>
+</article>
+</div>
+
+<div class="user-ops-grid">
+<article class="panel-card user-list-panel">
+<div class="user-controls" aria-label="User filters">
+<label>
+<span>Search</span>
+<input id="adminUserSearch" type="search" placeholder="Name, email, business, or phone">
+</label>
+
+<label>
+<span>Role</span>
+<select id="adminUserRoleFilter">
+<option value="">All roles</option>
+<option value="owner">Owners</option>
+<option value="staff">Staff</option>
+<option value="admin">Admins</option>
+</select>
+</label>
+
+<label>
+<span>Plan</span>
+<select id="adminUserPlanFilter">
+<option value="">All plans</option>
+<option value="free">Free</option>
+<option value="starter">Starter</option>
+<option value="growth">Growth</option>
+<option value="pro">Pro</option>
+<option value="none">No subscription</option>
+</select>
+</label>
+
+<label>
+<span>Status</span>
+<select id="adminUserStatusFilter">
+<option value="">All statuses</option>
+<option value="active">Active</option>
+<option value="past_due">Past due</option>
+<option value="cancelled">Cancelled</option>
+<option value="expired">Expired</option>
+<option value="no_subscription">No subscription</option>
+</select>
+</label>
+
+<button id="clearUserFiltersBtn" type="button" class="admin-link-btn">Clear</button>
+</div>
+
+<div class="admin-table-wrap">
+<table class="admin-user-table">
+<thead>
+<tr>
+<th>User</th>
+<th>Plan</th>
+<th>Status</th>
+<th>Portfolio</th>
+<th>Last activity</th>
+<th>Health</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="adminUsersTableBody">
+<tr>
+<td colspan="7" class="empty-table-cell">Loading users...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</article>
+
+<aside class="panel-card user-detail-panel" aria-live="polite">
+<div id="adminUserDetail">
+<p class="empty-detail">Select a user to review account details.</p>
+</div>
+</aside>
+</div>
+</section>
+
 <section class="admin-grid">
 <article class="panel-card">
 <div class="section-heading compact">
