@@ -25,6 +25,7 @@ let maintenance = [];
 let damages = [];
 let utilities = [];
 let internalNote = "";
+let tenantAnnouncements = [];
 
 const PAYMENT_METHOD_LABELS = {
   eft: "EFT",
@@ -59,7 +60,17 @@ function safeText(value, fallback = "-") {
       ? fallback
       : String(value);
 
-  return window.escapeHtml ? window.escapeHtml(text) : text;
+  if (window.escapeHtml) {
+    return window.escapeHtml(text);
+  }
+
+  return text.replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
 }
 
 function titleCase(value) {
@@ -317,6 +328,7 @@ async function loadTenantProfile() {
     renderDamages();
     renderUtilities();
     renderInternalNotes();
+    loadTenantAnnouncements();
 
   } catch (err) {
     console.error("Tenant profile error:", err);
@@ -697,6 +709,124 @@ function renderUtilities() {
   });
 }
 
+/* ==========================================================
+   COMMUNICATION
+========================================================== */
+async function loadTenantAnnouncements() {
+  const container = document.getElementById("tenantAnnouncementList");
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_URL}/notifications/tenant/${tenantId}/announcements`, {
+      headers: {
+        Authorization: `Bearer ${currentUser.token}`
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load communication");
+    }
+
+    tenantAnnouncements = data.announcements || [];
+    renderTenantAnnouncements();
+
+  } catch (err) {
+    console.error("Tenant announcements error:", err);
+    container.innerHTML = `
+      <div class="notification-empty">
+        <strong>Communication could not be loaded.</strong>
+        <span>Please refresh and try again.</span>
+      </div>`;
+  }
+}
+
+function renderTenantAnnouncements() {
+  const container = document.getElementById("tenantAnnouncementList");
+  if (!container) return;
+
+  if (!tenantAnnouncements.length) {
+    container.innerHTML = `
+      <div class="notification-empty">
+        <strong>No communication yet.</strong>
+        <span>Announcements sent from the Notifications page will appear here.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = tenantAnnouncements.map(announcement => {
+    const date = announcement.createdAt
+      ? new Date(announcement.createdAt).toLocaleString()
+      : "-";
+    const replies = announcement.replies || [];
+    const replyHtml = replies.length
+      ? replies.map(reply => `
+          <div class="tenant-reply">
+            <strong>${safeText(reply.title || "Reply")}</strong>
+            <span>${safeText(reply.createdAt ? new Date(reply.createdAt).toLocaleString() : "-")}</span>
+            <p>${safeText(reply.message || "")}</p>
+          </div>
+        `).join("")
+      : `<div class="tenant-reply tenant-reply-empty">No replies recorded yet.</div>`;
+
+    return `
+      <article class="tenant-announcement-card">
+        <div class="tenant-announcement-head">
+          <div>
+            <h4>${safeText(announcement.title || "Announcement")}</h4>
+            <span>${safeText(date)}</span>
+          </div>
+          <span class="notification-type-badge announcement">Announcement</span>
+        </div>
+        <p>${safeText(announcement.message || "")}</p>
+        <div class="tenant-replies">
+          ${replyHtml}
+        </div>
+        <div class="tenant-reply-form">
+          <textarea id="reply-${announcement._id}" rows="2" placeholder="Record a tenant reply or follow-up note..."></textarea>
+          <button class="btn-secondary btn-sm" type="button" onclick="recordAnnouncementReply('${announcement._id}')">
+            Save Reply
+          </button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function recordAnnouncementReply(notificationId) {
+  const textarea = document.getElementById(`reply-${notificationId}`);
+  const message = textarea?.value.trim() || "";
+
+  if (!message) {
+    notify("Write the reply first", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/notifications/announcements/${notificationId}/replies`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${currentUser.token}`
+      },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      notify(data.message || "Failed to save reply", "error");
+      return;
+    }
+
+    notify("Reply saved", "success");
+    await loadTenantAnnouncements();
+
+  } catch (err) {
+    console.error("Record announcement reply error:", err);
+    notify("Server error", "error");
+  }
+}
+
 
 
 /* ==========================================================
@@ -906,6 +1036,7 @@ window.exportStatementCSV = exportStatementCSV;
 window.exportTenantStatementPDF = exportTenantStatementPDF;
 window.shareTenantStatement = shareTenantStatement;
 window.exportPaymentHistoryPDF = exportPaymentHistoryPDF;
+window.recordAnnouncementReply = recordAnnouncementReply;
 
 
 

@@ -50,7 +50,7 @@
       <header class="header">
         <div class="header-left">
           <h2>Notifications</h2>
-          <span class="tagline">Stay on top of payments, arrears, and lease alerts</span>
+          <span class="tagline">Send tenant announcements and track payment, arrears, and lease alerts</span>
         </div>
 
         <div class="header-right">
@@ -62,9 +62,9 @@
         <section class="page-hero notifications-hero">
           <div class="page-hero-copy">
             <span class="page-eyebrow">Alert Centre</span>
-            <h3>Review the things that need your attention next.</h3>
+            <h3>Send updates and review the things that need your attention next.</h3>
             <p>
-              Payment events, arrears warnings, lease reminders, and system alerts are grouped here.
+              Broadcast property notices, track tenant replies, and keep payment or lease alerts in one place.
             </p>
           </div>
 
@@ -80,6 +80,69 @@
             <div class="hero-metric-card">
               <span class="hero-metric-label">Action</span>
               <strong>Mark read or delete</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card announcement-composer">
+          <div class="report-filter-copy">
+            <span class="page-eyebrow">Announcements</span>
+            <h3>Send a message to tenants.</h3>
+            <p>Use this for gate issues, cleaning days, water outages, complex notices, or any shared update.</p>
+          </div>
+
+          <form id="announcementForm" class="announcement-form">
+            <label class="filter-field">
+              <span>Audience</span>
+              <select id="announcementAudience">
+                <option value="all">All active tenants</option>
+                <option value="properties">Tenants in selected properties</option>
+              </select>
+            </label>
+
+            <label class="filter-field" id="announcementPropertyWrap">
+              <span>Properties</span>
+              <select id="announcementProperty" multiple size="4">
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span>Delivery</span>
+              <select id="announcementChannel">
+                <option value="both">App + WhatsApp where opted-in</option>
+                <option value="app">App record only</option>
+                <option value="whatsapp">WhatsApp where opted-in</option>
+              </select>
+            </label>
+
+            <label class="filter-field filter-field-wide">
+              <span>Title</span>
+              <input type="text" id="announcementTitle" maxlength="120" placeholder="e.g. Gate motor repair" required>
+            </label>
+
+            <label class="filter-field filter-field-wide announcement-message-field">
+              <span>Message</span>
+              <textarea id="announcementMessage" maxlength="2000" rows="4" placeholder="Write the update tenants should receive..." required></textarea>
+            </label>
+
+            <div class="announcement-actions">
+              <button type="submit" class="btn-primary">Send Announcement</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="table-box operations-table-box">
+          <div class="table-header">
+            <div>
+              <h3>Sent Announcements</h3>
+              <span class="chart-subtitle">Broadcasts are grouped here so you can see audience and delivery at a glance.</span>
+            </div>
+          </div>
+
+          <div class="announcement-list" id="announcementList">
+            <div class="notification-empty">
+              <strong>No announcements sent yet.</strong>
+              <span>Send your first notice above.</span>
             </div>
           </div>
         </section>
@@ -107,6 +170,8 @@
                 <option value="payment_over">Overpayment</option>
                 <option value="lease_missing">Lease missing</option>
                 <option value="lease_expiring">Lease expiring</option>
+                <option value="announcement">Announcement</option>
+                <option value="tenant_reply">Tenant reply</option>
                 <option value="system">System</option>
                 <option value="other">Other</option>
               </select>

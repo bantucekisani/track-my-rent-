@@ -39,6 +39,8 @@ const notificationSchema = new mongoose.Schema(
         // 📄 LEASE
         "lease_missing",
         "lease_expiring",
+        "announcement",
+        "tenant_reply",
 
         // ⚙ SYSTEM
         "system",

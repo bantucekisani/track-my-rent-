@@ -10,6 +10,7 @@
 let currentUser = null;
 let allNotifications = [];
 let filteredNotifications = [];
+let sentAnnouncements = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   const stored = localStorage.getItem("user");
@@ -32,19 +33,189 @@ function initNotificationsPage() {
   const typeFilter = document.getElementById("notifTypeFilter");
   const unreadFilter = document.getElementById("notifUnreadFilter");
   const markAllReadBtn = document.getElementById("markAllReadBtn");
+  const announcementForm = document.getElementById("announcementForm");
+  const announcementAudience = document.getElementById("announcementAudience");
 
   // Filters
   if (searchInput) searchInput.addEventListener("input", applyFilters);
   if (typeFilter) typeFilter.addEventListener("change", applyFilters);
   if (unreadFilter) unreadFilter.addEventListener("change", loadNotificationsFromServer);
+  if (announcementForm) announcementForm.addEventListener("submit", sendAnnouncement);
+  if (announcementAudience) announcementAudience.addEventListener("change", syncAnnouncementAudience);
 
   if (markAllReadBtn) {
     markAllReadBtn.addEventListener("click", markAllRead);
   }
 
   // Load data
+  syncAnnouncementAudience();
+  loadAnnouncementProperties();
+  loadAnnouncements();
   loadNotificationsFromServer();
   refreshNotifBadge();
+}
+
+async function loadAnnouncementProperties() {
+  const propertySelect = document.getElementById("announcementProperty");
+  if (!propertySelect) return;
+
+  try {
+    const res = await fetch(`${API_URL}/properties?limit=100`, {
+      headers: {
+        Authorization: `Bearer ${currentUser.token}`
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load properties");
+    }
+
+    propertySelect.innerHTML = "";
+    (data.properties || []).forEach(property => {
+      const option = document.createElement("option");
+      option.value = property._id;
+      option.textContent = property.name || "Property";
+      propertySelect.appendChild(option);
+    });
+
+  } catch (err) {
+    console.error("Load announcement properties error:", err);
+  }
+}
+
+function syncAnnouncementAudience() {
+  const audience = document.getElementById("announcementAudience")?.value || "all";
+  const propertyWrap = document.getElementById("announcementPropertyWrap");
+
+  if (propertyWrap) {
+    propertyWrap.style.display = audience === "properties" ? "grid" : "none";
+  }
+}
+
+async function sendAnnouncement(e) {
+  e.preventDefault();
+
+  const audience = document.getElementById("announcementAudience")?.value || "all";
+  const propertySelect = document.getElementById("announcementProperty");
+  const propertyIds = propertySelect
+    ? Array.from(propertySelect.selectedOptions).map(option => option.value).filter(Boolean)
+    : [];
+  const channel = document.getElementById("announcementChannel")?.value || "both";
+  const title = document.getElementById("announcementTitle")?.value.trim() || "";
+  const message = document.getElementById("announcementMessage")?.value.trim() || "";
+
+  if (!title || !message) {
+    notify("Add a title and message before sending", "warning");
+    return;
+  }
+
+  if (audience === "properties" && !propertyIds.length) {
+    notify("Select at least one property for this announcement", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/notifications/announcements`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${currentUser.token}`
+      },
+      body: JSON.stringify({
+        audience,
+        propertyIds,
+        title,
+        message,
+        channel
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      notify(data.message || "Failed to send announcement", "error");
+      return;
+    }
+
+    notify(
+      `Announcement sent to ${data.recipientCount || 0} tenant${data.recipientCount === 1 ? "" : "s"}`,
+      data.whatsappFailed ? "warning" : "success"
+    );
+
+    e.target.reset();
+    syncAnnouncementAudience();
+    await Promise.all([
+      loadAnnouncements(),
+      loadNotificationsFromServer()
+    ]);
+
+  } catch (err) {
+    console.error("Send announcement error:", err);
+    notify("Server error", "error");
+  }
+}
+
+async function loadAnnouncements() {
+  try {
+    const res = await fetch(`${API_URL}/notifications/announcements`, {
+      headers: {
+        Authorization: `Bearer ${currentUser.token}`
+      }
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to load announcements");
+    }
+
+    sentAnnouncements = data.announcements || [];
+    renderAnnouncements();
+
+  } catch (err) {
+    console.error("Load announcements error:", err);
+    renderAnnouncements([]);
+  }
+}
+
+function renderAnnouncements(list = sentAnnouncements) {
+  const container = document.getElementById("announcementList");
+  if (!container) return;
+
+  if (!list.length) {
+    container.innerHTML = `
+      <div class="notification-empty">
+        <strong>No announcements sent yet.</strong>
+        <span>Send your first notice above.</span>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(announcement => {
+    const createdAt = announcement.createdAt
+      ? new Date(announcement.createdAt).toLocaleString()
+      : "-";
+    const failedText = announcement.whatsappFailed
+      ? `<span class="announcement-warning">${announcement.whatsappFailed} WhatsApp failed</span>`
+      : "";
+
+    return `
+      <article class="announcement-item">
+        <div>
+          <div class="notification-title">${safeText(announcement.title)}</div>
+          <div class="notification-message">${safeText(announcement.message)}</div>
+          <div class="announcement-meta">
+            <span>${safeText(announcement.audienceLabel)}</span>
+            <span>${safeText(createdAt)}</span>
+            ${failedText}
+          </div>
+        </div>
+        <div class="announcement-count">
+          <strong>${Number(announcement.recipientCount || 0)}</strong>
+          <span>Recipients</span>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 /* =========================
@@ -142,10 +313,14 @@ function renderNotifications(list) {
     const typeLabel = safeText(type.replace(/_/g, " "));
 
     const relatedBits = [];
-    if (n.propertyId) relatedBits.push("Property");
-    if (n.unitId) relatedBits.push("Unit");
-    if (n.tenantId) relatedBits.push("Tenant");
-    if (n.leaseId) relatedBits.push("Lease");
+    if (n.propertyId?.name) relatedBits.push(n.propertyId.name);
+    else if (n.propertyId) relatedBits.push("Property");
+    if (n.unitId?.unitLabel) relatedBits.push(`Unit ${n.unitId.unitLabel}`);
+    else if (n.unitId) relatedBits.push("Unit");
+    if (n.tenantId?.fullName) relatedBits.push(n.tenantId.fullName);
+    else if (n.tenantId) relatedBits.push("Tenant");
+    if (n.leaseId?.referenceCode) relatedBits.push(n.leaseId.referenceCode);
+    else if (n.leaseId) relatedBits.push("Lease");
     const relatedText = safeText(relatedBits.join(" / ") || "-");
 
     let dateStr = "-";
@@ -202,7 +377,17 @@ function safeTypeClass(type) {
 function safeText(value) {
   const text = String(value ?? "");
 
-  return window.escapeHtml ? window.escapeHtml(text) : text;
+  if (window.escapeHtml) {
+    return window.escapeHtml(text);
+  }
+
+  return text.replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
 }
 
 /* =========================
