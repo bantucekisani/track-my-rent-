@@ -1055,17 +1055,29 @@ table td {
 
 .announcement-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
+.announcement-audience-field {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.announcement-delivery-field {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .announcement-property-field {
+  grid-column: 1 / -1;
+  grid-row: 2;
   min-width: 0;
 }
 
 .property-picker-toolbar {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -1078,7 +1090,7 @@ table td {
 }
 
 .property-picker-toolbar strong {
-  justify-self: end;
+  margin-left: auto;
   color: #1d4ed8;
   font-size: 0.84rem;
   white-space: nowrap;
@@ -1137,6 +1149,7 @@ table td {
 }
 
 .announcement-message-field,
+.announcement-title-field,
 .announcement-actions {
   grid-column: 1 / -1;
 }
@@ -1422,6 +1435,13 @@ table td {
 
   .announcement-actions .btn-primary {
     width: 100%;
+  }
+
+  .announcement-audience-field,
+  .announcement-delivery-field,
+  .announcement-property-field {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .announcement-count {
@@ -1858,6 +1878,11 @@ table td {
 
   .report-filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .property-picker-toolbar strong {
+    width: 100%;
+    margin-left: 0;
   }
 
   .filter-field-sm {
