@@ -100,11 +100,17 @@
               </select>
             </label>
 
-            <label class="filter-field" id="announcementPropertyWrap">
+            <div class="filter-field announcement-property-field" id="announcementPropertyWrap">
               <span>Properties</span>
-              <select id="announcementProperty" multiple size="4">
-              </select>
-            </label>
+              <div class="property-picker-toolbar">
+                <button id="selectAllAnnouncementProperties" type="button" class="btn-secondary btn-sm">Select all</button>
+                <button id="clearAnnouncementProperties" type="button" class="btn-secondary btn-sm">Clear</button>
+                <strong id="announcementPropertyCount">0 selected</strong>
+              </div>
+              <div id="announcementPropertyList" class="property-checkbox-list" aria-label="Properties to receive announcement">
+                <div class="property-checkbox-empty">Loading properties...</div>
+              </div>
+            </div>
 
             <label class="filter-field">
               <span>Delivery</span>

@@ -35,6 +35,8 @@ function initNotificationsPage() {
   const markAllReadBtn = document.getElementById("markAllReadBtn");
   const announcementForm = document.getElementById("announcementForm");
   const announcementAudience = document.getElementById("announcementAudience");
+  const selectAllPropertiesBtn = document.getElementById("selectAllAnnouncementProperties");
+  const clearPropertiesBtn = document.getElementById("clearAnnouncementProperties");
 
   // Filters
   if (searchInput) searchInput.addEventListener("input", applyFilters);
@@ -47,6 +49,18 @@ function initNotificationsPage() {
     markAllReadBtn.addEventListener("click", markAllRead);
   }
 
+  if (selectAllPropertiesBtn) {
+    selectAllPropertiesBtn.addEventListener("click", () => {
+      setAnnouncementPropertySelection(true);
+    });
+  }
+
+  if (clearPropertiesBtn) {
+    clearPropertiesBtn.addEventListener("click", () => {
+      setAnnouncementPropertySelection(false);
+    });
+  }
+
   // Load data
   syncAnnouncementAudience();
   loadAnnouncementProperties();
@@ -56,8 +70,8 @@ function initNotificationsPage() {
 }
 
 async function loadAnnouncementProperties() {
-  const propertySelect = document.getElementById("announcementProperty");
-  if (!propertySelect) return;
+  const propertyList = document.getElementById("announcementPropertyList");
+  if (!propertyList) return;
 
   try {
     const res = await fetch(`${API_URL}/properties?limit=100`, {
@@ -71,16 +85,47 @@ async function loadAnnouncementProperties() {
       throw new Error(data.message || "Failed to load properties");
     }
 
-    propertySelect.innerHTML = "";
-    (data.properties || []).forEach(property => {
-      const option = document.createElement("option");
-      option.value = property._id;
-      option.textContent = property.name || "Property";
-      propertySelect.appendChild(option);
-    });
+    const properties = data.properties || [];
+
+    if (!properties.length) {
+      propertyList.innerHTML = `
+        <div class="property-checkbox-empty">
+          Add properties first, then come back to select them here.
+        </div>
+      `;
+      updateAnnouncementPropertyCount();
+      return;
+    }
+
+    propertyList.innerHTML = properties
+      .map(property => `
+        <label class="property-checkbox-option">
+          <input
+            type="checkbox"
+            class="announcement-property-checkbox"
+            value="${safeText(property._id)}"
+          >
+          <span>${safeText(property.name || "Property")}</span>
+        </label>
+      `)
+      .join("");
+
+    propertyList
+      .querySelectorAll(".announcement-property-checkbox")
+      .forEach(input => {
+        input.addEventListener("change", updateAnnouncementPropertyCount);
+      });
+
+    updateAnnouncementPropertyCount();
 
   } catch (err) {
     console.error("Load announcement properties error:", err);
+    propertyList.innerHTML = `
+      <div class="property-checkbox-empty">
+        Could not load properties.
+      </div>
+    `;
+    updateAnnouncementPropertyCount();
   }
 }
 
@@ -93,14 +138,39 @@ function syncAnnouncementAudience() {
   }
 }
 
+function getAnnouncementPropertyCheckboxes() {
+  return Array.from(document.querySelectorAll(".announcement-property-checkbox"));
+}
+
+function getSelectedAnnouncementPropertyIds() {
+  return getAnnouncementPropertyCheckboxes()
+    .filter(input => input.checked)
+    .map(input => input.value)
+    .filter(Boolean);
+}
+
+function setAnnouncementPropertySelection(isSelected) {
+  getAnnouncementPropertyCheckboxes().forEach(input => {
+    input.checked = isSelected;
+  });
+  updateAnnouncementPropertyCount();
+}
+
+function updateAnnouncementPropertyCount() {
+  const countElement = document.getElementById("announcementPropertyCount");
+  const selectedCount = getSelectedAnnouncementPropertyIds().length;
+
+  if (countElement) {
+    countElement.textContent =
+      `${selectedCount} ${selectedCount === 1 ? "property" : "properties"} selected`;
+  }
+}
+
 async function sendAnnouncement(e) {
   e.preventDefault();
 
   const audience = document.getElementById("announcementAudience")?.value || "all";
-  const propertySelect = document.getElementById("announcementProperty");
-  const propertyIds = propertySelect
-    ? Array.from(propertySelect.selectedOptions).map(option => option.value).filter(Boolean)
-    : [];
+  const propertyIds = getSelectedAnnouncementPropertyIds();
   const channel = document.getElementById("announcementChannel")?.value || "both";
   const title = document.getElementById("announcementTitle")?.value.trim() || "";
   const message = document.getElementById("announcementMessage")?.value.trim() || "";
@@ -144,6 +214,7 @@ async function sendAnnouncement(e) {
 
     e.target.reset();
     syncAnnouncementAudience();
+    updateAnnouncementPropertyCount();
     await Promise.all([
       loadAnnouncements(),
       loadNotificationsFromServer()

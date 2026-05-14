@@ -1059,6 +1059,83 @@ table td {
   gap: 14px;
 }
 
+.announcement-property-field {
+  min-width: 0;
+}
+
+.property-picker-toolbar {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.property-picker-toolbar .btn-secondary {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.property-picker-toolbar strong {
+  justify-self: end;
+  color: #1d4ed8;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.property-checkbox-list {
+  display: grid;
+  gap: 8px;
+  max-height: 162px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.property-checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.property-checkbox-option:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.property-checkbox-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2563eb;
+  flex: 0 0 auto;
+}
+
+.property-checkbox-option span {
+  color: #0f172a;
+  font-size: 0.93rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.property-checkbox-empty {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
 .announcement-message-field,
 .announcement-actions {
   grid-column: 1 / -1;
