@@ -170,6 +170,18 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
     }
   }
 
+  function applyPaymentAmount(remainingAmount, invoiceTotals) {
+    if (remainingAmount <= 0) return 0;
+
+    const due = roundMoney(invoiceTotals.charged - invoiceTotals.paid);
+    if (due <= 0) return remainingAmount;
+
+    const applied = Math.min(due, remainingAmount);
+    invoiceTotals.paid = roundMoney(invoiceTotals.paid + applied);
+
+    return roundMoney(remainingAmount - applied);
+  }
+
   for (const [leaseKey, leaseInvoices] of invoicesByLease.entries()) {
     const payments = ledgerEntries
       .filter(entry => entry.leaseId?.toString() === leaseKey && entry.type === "payment")
@@ -177,7 +189,11 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
         const dateDiff = new Date(a.date) - new Date(b.date);
         if (dateDiff) return dateDiff;
         return String(a._id).localeCompare(String(b._id));
-      });
+      })
+      .map(payment => ({
+        payment,
+        remaining: roundMoney(payment.credit || 0)
+      }));
 
     const orderedInvoices = [...leaseInvoices.values()]
       .sort((a, b) => {
@@ -191,18 +207,24 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
         return Number(a.periodMonth || 0) - Number(b.periodMonth || 0);
       });
 
-    for (const payment of payments) {
-      let remaining = roundMoney(payment.credit || 0);
+    for (const paymentState of payments) {
+      const paymentPeriodKey =
+        `${leaseKey}_${paymentState.payment.periodYear}_${paymentState.payment.periodMonth}`;
+      const periodInvoice = leaseInvoices.get(paymentPeriodKey);
+
+      if (periodInvoice) {
+        paymentState.remaining =
+          applyPaymentAmount(paymentState.remaining, periodInvoice);
+      }
+    }
+
+    for (const paymentState of payments) {
+      let remaining = paymentState.remaining;
 
       for (const invoiceTotals of orderedInvoices) {
         if (remaining <= 0) break;
 
-        const due = roundMoney(invoiceTotals.charged - invoiceTotals.paid);
-        if (due <= 0) continue;
-
-        const applied = Math.min(due, remaining);
-        invoiceTotals.paid = roundMoney(invoiceTotals.paid + applied);
-        remaining = roundMoney(remaining - applied);
+        remaining = applyPaymentAmount(remaining, invoiceTotals);
       }
     }
   }
@@ -662,4 +684,8 @@ router.post("/:id/email", auth, async (req, res) => {
 
   }
 });
+
 module.exports = router;
+module.exports.__test = {
+  buildInvoiceAllocationMap
+};
