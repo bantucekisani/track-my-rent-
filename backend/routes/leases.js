@@ -494,12 +494,22 @@ router.post("/", auth, async (req, res) => {
        FETCH RECORDS
     =============================== */
 
-    const [tenant, property, unit, settings] = await Promise.all([
-      Tenant.findOne({ _id: tenantId, ownerId }).session(session),
-      Property.findOne({ _id: propertyId, ownerId }).session(session),
-      Unit.findOne({ _id: unitId, ownerId }).session(session),
-      Settings.findOne({ ownerId }).lean()
-    ]);
+    const tenant = await Tenant.findOne({
+      _id: tenantId,
+      ownerId
+    }).session(session);
+
+    const property = await Property.findOne({
+      _id: propertyId,
+      ownerId
+    }).session(session);
+
+    const unit = await Unit.findOne({
+      _id: unitId,
+      ownerId
+    }).session(session);
+
+    const settings = await Settings.findOne({ ownerId }).lean();
 
     if (!tenant || !property || !unit) {
       return abortRequest(404, {
