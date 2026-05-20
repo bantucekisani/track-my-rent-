@@ -13,6 +13,17 @@ const settingsSchema = new mongoose.Schema(
        FINANCIAL SETTINGS
     ====================================================== */
     financial: {
+      defaultLateFeeAmount: { type: Number, default: 0, min: 0 },
+      defaultLateFeePercent: { type: Number, default: 0, min: 0 },
+      gracePeriodDays: { type: Number, default: 0, min: 0 },
+      defaultRentDueDay: { type: Number, default: 1, min: 1, max: 31 },
+      vatEnabled: { type: Boolean, default: false },
+      vatPercent: { type: Number, default: 0, min: 0, max: 100 },
+      vatMode: {
+        type: String,
+        enum: ["exclusive", "inclusive"],
+        default: "exclusive"
+      },
 
       /* -----------------------------
          RENT RULES

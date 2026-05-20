@@ -3,6 +3,15 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const Settings = require("../models/Financial-Settings");
 
+function parseNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 /* =========================================
    GET FINANCIAL SETTINGS
 ========================================= */
@@ -64,20 +73,24 @@ router.put("/", auth, async (req, res) => {
     }
 
     const updateData = {
-      financial: {
-        defaultLateFeeAmount: Number(defaultLateFeeAmount) || 0,
-        defaultLateFeePercent: Number(defaultLateFeePercent) || 0,
-        gracePeriodDays: Number(gracePeriodDays) || 0,
-        defaultRentDueDay: Number(defaultRentDueDay) || 1,
-        vatEnabled: Boolean(vatEnabled),
-        vatPercent: Number(vatPercent) || 0,
-        vatMode: vatMode || "exclusive"
+      $set: {
+        "financial.defaultLateFeeAmount":
+          Math.max(parseNumber(defaultLateFeeAmount, 0), 0),
+        "financial.defaultLateFeePercent":
+          Math.max(parseNumber(defaultLateFeePercent, 0), 0),
+        "financial.gracePeriodDays":
+          Math.max(parseNumber(gracePeriodDays, 0), 0),
+        "financial.defaultRentDueDay":
+          clamp(parseNumber(defaultRentDueDay, 1), 1, 31),
+        "financial.vatEnabled": Boolean(vatEnabled),
+        "financial.vatPercent": clamp(parseNumber(vatPercent, 0), 0, 100),
+        "financial.vatMode": vatMode === "inclusive" ? "inclusive" : "exclusive"
       }
     };
 
     // 🔥 Handle preferences if provided
     if (preferences) {
-      updateData.preferences = {
+      updateData.$set.preferences = {
         currency: preferences.currency || "ZAR",
         locale: preferences.locale || "en-ZA",
         timezone:
