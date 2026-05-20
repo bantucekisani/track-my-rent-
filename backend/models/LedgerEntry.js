@@ -184,7 +184,7 @@ LedgerEntrySchema.index(
     unique: true,
     partialFilterExpression: {
       type: "expense",
-      recurringExpenseId: { $exists: true }
+      recurringExpenseId: { $type: "objectId" }
     }
   }
 );

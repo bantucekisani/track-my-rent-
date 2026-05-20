@@ -245,10 +245,16 @@ router.post("/", auth, async (req, res) => {
 
     console.error("MAINTENANCE CREATE ERROR:", err);
 
+    if (err?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "A matching ledger entry already exists for this maintenance record"
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: err.message
+      message: "Server error"
     });
 
   }

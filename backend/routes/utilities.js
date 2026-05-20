@@ -9,6 +9,36 @@ const Settings = require("../models/Financial-Settings");
 const ensureInvoiceForLedger = require("../services/ensureInvoiceForLedger");
 
 const router = express.Router();
+const ALLOWED_UTILITY_TYPES = new Set([
+  "water",
+  "electricity",
+  "refuse",
+  "sewer",
+  "wifi",
+  "other"
+]);
+
+function normalizeUtilityType(value) {
+  const type = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  const aliases = {
+    electric: "electricity",
+    power: "electricity",
+    trash: "refuse",
+    waste: "refuse",
+    wi_fi: "wifi",
+    internet: "wifi"
+  };
+
+  return aliases[type] || type;
+}
+
+function formatPeriod(year, month) {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
 
 /* =====================================================
    POST UTILITY BILL
@@ -47,6 +77,16 @@ router.post("/", auth, async (req, res) => {
       session.endSession();
       return res.status(400).json({
         message: "Invalid amount"
+      });
+    }
+
+    const utilityType = normalizeUtilityType(subtype);
+
+    if (!ALLOWED_UTILITY_TYPES.has(utilityType)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        message: "Invalid utility type"
       });
     }
 
@@ -115,10 +155,11 @@ router.post("/", auth, async (req, res) => {
       leaseId: lease._id,
       propertyId: lease.propertyId,
       unitId: lease.unitId,
-      subtype,
+      utilityType,
       description,
       amount: safeAmount,
       currency: entryCurrency,
+      period: formatPeriod(finalYear, finalMonth),
       periodMonth: finalMonth,
       periodYear: finalYear,
       status: "Posted"
@@ -141,8 +182,8 @@ router.post("/", auth, async (req, res) => {
       periodYear: finalYear,
 
       type: "utility",
-      subtype,
-      description: description || `Utility: ${subtype}`,
+      subtype: utilityType,
+      description: description || `Utility: ${utilityType}`,
 
       debit: safeAmount,
       credit: 0,
@@ -174,8 +215,7 @@ router.post("/", auth, async (req, res) => {
 
     console.error("UTILITY ERROR:", err);
     res.status(500).json({
-      message: "Failed to post utility",
-      error: err.message
+      message: "Failed to post utility"
     });
   }
 });

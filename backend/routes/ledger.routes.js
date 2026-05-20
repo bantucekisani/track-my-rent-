@@ -1059,10 +1059,19 @@ router.get("/", auth, async (req, res) => {
        FORCE ObjectId (CRITICAL)
     =============================== */
     const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const filter = { ownerId };
 
-    const ledger = await LedgerEntry.find({
-      ownerId
-    })
+    if (req.query.tenantId) {
+      if (!mongoose.isValidObjectId(req.query.tenantId)) {
+        return res.status(400).json({
+          message: "Invalid tenant id"
+        });
+      }
+
+      filter.tenantId = new mongoose.Types.ObjectId(req.query.tenantId);
+    }
+
+    const ledger = await LedgerEntry.find(filter)
       .populate("tenantId", "fullName")
       .populate("propertyId", "name")
       .populate("unitId", "unitLabel")

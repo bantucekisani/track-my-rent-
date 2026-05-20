@@ -10,11 +10,13 @@ const utilityBillSchema = new mongoose.Schema(
 
     utilityType: {
       type: String,
-      enum: ["water", "electricity"],
+      enum: ["water", "electricity", "refuse", "sewer", "wifi", "other"],
       required: true
     },
 
     period: { type: String, required: true }, // e.g. "2025-12"
+    periodMonth: { type: Number, min: 1, max: 12 },
+    periodYear: { type: Number, min: 2000 },
 
     previousReading: Number,
     currentReading: Number,
@@ -22,8 +24,21 @@ const utilityBillSchema = new mongoose.Schema(
 
     ratePerUnit: Number,
     amount: { type: Number, required: true },
+    currency: {
+      type: String,
+      default: "ZAR",
+      uppercase: true,
+      trim: true
+    },
 
-    notes: String
+    description: String,
+    notes: String,
+
+    status: {
+      type: String,
+      enum: ["Posted", "Reversed"],
+      default: "Posted"
+    }
   },
   { timestamps: true }
 );

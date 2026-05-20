@@ -40,6 +40,7 @@ const {
 } = require("./services/dailyNotificationChecks");
 const startLateFeeScheduler = require("./services/lateFeeScheduler");
 const startRecurringExpenseScheduler = require("./services/recurringExpenseScheduler");
+const ensureLedgerIndexes = require("./services/ledgerIndexMaintenance");
 const adminRoutes = require("./routes/admin");
 const subscriptionRoutes = require("./routes/subscription");
 const sendRentReminders = require("./services/rentReminderService");
@@ -219,8 +220,15 @@ cron.schedule("0 8 * * *", async () => {
 ====================================================== */
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("✅ Connected to MongoDB Atlas");
+
+    try {
+      await ensureLedgerIndexes();
+      console.log("Ledger indexes verified");
+    } catch (err) {
+      console.error("Ledger index verification failed:", err.message);
+    }
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);

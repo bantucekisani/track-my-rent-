@@ -41,6 +41,10 @@ const MONTHS = [
   "July","August","September","October","November","December"
 ];
 
+const ALLOWED_CURRENCIES = new Set([
+  "ZAR", "USD", "EUR", "GBP", "AED", "AUD", "CAD", "NZD", "CHF", "SGD", "JPY"
+]);
+
 /* =========================
    HELPERS
 ========================= */
@@ -63,6 +67,44 @@ function getLast4(phone = "") {
 
 function buildReferenceCode(name, unit, phone) {
   return `TMR-${makeTenantShort(name)}-${cleanUnitLabel(unit)}-${getLast4(phone)}`;
+}
+
+function normalizeCurrency(...values) {
+  for (const value of values) {
+    const currency = String(value || "").trim().toUpperCase();
+
+    if (ALLOWED_CURRENCIES.has(currency)) {
+      return currency;
+    }
+  }
+
+  return "ZAR";
+}
+
+function parseOptionalNumber(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+
+  return Number(value);
+}
+
+async function buildUniqueReferenceCode(ownerId, name, unit, phone, session) {
+  const baseReference = buildReferenceCode(name, unit, phone);
+  let referenceCode = baseReference;
+  let suffix = 2;
+
+  while (
+    await Lease.exists({
+      ownerId,
+      referenceCode
+    }).session(session)
+  ) {
+    referenceCode = `${baseReference}-${suffix}`;
+    suffix += 1;
+  }
+
+  return referenceCode;
 }
 
 function formatMoney(locale, currency, value) {
@@ -363,6 +405,11 @@ router.get("/:id/pdf", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
 
   const session = await mongoose.startSession();
+  const abortRequest = async (status, body) => {
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(status).json(body);
+  };
 
   try {
 
@@ -392,17 +439,17 @@ router.post("/", auth, async (req, res) => {
       !mongoose.isValidObjectId(propertyId) ||
       !mongoose.isValidObjectId(unitId)
     ) {
-      return res.status(400).json({ message: "Invalid ID supplied" });
+      return abortRequest(400, { message: "Invalid ID supplied" });
     }
 
     if (!leaseStart || monthlyRent == null) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return abortRequest(400, { message: "Missing required fields" });
     }
 
     const startDate = new Date(leaseStart);
 
     if (isNaN(startDate.getTime())) {
-      return res.status(400).json({ message: "Invalid lease start date" });
+      return abortRequest(400, { message: "Invalid lease start date" });
     }
 
     let endDate = null;
@@ -411,11 +458,11 @@ router.post("/", auth, async (req, res) => {
       endDate = new Date(leaseEnd);
 
       if (isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: "Invalid lease end date" });
+        return abortRequest(400, { message: "Invalid lease end date" });
       }
 
       if (endDate <= startDate) {
-        return res.status(400).json({
+        return abortRequest(400, {
           message: "Lease end must be after start date"
         });
       }
@@ -425,11 +472,11 @@ router.post("/", auth, async (req, res) => {
     const depositNumber = Number(deposit || 0);
 
     if (isNaN(rentNumber) || rentNumber <= 0) {
-      return res.status(400).json({ message: "Invalid monthly rent amount" });
+      return abortRequest(400, { message: "Invalid monthly rent amount" });
     }
 
     if (isNaN(depositNumber) || depositNumber < 0) {
-      return res.status(400).json({ message: "Invalid deposit amount" });
+      return abortRequest(400, { message: "Invalid deposit amount" });
     }
 
     /* ===============================
@@ -444,7 +491,7 @@ router.post("/", auth, async (req, res) => {
     ]);
 
     if (!tenant || !property || !unit) {
-      return res.status(404).json({
+      return abortRequest(404, {
         message: "Invalid tenant / property / unit"
       });
     }
@@ -460,25 +507,18 @@ router.post("/", auth, async (req, res) => {
     }).session(session);
 
     if (occupied) {
-      return res.status(400).json({ message: "Unit already occupied" });
+      return abortRequest(400, { message: "Unit already occupied" });
     }
 
     /* ===============================
        LOCK CURRENCY
     =============================== */
 
-    let leaseCurrency =
-      (requestCurrency && requestCurrency.toUpperCase()) ||
-      settings?.preferences?.currency ||
-      "ZAR";
-
-    const allowedCurrencies = [
-      "ZAR","USD","EUR","GBP","AED","AUD","CAD","NZD"
-    ];
-
-    if (!allowedCurrencies.includes(leaseCurrency)) {
-      leaseCurrency = settings?.preferences?.currency || "ZAR";
-    }
+    const leaseCurrency = normalizeCurrency(
+      requestCurrency,
+      settings?.preferences?.currency,
+      property.currency
+    );
 
     /* ===============================
        SAFE MONEY ROUNDING
@@ -490,14 +530,41 @@ router.post("/", auth, async (req, res) => {
     const safeDeposit =
       Math.round(depositNumber * 100) / 100;
 
+    const safeEscalationPercent =
+      parseOptionalNumber(escalationPercent, 0);
+
+    const safePaymentDueDay =
+      parseOptionalNumber(paymentDueDay, settings?.financial?.rent?.dueDay || 1);
+
+    if (
+      !Number.isFinite(safeEscalationPercent) ||
+      safeEscalationPercent < 0
+    ) {
+      return abortRequest(400, {
+        message: "Invalid escalation percentage"
+      });
+    }
+
+    if (
+      !Number.isInteger(safePaymentDueDay) ||
+      safePaymentDueDay < 1 ||
+      safePaymentDueDay > 31
+    ) {
+      return abortRequest(400, {
+        message: "Payment due day must be between 1 and 31"
+      });
+    }
+
     /* ===============================
        REFERENCE CODE
     =============================== */
 
-    const referenceCode = buildReferenceCode(
+    const referenceCode = await buildUniqueReferenceCode(
+      ownerId,
       tenant.fullName,
       unit.unitLabel,
-      tenant.phone
+      tenant.phone,
+      session
     );
 
     /* ===============================
@@ -513,8 +580,8 @@ router.post("/", auth, async (req, res) => {
       leaseEnd: endDate,
       monthlyRent: safeMonthlyRent,
       deposit: safeDeposit,
-      escalationPercent,
-      paymentDueDay,
+      escalationPercent: safeEscalationPercent,
+      paymentDueDay: safePaymentDueDay,
       referenceCode,
       currency: leaseCurrency,
       status: "Active",
@@ -594,6 +661,24 @@ router.post("/", auth, async (req, res) => {
     session.endSession();
 
     console.error("LEASE CREATE ERROR:", err);
+
+    if (err?.code === 11000) {
+      if (err?.keyPattern?.referenceCode) {
+        return res.status(409).json({
+          message: "Lease reference already exists. Please retry creating the lease."
+        });
+      }
+
+      if (err?.keyPattern?.unitId || err?.keyPattern?.status) {
+        return res.status(409).json({
+          message: "Unit already has an active lease"
+        });
+      }
+
+      return res.status(409).json({
+        message: "Duplicate lease record"
+      });
+    }
 
     res.status(500).json({
       message: "Server error"

@@ -287,7 +287,8 @@ async function saveLease(e) {
     monthlyRent: Number(leaseRent.value),
     deposit: Number(leaseDeposit.value) || 0,
     escalationPercent: Number(leaseEscalation.value) || 0,
-    paymentDueDay: Number(leaseDueDay.value) || 1
+    paymentDueDay: Number(leaseDueDay.value) || 1,
+    currency: window.APP_CURRENCY || "ZAR"
   };
 
   const url = editingLeaseId
@@ -306,7 +307,14 @@ async function saveLease(e) {
   });
 
   if (!res.ok) {
-    notify("Error saving lease", "error");
+    let message = "Error saving lease";
+
+    try {
+      const data = await res.json();
+      message = data.message || message;
+    } catch {}
+
+    notify(message, "error");
     return;
   }
 

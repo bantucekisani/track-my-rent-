@@ -81,6 +81,14 @@ const LeaseSchema = new mongoose.Schema(
       required: true
     },
 
+    currency: {
+      type: String,
+      enum: ["ZAR", "USD", "EUR", "GBP", "AUD", "CAD", "NZD", "CHF", "SGD", "JPY", "AED"],
+      default: "ZAR",
+      uppercase: true,
+      trim: true
+    },
+
     /* =====================
        DIGITAL SIGNATURES
     ====================== */
