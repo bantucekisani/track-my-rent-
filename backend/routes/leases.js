@@ -82,11 +82,22 @@ function normalizeCurrency(...values) {
 }
 
 function parseOptionalNumber(value, fallback) {
-  if (value === undefined || value === null || value === "") {
+  const candidate =
+    value === undefined || value === null || value === ""
+      ? fallback
+      : value;
+
+  return Number(candidate);
+}
+
+function getValidationMessage(err, fallback = "Invalid lease details") {
+  if (err?.name !== "ValidationError" || !err.errors) {
     return fallback;
   }
 
-  return Number(value);
+  return Object.values(err.errors)
+    .map(error => error?.message)
+    .find(Boolean) || fallback;
 }
 
 async function buildUniqueReferenceCode(ownerId, name, unit, phone, session) {
@@ -677,6 +688,18 @@ router.post("/", auth, async (req, res) => {
 
       return res.status(409).json({
         message: "Duplicate lease record"
+      });
+    }
+
+    if (err?.name === "ValidationError") {
+      return res.status(400).json({
+        message: getValidationMessage(err)
+      });
+    }
+
+    if (err?.name === "CastError") {
+      return res.status(400).json({
+        message: "Invalid lease details"
       });
     }
 
