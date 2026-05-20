@@ -427,6 +427,11 @@
         <span class="summary-subvalue">Credits received</span>
       </article>
       <article class="summary-card">
+        <span class="summary-label">VAT included</span>
+        <strong class="summary-value"><%= formatter.format(summary.totalVat || 0) %></strong>
+        <span class="summary-subvalue">Tax portion of debits</span>
+      </article>
+      <article class="summary-card">
         <span class="summary-label">Closing balance</span>
         <strong class="summary-value"><%= formatter.format(closingBalance || 0) %></strong>
         <span class="summary-subvalue"><%= isPaid ? "Nothing outstanding" : "Amount outstanding" %></span>
@@ -495,6 +500,8 @@
           <tr>
             <th>Period</th>
             <th>Description</th>
+            <th class="amount">Net</th>
+            <th class="amount">VAT</th>
             <th class="amount">Debit</th>
             <th class="amount">Credit</th>
             <th class="amount">Balance</th>
@@ -505,6 +512,8 @@
             <tr>
               <td class="period"><%= row.period %></td>
               <td class="description"><%= row.description %></td>
+              <td class="amount"><%= formatter.format(row.netAmount || 0) %></td>
+              <td class="amount"><%= formatter.format(row.vatAmount || 0) %></td>
               <td class="amount"><%= formatter.format(row.debit || 0) %></td>
               <td class="amount"><%= formatter.format(row.credit || 0) %></td>
               <td class="amount balance"><%= formatter.format(row.balance || 0) %></td>
@@ -518,6 +527,14 @@
       <div class="totals-title">Statement totals</div>
       <table class="totals-table">
         <tbody>
+          <tr>
+            <td>Net charges</td>
+            <td class="amount"><%= formatter.format(summary.totalNet || 0) %></td>
+          </tr>
+          <tr>
+            <td>VAT included</td>
+            <td class="amount"><%= formatter.format(summary.totalVat || 0) %></td>
+          </tr>
           <tr>
             <td>Total charged</td>
             <td class="amount"><%= formatter.format(summary.totalCharged || 0) %></td>

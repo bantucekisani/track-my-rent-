@@ -620,6 +620,7 @@
         <th>Date</th>
         <th>Charge</th>
         <th>Details</th>
+        <th class="right">Net</th>
         <th class="right">VAT</th>
         <th class="right">Amount Due</th>
       </tr>
@@ -635,13 +636,14 @@
             <td>
               <span class="item-description"><%= item.description || "-" %></span>
             </td>
-            <td class="right"><%= item.vat || "-" %></td>
+            <td class="right"><%= money(item.netAmount || 0) %></td>
+            <td class="right"><%= item.vatAmount ? money(item.vatAmount) : "-" %></td>
             <td class="right"><%= money(item.amount) %></td>
           </tr>
         <% }) %>
       <% } else { %>
         <tr>
-          <td colspan="5" class="muted">No invoice items were available for this billing period.</td>
+          <td colspan="6" class="muted">No invoice items were available for this billing period.</td>
         </tr>
       <% } %>
     </tbody>
@@ -687,6 +689,14 @@
   <div class="totals-shell">
     <div class="section-card-head"><strong>Balance Summary</strong></div>
     <div class="totals-body">
+      <div class="totals-row">
+        <span>Net Charges</span>
+        <strong><%= money(totals?.net || 0) %></strong>
+      </div>
+      <div class="totals-row">
+        <span>VAT Included</span>
+        <strong><%= money(totals?.vat || 0) %></strong>
+      </div>
       <div class="totals-row">
         <span>Total Charged</span>
         <strong><%= money(totals?.charged) %></strong>

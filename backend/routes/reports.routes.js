@@ -430,6 +430,8 @@ async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
       {
         period: "Opening Balance",
         description: "Balance brought forward",
+        netAmount: 0,
+        vatAmount: 0,
         debit: 0,
         credit: 0,
         balance: runningBalance
@@ -443,6 +445,12 @@ async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
 
       const credit =
         Math.round(Number(e.credit || 0) * 100) / 100;
+      const vatAmount =
+        Math.round(Number(e.vatAmount || 0) * 100) / 100;
+      const savedNetAmount =
+        Math.round(Number(e.netAmount || 0) * 100) / 100;
+      const netAmount =
+        savedNetAmount || Math.round((debit - vatAmount) * 100) / 100;
 
       runningBalance += debit - credit;
 
@@ -452,6 +460,8 @@ async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
       rows.push({
         period: `${yearNum}-${String(monthNum).padStart(2, "0")}`,
         description: describeLedgerEntry(e),
+        netAmount,
+        vatAmount,
         debit,
         credit,
         balance: runningBalance
@@ -472,10 +482,25 @@ async function buildTenantStatementData({ tenantId, year, month, ownerId }) {
       (sum, e) => sum + Number(e.credit || 0),
       0
     );
+    const totalVat = entries.reduce(
+      (sum, e) => sum + Number(e.vatAmount || 0),
+      0
+    );
+    const totalNet = entries.reduce(
+      (sum, e) => {
+        const debit = Number(e.debit || 0);
+        const vat = Number(e.vatAmount || 0);
+        const net = Number(e.netAmount || 0) || debit - vat;
+        return sum + net;
+      },
+      0
+    );
 
     const summary = {
       totalCharged: Math.round(totalCharged * 100) / 100,
       totalPaid: Math.round(totalPaid * 100) / 100,
+      totalVat: Math.round(totalVat * 100) / 100,
+      totalNet: Math.round(totalNet * 100) / 100,
       balance: runningBalance
     };
 

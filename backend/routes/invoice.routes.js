@@ -39,6 +39,25 @@ function invoiceChargeAmount(entry) {
   return roundMoney(Number(entry.debit || 0) - Number(entry.credit || 0));
 }
 
+function invoiceVatAmount(entry) {
+  const amount = invoiceChargeAmount(entry);
+  const vat = roundMoney(entry.vatAmount || 0);
+
+  return amount < 0 ? -vat : vat;
+}
+
+function invoiceNetAmount(entry) {
+  const amount = invoiceChargeAmount(entry);
+  const vat = invoiceVatAmount(entry);
+  const savedNet = roundMoney(entry.netAmount || 0);
+
+  if (savedNet > 0) {
+    return amount < 0 ? -savedNet : savedNet;
+  }
+
+  return roundMoney(amount - vat);
+}
+
 function invoiceChargeLabel(entry) {
   return ledgerEntryLabel(entry) || "Tenant Charge";
 }
@@ -51,8 +70,9 @@ function mapInvoiceItem(entry, locale) {
     typeLabel: invoiceChargeLabel(entry),
     description: entry.description || "",
     quantity: 1,
-    unitPrice: Math.abs(amount),
-    vat: null,
+    unitPrice: Math.abs(invoiceNetAmount(entry)),
+    vatAmount: invoiceVatAmount(entry),
+    netAmount: invoiceNetAmount(entry),
     amount
   };
 }
@@ -67,9 +87,14 @@ async function buildInvoicePdfItemsAndTotals(ownerId, invoice, locale) {
     .sort({ date: 1, _id: 1 })
     .lean();
 
-  const items = ledgerEntries
-    .filter(isChargeEntry)
-    .map(entry => mapInvoiceItem(entry, locale));
+  const chargeEntries = ledgerEntries.filter(isChargeEntry);
+  const items = chargeEntries.map(entry => mapInvoiceItem(entry, locale));
+  const vatTotal = roundMoney(
+    chargeEntries.reduce((sum, entry) => sum + invoiceVatAmount(entry), 0)
+  );
+  const netTotal = roundMoney(
+    chargeEntries.reduce((sum, entry) => sum + invoiceNetAmount(entry), 0)
+  );
 
   const allocatedTotals =
     await getAllocatedInvoiceTotals(ownerId, invoice);
@@ -81,7 +106,8 @@ async function buildInvoicePdfItemsAndTotals(ownerId, invoice, locale) {
       description: "Payments allocated to this invoice",
       quantity: 1,
       unitPrice: allocatedTotals.paid,
-      vat: null,
+      vatAmount: 0,
+      netAmount: 0,
       amount: -allocatedTotals.paid
     });
   }
@@ -92,7 +118,9 @@ async function buildInvoicePdfItemsAndTotals(ownerId, invoice, locale) {
     totals: {
       charged: allocatedTotals.charged,
       paid: allocatedTotals.paid,
-      due: allocatedTotals.balance
+      due: allocatedTotals.balance,
+      vat: vatTotal,
+      net: netTotal
     }
   };
 }
@@ -113,6 +141,8 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
     invoicesByLease.get(leaseKey).set(periodKey, {
       charged: 0,
       paid: 0,
+      vat: 0,
+      net: 0,
       invoiceDate: invoice.invoiceDate,
       periodMonth: invoice.periodMonth,
       periodYear: invoice.periodYear
@@ -130,6 +160,12 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
     if (invoiceTotals) {
       invoiceTotals.charged = roundMoney(
         invoiceTotals.charged + invoiceChargeAmount(entry)
+      );
+      invoiceTotals.vat = roundMoney(
+        invoiceTotals.vat + invoiceVatAmount(entry)
+      );
+      invoiceTotals.net = roundMoney(
+        invoiceTotals.net + invoiceNetAmount(entry)
       );
     }
   }
@@ -178,7 +214,9 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
       allocationMap[periodKey] = {
         charged: roundMoney(totals.charged),
         paid: roundMoney(totals.paid),
-        balance: roundMoney(Math.max(totals.charged - totals.paid, 0))
+        balance: roundMoney(Math.max(totals.charged - totals.paid, 0)),
+        vat: roundMoney(totals.vat || 0),
+        net: roundMoney(totals.net || 0)
       };
     }
   }
@@ -188,7 +226,7 @@ function buildInvoiceAllocationMap(invoices, ledgerEntries) {
 
 async function getAllocatedInvoiceTotals(ownerId, invoice) {
   if (!invoice?.leaseId) {
-    return { charged: 0, paid: 0, balance: 0 };
+    return { charged: 0, paid: 0, balance: 0, vat: 0, net: 0 };
   }
 
   const leaseInvoices = await Invoice.find({
@@ -207,7 +245,7 @@ async function getAllocatedInvoiceTotals(ownerId, invoice) {
   const key =
     `${invoice.leaseId}_${invoice.periodYear}_${invoice.periodMonth}`;
 
-  return allocationMap[key] || { charged: 0, paid: 0, balance: 0 };
+  return allocationMap[key] || { charged: 0, paid: 0, balance: 0, vat: 0, net: 0 };
 }
 
 /* =====================================================
@@ -272,7 +310,9 @@ router.get("/", auth, async (req, res) => {
       const totals = allocationMap[key] || {
         charged: 0,
         paid: 0,
-        balance: 0
+        balance: 0,
+        vat: 0,
+        net: 0
       };
 
       const totalCharged = totals.charged;
@@ -292,6 +332,8 @@ router.get("/", auth, async (req, res) => {
   ledgerCharged: totalCharged,
   ledgerPaid: totalPaid,
   ledgerBalance: balance,
+  ledgerVat: totals.vat || 0,
+  ledgerNet: totals.net || 0,
 
   ledgerStatus:  
 
