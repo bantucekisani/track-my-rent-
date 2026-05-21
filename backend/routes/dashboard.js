@@ -132,7 +132,7 @@ router.get("/summary", auth, async (req, res) => {
       ownerId,
       periodMonth: month,
       periodYear: year,
-      type: { $in: ["rent", "payment"] }
+      type: { $in: ["rent", "rent_reversal", "payment"] }
     };
 
     if (propertyId) {
@@ -143,38 +143,46 @@ router.get("/summary", auth, async (req, res) => {
 
     let expectedThisMonth = 0;
     let collectedThisMonth = 0;
-    const monthBalancesByTenant = new Map();
+    let cashReceivedThisMonth = 0;
+    let tenantCreditsThisMonth = 0;
+    const monthTotalsByTenant = new Map();
 
-    function addMonthTenantBalance(entry, amount) {
-      if (!entry.tenantId) return;
+    function getMonthTenantTotals(entry) {
+      const tenantKey =
+        entry.tenantId?.toString() ||
+        entry.leaseId?.toString() ||
+        `entry:${entry._id}`;
 
-      const tenantKey = entry.tenantId.toString();
-      monthBalancesByTenant.set(
-        tenantKey,
-        (monthBalancesByTenant.get(tenantKey) || 0) + amount
-      );
+      if (!monthTotalsByTenant.has(tenantKey)) {
+        monthTotalsByTenant.set(tenantKey, {
+          rent: 0,
+          payments: 0
+        });
+      }
+
+      return monthTotalsByTenant.get(tenantKey);
     }
 
     for (const entry of monthLedger) {
 
       const entryCurrency = entry.currency || "ZAR";
 
-      if (entry.type === "rent") {
+      if (entry.type === "rent" || entry.type === "rent_reversal") {
 
         let converted = 0;
 
 try {
   converted = await convert(
-    entry.debit || 0,
+    Number(entry.debit || 0) - Number(entry.credit || 0),
     entryCurrency,
     baseCurrency
   );
 } catch {
-  converted = entry.debit || 0;
+  converted = Number(entry.debit || 0) - Number(entry.credit || 0);
 }
 
         expectedThisMonth += converted;
-        addMonthTenantBalance(entry, converted);
+        getMonthTenantTotals(entry).rent += converted;
       }
 
       if (entry.type === "payment") {
@@ -185,13 +193,21 @@ try {
           baseCurrency
         );
 
-        collectedThisMonth += converted;
-        addMonthTenantBalance(entry, -converted);
+        cashReceivedThisMonth += converted;
+        getMonthTenantTotals(entry).payments += converted;
       }
     }
 
-    const outstandingThisMonth = Array.from(monthBalancesByTenant.values())
-      .reduce((sum, balance) => sum + Math.max(balance, 0), 0);
+    let outstandingThisMonth = 0;
+
+    for (const totals of monthTotalsByTenant.values()) {
+      const rent = Math.max(Number(totals.rent || 0), 0);
+      const payments = Math.max(Number(totals.payments || 0), 0);
+
+      collectedThisMonth += Math.min(rent, payments);
+      outstandingThisMonth += Math.max(rent - payments, 0);
+      tenantCreditsThisMonth += Math.max(payments - rent, 0);
+    }
 
     /* -------------------------------
        VAT COLLECTED
@@ -292,7 +308,9 @@ try {
   rent: {
     expectedThisMonth: Number(expectedThisMonth.toFixed(2)),
     collectedThisMonth: Number(collectedThisMonth.toFixed(2)),
-    outstandingThisMonth: Number(outstandingThisMonth.toFixed(2))
+    outstandingThisMonth: Number(outstandingThisMonth.toFixed(2)),
+    cashReceivedThisMonth: Number(cashReceivedThisMonth.toFixed(2)),
+    tenantCreditsThisMonth: Number(tenantCreditsThisMonth.toFixed(2))
   },
 
   vat: {

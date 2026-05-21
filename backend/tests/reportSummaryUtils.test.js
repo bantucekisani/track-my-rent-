@@ -49,16 +49,35 @@ test("filterEntriesByPeriod respects accounting period and property filters", ()
 
 test("calculateRentSummary totals rent debits and payment credits", () => {
   const summary = calculateRentSummary([
-    { type: "rent", debit: 33000 },
-    { type: "payment", credit: 10000 },
-    { type: "payment", credit: 23000 },
+    { tenantId: "t1", type: "rent", debit: 33000 },
+    { tenantId: "t1", type: "payment", credit: 10000 },
+    { tenantId: "t1", type: "payment", credit: 23000 },
     { type: "deposit", credit: 5000 }
   ]);
 
   assert.deepEqual(summary, {
     expected: 33000,
     collected: 33000,
-    outstanding: 0
+    outstanding: 0,
+    cashReceived: 33000,
+    credits: 0
+  });
+});
+
+test("calculateRentSummary caps collected rent and reports overpayments separately", () => {
+  const summary = calculateRentSummary([
+    { tenantId: "t1", type: "rent", debit: 10000 },
+    { tenantId: "t1", type: "payment", credit: 15000 },
+    { tenantId: "t2", type: "rent", debit: 8000 },
+    { tenantId: "t2", type: "payment", credit: 3000 }
+  ]);
+
+  assert.deepEqual(summary, {
+    expected: 18000,
+    collected: 13000,
+    outstanding: 5000,
+    cashReceived: 18000,
+    credits: 5000
   });
 });
 

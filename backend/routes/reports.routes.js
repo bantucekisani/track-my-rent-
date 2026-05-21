@@ -631,7 +631,7 @@ router.get("/monthly-income", auth, async (req, res) => {
           propertyId: { $in: propertyIds },
           periodMonth: parsed.monthNum,
           periodYear: parsed.yearNum,
-          type: { $in: ["rent", "payment"] }
+          type: { $in: ["rent", "rent_reversal", "payment"] }
         }).lean()
       : [];
 
@@ -696,7 +696,7 @@ router.get("/monthly-income/pdf", auth, async (req, res) => {
           propertyId: { $in: propertyIds },
           periodMonth: parsed.monthNum,
           periodYear: parsed.yearNum,
-          type: { $in: ["rent", "payment"] }
+          type: { $in: ["rent", "rent_reversal", "payment"] }
         }).lean()
       : [];
 

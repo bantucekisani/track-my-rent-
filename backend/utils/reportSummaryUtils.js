@@ -74,23 +74,59 @@ function filterEntriesByPeriod(entries, { month, year, propertyId } = {}) {
 }
 
 function calculateRentSummary(entries) {
-  let expected = 0;
-  let collected = 0;
+  const totalsByAccount = new Map();
+
+  function getAccountTotals(entry) {
+    const key =
+      idOf(entry.tenantId) ||
+      idOf(entry.leaseId) ||
+      idOf(entry.propertyId) ||
+      "unassigned";
+
+    if (!totalsByAccount.has(key)) {
+      totalsByAccount.set(key, {
+        rent: 0,
+        payments: 0
+      });
+    }
+
+    return totalsByAccount.get(key);
+  }
 
   (entries || []).forEach(entry => {
-    if (entry.type === "rent") {
-      expected += toNumber(entry.debit);
+    if (entry.type === "rent" || entry.type === "rent_reversal") {
+      getAccountTotals(entry).rent +=
+        toNumber(entry.debit) - toNumber(entry.credit);
     }
 
     if (entry.type === "payment") {
-      collected += toNumber(entry.credit);
+      getAccountTotals(entry).payments += toNumber(entry.credit);
     }
+  });
+
+  let expected = 0;
+  let collected = 0;
+  let outstanding = 0;
+  let cashReceived = 0;
+  let credits = 0;
+
+  totalsByAccount.forEach(totals => {
+    const rent = Math.max(toNumber(totals.rent), 0);
+    const payments = Math.max(toNumber(totals.payments), 0);
+
+    expected += rent;
+    collected += Math.min(rent, payments);
+    outstanding += Math.max(rent - payments, 0);
+    cashReceived += payments;
+    credits += Math.max(payments - rent, 0);
   });
 
   return {
     expected: roundMoney(expected),
     collected: roundMoney(collected),
-    outstanding: roundMoney(Math.max(expected - collected, 0))
+    outstanding: roundMoney(outstanding),
+    cashReceived: roundMoney(cashReceived),
+    credits: roundMoney(credits)
   };
 }
 
