@@ -15,6 +15,11 @@ const monthNames = [
   "July", "August", "September", "October", "November", "December"
 ];
 const DEFAULT_TIMEZONE = process.env.APP_TIMEZONE || "Africa/Johannesburg";
+const RENT_ARREARS_TYPES = [
+  "rent",
+  "rent_reversal",
+  "payment"
+];
 
 function getCurrentPeriod(timeZone = DEFAULT_TIMEZONE) {
   const parts = new Intl.DateTimeFormat("en-ZA", {
@@ -199,23 +204,7 @@ try {
         $match: {
           ownerId,
           tenantId: { $ne: null },
-          type: {
-            $in: [
-              "rent",
-              "rent_reversal",
-              "utility",
-              "utility_reversal",
-              "damage",
-              "payment",
-              "damage_reversal",
-              "maintenance",
-              "maintenance_reversal",
-              "levy",
-              "levy_reversal",
-              "late_fee",
-              "deposit"
-            ]
-          }
+          type: { $in: RENT_ARREARS_TYPES }
         }
       },
       {
@@ -361,7 +350,8 @@ const ownerId = new mongoose.Types.ObjectId(req.user.id);
       {
         $match: {
           ownerId,
-          tenantId: { $exists: true, $ne: null }
+          tenantId: { $exists: true, $ne: null },
+          type: { $in: RENT_ARREARS_TYPES }
         }
       },
       {

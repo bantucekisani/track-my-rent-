@@ -33,6 +33,11 @@ const {
 
 
 const router = express.Router();
+const RENT_ARREARS_TYPES = [
+  "rent",
+  "rent_reversal",
+  "payment"
+];
 
 function parseMonthYear(month, year) {
   const monthNum = Number(month);
@@ -185,7 +190,8 @@ async function buildArrearsReportData(ownerId) {
     {
       $match: {
         ownerId,
-        tenantId: { $exists: true, $ne: null }
+        tenantId: { $exists: true, $ne: null },
+        type: { $in: RENT_ARREARS_TYPES }
       }
     },
     {
@@ -1586,7 +1592,8 @@ router.get("/arrears", auth, async (req, res) => {
       {
         $match: {
           ownerId,
-          tenantId: { $exists: true, $ne: null }
+          tenantId: { $exists: true, $ne: null },
+          type: { $in: RENT_ARREARS_TYPES }
         }
       },
 
@@ -1801,13 +1808,13 @@ router.get("/arrears/pdf", auth, async (req, res) => {
     await sendTabularPdfReport(res, {
       title: "Rent Arrears",
       subtitle:
-        "Rolling tenant balances where total charges are greater than payments received.",
+        "Rolling rent balances where rent charges are greater than payments received.",
       generatedAt: new Date().toLocaleDateString(data.locale),
       summaryItems: [
         { label: "Tenants in arrears", value: String(data.count) },
         { label: "Total outstanding", value: totalLabel },
         { label: "Currencies", value: String(Math.max(currencyEntries.length, 1)) },
-        { label: "Scope", value: "All active balances" }
+        { label: "Scope", value: "Rent charges and payments" }
       ],
       columns: [
         "Tenant",

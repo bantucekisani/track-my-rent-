@@ -512,7 +512,7 @@ function getAttentionItems(summary, rentStatus) {
       tone: "danger",
       label: "Arrears",
       title: `${arrearsTenants || "Some"} tenant${arrearsTenants === 1 ? "" : "s"} need follow-up`,
-      text: `${formatMoney(arrearsAmount)} is outstanding across previous periods.`,
+      text: `${formatMoney(arrearsAmount)} rent is outstanding across current and previous periods.`,
       href: "reports.html#arrears",
       action: "View arrears"
     });
