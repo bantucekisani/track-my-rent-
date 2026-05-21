@@ -175,9 +175,9 @@ function renderTable(rows) {
         </span>
       </td>
       <td>
-        ${r.status === "PENDING"
+        ${r.status === "PENDING" && r._id
           ? `<button class="btn-sm" onclick="approveImport('${r._id || ""}')">Approve</button>`
-          : "-"}
+          : safeText(r.reason, "-")}
       </td>
     </tr>
   `).join("");

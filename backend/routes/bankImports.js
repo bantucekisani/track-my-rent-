@@ -78,6 +78,22 @@ function parseCSVText(text) {
   });
 }
 
+function normalizeResultRow(row = {}, overrides = {}) {
+  const raw = row.raw || row.row || {};
+  const rawAmount = row.amount ?? raw.amount ?? raw.Amount ?? raw.AMOUNT ?? 0;
+  const rawReference =
+    row.reference ?? raw.reference ?? raw.Reference ?? raw.REFERENCE ?? "";
+  const rawDate = row.date ?? raw.date ?? raw.Date ?? raw.DATE ?? null;
+
+  return {
+    date: rawDate,
+    tenant: "-",
+    reference: rawReference,
+    amount: Math.round(Number(rawAmount || 0) * 100) / 100,
+    ...overrides
+  };
+}
+
 /* =========================
    MULTER
 ========================= */
@@ -142,12 +158,12 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
     for (const row of rows) {
 
       if (!row.amount || row.amount <= 0) {
-        unmatched.push({ row, reason: "Invalid amount" });
+        unmatched.push(normalizeResultRow(row, { reason: "Invalid amount" }));
         continue;
       }
 
       if (!row.reference) {
-        unmatched.push({ row, reason: "Missing reference" });
+        unmatched.push(normalizeResultRow(row, { reason: "Missing reference" }));
         continue;
       }
 
@@ -188,7 +204,7 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
       }
 
       if (!tenant) {
-        unmatched.push({ row, reason: "No tenant match" });
+        unmatched.push(normalizeResultRow(row, { reason: "No tenant match" }));
         continue;
       }
 
@@ -204,12 +220,10 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
       }
 
       if (!lease) {
-        pending.push({
+        unmatched.push(normalizeResultRow(row, {
           tenant: tenant.fullName,
-          amount: safeAmount,
-          reference: row.reference,
           reason: "No active lease"
-        });
+        }));
         continue;
       }
 
@@ -225,11 +239,10 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
       });
 
       if (duplicate) {
-        duplicates.push({
+        duplicates.push(normalizeResultRow(row, {
           tenant: tenant.fullName,
-          amount: safeAmount,
-          reference: row.reference
-        });
+          reason: "Duplicate payment"
+        }));
         continue;
       }
 
@@ -242,7 +255,7 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
         reference: row.reference
       });
 
-      await BankImport.create({
+      const importRecord = await BankImport.create({
         ownerId,
         raw: row,
         amount: safeAmount,
@@ -288,21 +301,20 @@ router.post("/upload", auth, upload.single("statement"), async (req, res) => {
 
         await emitLedgerNotification(entry);
 
-        matched.push({
+        matched.push(normalizeResultRow(row, {
+          _id: importRecord._id,
           tenant: tenant.fullName,
-          amount: safeAmount,
-          reference: row.reference,
           confidence
-        });
+        }));
 
       } else {
 
-        pending.push({
+        pending.push(normalizeResultRow(row, {
+          _id: importRecord._id,
           tenant: tenant.fullName,
-          amount: safeAmount,
-          reference: row.reference,
-          confidence
-        });
+          confidence,
+          reason: "Low confidence match"
+        }));
       }
     }
 
