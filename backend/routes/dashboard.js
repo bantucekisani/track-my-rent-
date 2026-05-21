@@ -143,6 +143,17 @@ router.get("/summary", auth, async (req, res) => {
 
     let expectedThisMonth = 0;
     let collectedThisMonth = 0;
+    const monthBalancesByTenant = new Map();
+
+    function addMonthTenantBalance(entry, amount) {
+      if (!entry.tenantId) return;
+
+      const tenantKey = entry.tenantId.toString();
+      monthBalancesByTenant.set(
+        tenantKey,
+        (monthBalancesByTenant.get(tenantKey) || 0) + amount
+      );
+    }
 
     for (const entry of monthLedger) {
 
@@ -163,6 +174,7 @@ try {
 }
 
         expectedThisMonth += converted;
+        addMonthTenantBalance(entry, converted);
       }
 
       if (entry.type === "payment") {
@@ -174,13 +186,12 @@ try {
         );
 
         collectedThisMonth += converted;
+        addMonthTenantBalance(entry, -converted);
       }
     }
 
-    const outstandingThisMonth = Math.max(
-      0,
-      expectedThisMonth - collectedThisMonth
-    );
+    const outstandingThisMonth = Array.from(monthBalancesByTenant.values())
+      .reduce((sum, balance) => sum + Math.max(balance, 0), 0);
 
     /* -------------------------------
        VAT COLLECTED
