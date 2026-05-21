@@ -202,7 +202,7 @@ router.get("/stats", auth, requireAdmin, async (req, res) => {
       newTenants,
       subscriptions
     ] = await Promise.all([
-      User.countDocuments({ role: "owner" }),
+      User.countDocuments(),
       Property.countDocuments(),
       Unit.countDocuments(),
       Unit.countDocuments({ status: "Occupied" }),
@@ -211,7 +211,6 @@ router.get("/stats", auth, requireAdmin, async (req, res) => {
       Tenant.countDocuments({ status: "active" }),
       Lease.countDocuments({ status: "Active" }),
       User.countDocuments({
-        role: "owner",
         createdAt: { $gte: startOfMonth }
       }),
       Property.countDocuments({
@@ -640,7 +639,6 @@ router.get("/growth", auth, requireAdmin, async (req, res) => {
         User.aggregate([
           {
             $match: {
-              role: "owner",
               createdAt: { $gte: fromDate }
             }
           },

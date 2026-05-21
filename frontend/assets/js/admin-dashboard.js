@@ -428,7 +428,7 @@ function renderGrowthChart(growth) {
       labels: growth.labels || [],
       datasets: [
         {
-          label: "Landlords",
+          label: "Users",
           data: growth.users || [],
           borderColor: "#2563eb",
           backgroundColor: "rgba(37, 99, 235, 0.14)",
