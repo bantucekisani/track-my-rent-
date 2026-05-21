@@ -43,6 +43,18 @@ function getMonthRange(year, month) {
   return { start, end };
 }
 
+function buildPeriodCutoffMatch({ month, year }) {
+  return {
+    $or: [
+      { periodYear: { $lt: year } },
+      {
+        periodYear: year,
+        periodMonth: { $lte: month }
+      }
+    ]
+  };
+}
+
 /* =========================================================
    DASHBOARD SUMMARY
 ========================================================= */
@@ -204,7 +216,8 @@ try {
         $match: {
           ownerId,
           tenantId: { $ne: null },
-          type: { $in: RENT_ARREARS_TYPES }
+          type: { $in: RENT_ARREARS_TYPES },
+          ...buildPeriodCutoffMatch({ month, year })
         }
       },
       {
@@ -345,13 +358,15 @@ router.get("/arrears", auth, async (req, res) => {
   try {
 
 const ownerId = new mongoose.Types.ObjectId(req.user.id);
+    const currentPeriod = getCurrentPeriod(DEFAULT_TIMEZONE);
 
     const balances = await LedgerEntry.aggregate([
       {
         $match: {
           ownerId,
           tenantId: { $exists: true, $ne: null },
-          type: { $in: RENT_ARREARS_TYPES }
+          type: { $in: RENT_ARREARS_TYPES },
+          ...buildPeriodCutoffMatch(currentPeriod)
         }
       },
       {

@@ -38,6 +38,7 @@ const RENT_ARREARS_TYPES = [
   "rent_reversal",
   "payment"
 ];
+const DEFAULT_TIMEZONE = process.env.APP_TIMEZONE || "Africa/Johannesburg";
 
 function parseMonthYear(month, year) {
   const monthNum = Number(month);
@@ -53,6 +54,31 @@ function parseMonthYear(month, year) {
   }
 
   return { monthNum, yearNum };
+}
+
+function getCurrentPeriod(timeZone = DEFAULT_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat("en-ZA", {
+    timeZone,
+    month: "numeric",
+    year: "numeric"
+  }).formatToParts(new Date());
+
+  return {
+    month: Number(parts.find(part => part.type === "month")?.value),
+    year: Number(parts.find(part => part.type === "year")?.value)
+  };
+}
+
+function buildPeriodCutoffMatch({ month, year }) {
+  return {
+    $or: [
+      { periodYear: { $lt: year } },
+      {
+        periodYear: year,
+        periodMonth: { $lte: month }
+      }
+    ]
+  };
 }
 
 function parseOptionalPropertyId(propertyId) {
@@ -185,13 +211,16 @@ async function buildArrearsReportData(ownerId) {
 
   const locale =
     settings?.preferences?.locale || "en-ZA";
+  const currentPeriod =
+    getCurrentPeriod(settings?.preferences?.timezone || DEFAULT_TIMEZONE);
 
   const balances = await LedgerEntry.aggregate([
     {
       $match: {
         ownerId,
         tenantId: { $exists: true, $ne: null },
-        type: { $in: RENT_ARREARS_TYPES }
+        type: { $in: RENT_ARREARS_TYPES },
+        ...buildPeriodCutoffMatch(currentPeriod)
       }
     },
     {
@@ -1582,6 +1611,8 @@ router.get("/arrears", auth, async (req, res) => {
 
     const locale =
       settings?.preferences?.locale || "en-ZA";
+    const currentPeriod =
+      getCurrentPeriod(settings?.preferences?.timezone || DEFAULT_TIMEZONE);
 
     /* =========================
        AGGREGATE LEDGER
@@ -1593,7 +1624,8 @@ router.get("/arrears", auth, async (req, res) => {
         $match: {
           ownerId,
           tenantId: { $exists: true, $ne: null },
-          type: { $in: RENT_ARREARS_TYPES }
+          type: { $in: RENT_ARREARS_TYPES },
+          ...buildPeriodCutoffMatch(currentPeriod)
         }
       },
 
@@ -1808,13 +1840,13 @@ router.get("/arrears/pdf", auth, async (req, res) => {
     await sendTabularPdfReport(res, {
       title: "Rent Arrears",
       subtitle:
-        "Rolling rent balances where rent charges are greater than payments received.",
+        "Current and past rent balances where rent charges are greater than payments received.",
       generatedAt: new Date().toLocaleDateString(data.locale),
       summaryItems: [
         { label: "Tenants in arrears", value: String(data.count) },
         { label: "Total outstanding", value: totalLabel },
         { label: "Currencies", value: String(Math.max(currencyEntries.length, 1)) },
-        { label: "Scope", value: "Rent charges and payments" }
+        { label: "Scope", value: "Current and past rent charges and payments" }
       ],
       columns: [
         "Tenant",
