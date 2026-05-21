@@ -44,6 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setDashboardLoadingState(true);
     clearDashboardCache();
 
+    document
+      .getElementById("refreshDashboardBtn")
+      ?.addEventListener("click", refreshDashboard);
+
     loadDashboard();
     loadSubscription();
     loadTutorialPrompt();
@@ -147,12 +151,15 @@ requestIdleCallback(loadWidgets);
 setTimeout(loadWidgets,200);
 }
 
+return true;
+
 }catch(err){
 
 dashboardLoading = false;
 setDashboardLoadingState(false);
 console.error("Dashboard load error:",err);
 notify("We could not refresh the dashboard right now.", "warning");
+return false;
 
 }
 
@@ -308,6 +315,23 @@ async function loadDashboardArrears() {
 
 }
 
+async function refreshDashboard() {
+  if (dashboardLoading) return;
+
+  setRefreshButtonState(true);
+  setDashboardLoadingState(true);
+  clearDashboardCache();
+
+  try {
+    const refreshed = await loadDashboard();
+    if (refreshed) {
+      notify("Dashboard refreshed.", "success");
+    }
+  } finally {
+    setRefreshButtonState(false);
+  }
+}
+
 
 function setDashboardLoadingState(isLoading) {
   const content = document.querySelector(".content");
@@ -317,6 +341,18 @@ function setDashboardLoadingState(isLoading) {
   }
 
   content.classList.toggle("dashboard-loading", isLoading);
+}
+
+function setRefreshButtonState(isLoading) {
+  const button = document.getElementById("refreshDashboardBtn");
+
+  if (!button) {
+    return;
+  }
+
+  button.disabled = Boolean(isLoading);
+  button.setAttribute("aria-busy", isLoading ? "true" : "false");
+  button.textContent = isLoading ? "Refreshing..." : "Refresh";
 }
 
 function getSetupGuideSteps(data) {
