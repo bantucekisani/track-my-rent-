@@ -1,0 +1,37 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /admin-dashboard.html
+Disallow: /admin-tools.html
+Disallow: /ai-assistant.html
+Disallow: /bank-import.html
+Disallow: /business-settings.html
+Disallow: /damages.html
+Disallow: /dashboard.html
+Disallow: /expenses.html
+Disallow: /financial-settings.html
+Disallow: /forgot-password.html
+Disallow: /invoices.html
+Disallow: /leases.html
+Disallow: /ledger.html
+Disallow: /login.html
+Disallow: /maintenance.html
+Disallow: /notifications.html
+Disallow: /payments.html
+Disallow: /pricing.html
+Disallow: /profit-loss.html
+Disallow: /properties.html
+Disallow: /register.html
+Disallow: /reports.html
+Disallow: /reset-password.html
+Disallow: /sign-lease.html
+Disallow: /signed.html
+Disallow: /tenant-profile.html
+Disallow: /tenants.html
+Disallow: /tutorials.html
+Disallow: /units.html
+Disallow: /utilities.html
+
+Sitemap: https://trackmyrent.co.za/sitemap.xml

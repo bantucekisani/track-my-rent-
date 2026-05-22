@@ -200,7 +200,11 @@ app.use((err, req, res, next) => {
 });
 
 app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => {
-  res.sendFile(path.join(frontendDir, "index.html"));
+  if (path.extname(req.path)) {
+    return res.status(404).type("text/plain").send("Not found");
+  }
+
+  return res.sendFile(path.join(frontendDir, "index.html"));
 });
 
 
